@@ -10,3 +10,11 @@ endif()
 project(Nani VERSION 0.1.0 LANGUAGES C CXX)
 
 add_subdirectory(nani)
+
+option(NANI_BUILD_SNIPPETS "Build dependency usage snippets" ON)
+
+if(NANI_BUILD_SNIPPETS)
+  add_subdirectory(deps/snippets/simple_skia)
+  add_subdirectory(deps/snippets/simple_libuv)
+  add_subdirectory(deps/snippets/simple_quickjs_ng)
+endif()
