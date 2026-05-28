@@ -1,0 +1,31 @@
+# Build directories
+build/
+out/
+cmake-build-*/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+compile_commands.json
+CTestTestfile.cmake
+Testing/
+
+# vcpkg generated files
+vcpkg_installed/
+
+# Visual Studio
+.vs/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
+# Editor and OS files
+.vscode/
+.idea/
+*.user
+*.swp
+*.swo
+Thumbs.db
+Desktop.ini
