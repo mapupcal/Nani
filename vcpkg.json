@@ -5,6 +5,8 @@
   "dependencies": [
     "skia",
     "libuv",
-    "quickjs-ng"
+    "quickjs-ng",
+    "curl",
+    "glfw3"
   ]
 }
