@@ -2,6 +2,7 @@
 #include "defs.h"
 #include "basic/pointf.h"
 #include "basic/sizef.h"
+#include "basic/rectf.h"
 
 namespace nani::canvas
 {
@@ -30,7 +31,8 @@ namespace nani::canvas
 			Move,
 			Resize,
 			FocusIn,
-			FocusOut
+			FocusOut,
+			Paint,
 		};
 
 	public:
@@ -68,5 +70,18 @@ namespace nani::canvas
 	private:
 		basic::SizeF m_oldSize;
 		basic::SizeF m_newSize;
+	};
+
+	class PaintEvent : public Event
+	{
+	public:
+		PaintEvent(const basic::RectF& dirtyRect);
+		~PaintEvent();
+
+	public:
+		const basic::RectF DirtyRect() const;
+
+	private:
+		basic::RectF m_dirtyRect;
 	};
 }

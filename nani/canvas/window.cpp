@@ -26,6 +26,16 @@ namespace nani::canvas
 		return m_pImpl->size;
 	}
 
+	const RectF Window::Rect() const
+	{
+		return RectF(0, 0, Size());
+	}
+
+	const RectF Window::Geometry() const
+	{
+		return RectF(Position(), Size());
+	}
+
 	bool Window::IsVisible() const
 	{
 		return m_pImpl->IsVisible();
@@ -58,7 +68,7 @@ namespace nani::canvas
 
 	void Window::Update()
 	{
-
+		m_pImpl->Paint(Rect());
 	}
 
 	void Window::RaiseEvent(Event* e)

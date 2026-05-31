@@ -33,6 +33,8 @@ namespace nani::canvas::internal
 		void InitializeSkiaContext();
 		void ResetSkiaSurface();
 
+		void Paint(const basic::RectF& dirtyRect);
+
 	public:
 		void OnGLFWWindowSizeChanged(int width, int height);
 		void OnGLFWWindowPositionChanged(int xpos, int ypos);

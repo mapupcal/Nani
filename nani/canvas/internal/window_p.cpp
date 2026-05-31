@@ -6,6 +6,12 @@
 #include <include/gpu/ganesh/gl/GrGLInterface.h>
 #include <include/gpu/ganesh/GrContextOptions.h>
 #include <include/gpu/ganesh/GrDirectContext.h>
+#include <include/gpu/ganesh/gl/GrGLBackendSurface.h>
+#include <include/gpu/ganesh/SkSurfaceGanesh.h>
+#include <include/gpu/ganesh/GrBackendSurface.h>
+#include <core/SkCanvas.h>
+#include <core/SkColorSpace.h>
+
 using namespace nani::canvas::basic;
 
 namespace nani::canvas::internal
@@ -64,10 +70,15 @@ namespace nani::canvas::internal
 			InitializeGLFWWindow();
 			InitializeSkiaContext();
 		}
+
+		if (IsVisible())
+			return;
+
 		glfwShowWindow(glfwWindow);
 
 		Event event(Event::Type::Show);
 		window->RaiseEvent(&event);
+		Paint(RectF(0, 0, size));
 	}
 
 	void WindowPrivate::Hide()
@@ -99,7 +110,7 @@ namespace nani::canvas::internal
 	{
 		if (!glfwWindow)
 			return;
-		if (pos != this->pos)
+		if (pos == this->pos)
 			return;
 
 		glfwSetWindowPos(glfwWindow, pos.x, pos.y);
@@ -109,7 +120,7 @@ namespace nani::canvas::internal
 	{
 		if (!glfwWindow)
 			return;
-		if (size != this->size)
+		if (size == this->size)
 			return;
 
 		glfwSetWindowSize(glfwWindow, size.width, size.height);
@@ -117,6 +128,9 @@ namespace nani::canvas::internal
 
 	void WindowPrivate::OnGLFWWindowSizeChanged(int width, int height)
 	{
+		if (width <= 0 || height <= 0)
+			return;
+
 		SizeF oldSize = size;
 		size = SizeF(width, height);
 
@@ -152,6 +166,22 @@ namespace nani::canvas::internal
 
 		Event event(Event::Type::Close);
 		window->RaiseEvent(&event);
+	}
+
+	void WindowPrivate::Paint(const RectF& dirtyRect)
+	{
+		if (!skiaSurface)
+			return;
+
+		SkCanvas* canvas = skiaSurface->getCanvas();
+		if (!canvas)
+			return;
+
+		canvas->clear(SK_ColorTRANSPARENT); //TODO:Dirty Rect Update.
+		PaintEvent event(dirtyRect);
+		window->RaiseEvent(&event);
+		skiaGlContext->flushAndSubmit();
+		glfwSwapBuffers(glfwWindow);
 	}
 
 	bool WindowPrivate::Initialize()
@@ -205,5 +235,23 @@ namespace nani::canvas::internal
 			return;
 
 		skiaSurface.reset();
+
+		GrGLFramebufferInfo fbi =
+		{
+			.fFBOID = 0,
+			.fFormat = GL_RGBA8
+		};
+
+		GrBackendRenderTarget target = GrBackendRenderTargets::MakeGL(size.width, size.height, 0, 8, fbi);
+		skiaSurface = SkSurfaces::WrapBackendRenderTarget(
+			skiaGlContext.get(),
+			target,
+			kBottomLeft_GrSurfaceOrigin,
+			kRGBA_8888_SkColorType,
+			nullptr,
+			nullptr
+		);
+
+		Paint(RectF(0, 0, size));
 	}
 }

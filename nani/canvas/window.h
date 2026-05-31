@@ -21,6 +21,8 @@ namespace nani::canvas
 	public:
 		const basic::PointF Position() const;
 		const basic::SizeF Size() const;
+		const basic::RectF Rect() const;
+		const basic::RectF Geometry() const;
 		bool IsVisible() const;
 
 		void Show();

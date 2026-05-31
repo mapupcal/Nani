@@ -57,5 +57,22 @@ namespace nani::canvas
 	{
 		return m_newSize;
 	}
+
+	PaintEvent::PaintEvent(const basic::RectF& dirtyRect)
+		: Event(Event::Type::Paint)
+		, m_dirtyRect(dirtyRect)
+	{
+
+	}
+
+	PaintEvent::~PaintEvent()
+	{
+
+	}
+
+	const basic::RectF PaintEvent::DirtyRect() const
+	{
+		return m_dirtyRect;
+	}
 }
 
