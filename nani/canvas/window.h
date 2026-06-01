@@ -32,6 +32,8 @@ namespace nani::canvas
 		void Resize(const basic::SizeF& size);
 		void Update();
 
+		void RegisterEventFilter(Event::IFilter* filter);
+		void UnRegisterEventFilter(Event::IFilter* filter);
 	private:
 		void RaiseEvent(Event* e);
 

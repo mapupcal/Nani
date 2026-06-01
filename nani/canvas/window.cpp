@@ -71,8 +71,20 @@ namespace nani::canvas
 		m_pImpl->Paint(Rect());
 	}
 
+	void Window::RegisterEventFilter(Event::IFilter* filter)
+	{
+		m_pImpl->RegisterEventFilter(filter);
+	}
+
+	void Window::UnRegisterEventFilter(Event::IFilter* filter)
+	{
+		m_pImpl->UnRegisterEventFilter(filter);
+	}
+
 	void Window::RaiseEvent(Event* e)
 	{
+		if (m_pImpl->FilterEvent(e))
+			return;
 		//TODO:
 	}
 }

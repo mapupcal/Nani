@@ -7,72 +7,70 @@ namespace nani::canvas
 
 	}
 
-	Event::~Event()
-	{
-
-	}
-
-	MoveEvent::MoveEvent(const basic::PointF& oldPos, const basic::PointF& newPos)
+	MoveEvent::MoveEvent(const basic::PointF& oldPos_, const basic::PointF& newPos_)
 		: Event(Type::Move)
-		, m_oldPos(oldPos)
-		, m_newPos(newPos)
+		, oldPos(oldPos_)
+		, newPos(newPos_)
 	{
 
 	}
 
-	MoveEvent::~MoveEvent()
-	{
-
-	}
-
-	const basic::PointF MoveEvent::OldPosition() const
-	{
-		return m_oldPos;
-	}
-
-	const basic::PointF MoveEvent::NewPosiiton() const
-	{
-		return m_newPos;
-	}
-
-	ResizeEvent::ResizeEvent(const basic::SizeF& oldSize, const basic::SizeF& newSize)
+	ResizeEvent::ResizeEvent(const basic::SizeF& oldSize_, const basic::SizeF& newSize_)
 		: Event(Type::Resize)
-		, m_oldSize(oldSize)
-		, m_newSize(newSize)
+		, oldSize(oldSize_)
+		, newSize(newSize_)
 	{
 
 	}
 
-	ResizeEvent::~ResizeEvent()
-	{
-
-	}
-
-	const basic::SizeF ResizeEvent::OldSize() const
-	{
-		return m_oldSize;
-	}
-
-	const basic::SizeF ResizeEvent::NewSize() const
-	{
-		return m_newSize;
-	}
-
-	PaintEvent::PaintEvent(const basic::RectF& dirtyRect)
+	PaintEvent::PaintEvent(const basic::RectF& dirtyRect_)
 		: Event(Event::Type::Paint)
-		, m_dirtyRect(dirtyRect)
+		, dirtyRect(dirtyRect_)
 	{
 
 	}
 
-	PaintEvent::~PaintEvent()
+
+	MouseEvent::MouseEvent(Type type_, const basic::PointF& pos_, const basic::PointF& globalPos_)
+		: Event(type_)
+		, pos(pos_)
+		, globalPos(globalPos_)
 	{
 
 	}
 
-	const basic::RectF PaintEvent::DirtyRect() const
+	MouseMoveEvent::MouseMoveEvent(const basic::PointF& pos_, const basic::PointF& globalPos_)
+		: MouseEvent(Type::MouseMove, pos_, globalPos_)
 	{
-		return m_dirtyRect;
+
+	}
+
+	MouseButtonEvent::MouseButtonEvent(Type type_, MouseButton button_, const basic::PointF& pos_, const basic::PointF& globalPos_, Modifier modifier_)
+		: MouseEvent(type_, pos_, globalPos_)
+		, button(button_)
+		, modifier(modifier_)
+	{
+
+	}
+
+	MousePressEvent::MousePressEvent(MouseButton button_, const basic::PointF& pos_, const basic::PointF& globalPos_, Modifier modifier_)
+		: MouseButtonEvent(Type::MousePress,button_, pos_, globalPos_, modifier_)
+	{
+
+	}
+
+	MouseReleaseEvent::MouseReleaseEvent(MouseButton button_, const basic::PointF& pos_, const basic::PointF& globalPos_, Modifier modifier_)
+		: MouseButtonEvent(Type::MousePress, button_, pos_, globalPos_, modifier_)
+	{
+
+	}
+
+	WheelEvent::WheelEvent(double deltaX_, double deltaY_)
+		: Event(Type::Wheel)
+		, deltaX(deltaX_)
+		, deltaY(deltaY_)
+	{
+
 	}
 }
 

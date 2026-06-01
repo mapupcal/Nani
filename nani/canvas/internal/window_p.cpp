@@ -1,7 +1,6 @@
 #pragma once
 #include "window_p.h"
 #include "window.h"
-#include "event.h"
 #include "env_p.h"
 #include <include/gpu/ganesh/gl/GrGLInterface.h>
 #include <include/gpu/ganesh/GrContextOptions.h>
@@ -11,6 +10,7 @@
 #include <include/gpu/ganesh/GrBackendSurface.h>
 #include <core/SkCanvas.h>
 #include <core/SkColorSpace.h>
+#include <ranges>
 
 using namespace nani::canvas::basic;
 
@@ -44,6 +44,67 @@ namespace nani::canvas::internal
 			WindowPrivate* pImpl = reinterpret_cast<WindowPrivate*>(glfwGetWindowUserPointer(window));
 			if (pImpl)
 				pImpl->OnGLFWWindowFocusChanged(focused == GLFW_TRUE);
+		}
+
+		void _OnGLFWWindowMousePos(GLFWwindow* window, double xpos, double ypos)
+		{
+			WindowPrivate* pImpl = reinterpret_cast<WindowPrivate*>(glfwGetWindowUserPointer(window));
+			if (pImpl)
+				pImpl->OnGLFWWindowMouseMove(xpos, ypos);
+		}
+
+		void _OnGLFWWindowMouseEnter(GLFWwindow* window, int entered)
+		{
+			WindowPrivate* pImpl = reinterpret_cast<WindowPrivate*>(glfwGetWindowUserPointer(window));
+			if (pImpl)
+				pImpl->OnGLFWWindowMouseEnter(entered == GLFW_TRUE);
+		}
+
+		void _OnGLFWWindowMouseButton(GLFWwindow* window, int btn, int action, int mods)
+		{
+			WindowPrivate* pImpl = reinterpret_cast<WindowPrivate*>(glfwGetWindowUserPointer(window));
+			if (pImpl)
+			{
+				double xPos = 0.0f;
+				double yPos = 0.0f;
+				glfwGetCursorPos(window, &xPos, &yPos);
+
+				MouseButton button = MouseButton::Unknown;
+				if (btn == GLFW_MOUSE_BUTTON_LEFT)
+					button = MouseButton::Left;
+				if (btn == GLFW_MOUSE_BUTTON_MIDDLE)
+					button = MouseButton::Middle;
+				else if(btn == GLFW_MOUSE_BUTTON_RIGHT)
+					button = MouseButton::Right;
+				else
+				{
+					NANI_ASSERT(false);
+					NANI_MESSAGE("Not support mouse button type");
+				}
+
+				Modifier modifier = Modifier::None;
+				if (mods & GLFW_MOD_SHIFT)
+					modifier = modifier | Modifier::Shift;
+				if (mods & GLFW_MOD_ALT)
+					modifier = modifier | Modifier::Alt;
+				if (mods & GLFW_MOD_CONTROL)
+					modifier = modifier | Modifier::Ctrl;
+				if (mods & GLFW_MOD_CAPS_LOCK)
+					modifier = modifier | Modifier::CapsLock;
+				if (mods & GLFW_MOD_NUM_LOCK)
+					modifier = modifier | Modifier::NumLock;
+				if (mods & GLFW_MOD_SUPER)
+					modifier = modifier | Modifier::Super;
+
+				pImpl->OnGLFWWindowMouseButton(xPos, yPos, button, action == GLFW_PRESS, modifier);
+			}
+		}
+
+		void _OnGLFWWindowWheelScroll(GLFWwindow* window, double xOffset, double yOffset)
+		{
+			WindowPrivate* pImpl = reinterpret_cast<WindowPrivate*>(glfwGetWindowUserPointer(window));
+			if (pImpl)
+				pImpl->OnGLFWWindowWheelScroll(xOffset, yOffset);
 		}
 	}
 
@@ -142,10 +203,10 @@ namespace nani::canvas::internal
 		window->RaiseEvent(&event);
 	}
 
-	void WindowPrivate::OnGLFWWindowPositionChanged(int xpos, int ypos)
+	void WindowPrivate::OnGLFWWindowPositionChanged(int xPos, int yPos)
 	{
 		PointF oldPos = pos;
-		pos = PointF(xpos, ypos);
+		pos = PointF(xPos, yPos);
 
 		MoveEvent event(oldPos, pos);
 		window->RaiseEvent(&event);
@@ -168,6 +229,43 @@ namespace nani::canvas::internal
 		window->RaiseEvent(&event);
 	}
 
+	void WindowPrivate::OnGLFWWindowMouseEnter(bool bEnter)
+	{
+		Event::Type type = bEnter ? Event::Type::Enter : Event::Type::Leave;
+		Event event(type);
+		window->RaiseEvent(&event);
+	}
+
+	void WindowPrivate::OnGLFWWindowMouseMove(double xPos, double yPos)
+	{
+		PointF pos_(xPos, yPos);
+		PointF globalPos = pos_ + pos;
+		MouseMoveEvent event(pos_, globalPos);
+		window->RaiseEvent(&event);
+	}
+
+	void WindowPrivate::OnGLFWWindowMouseButton(double xPos, double yPos, MouseButton button, bool bPress, Modifier modifier)
+	{
+		PointF pos_(xPos, yPos);
+		PointF globalPos = pos_ + pos;
+		if (bPress)
+		{
+			MousePressEvent event(button, pos_, globalPos, modifier);
+			window->RaiseEvent(&event);
+		}
+		else
+		{
+			MouseReleaseEvent event(button, pos_, globalPos, modifier);
+			window->RaiseEvent(&event);
+		}
+	}
+
+	void WindowPrivate::OnGLFWWindowWheelScroll(double xDelta, double yDelta)
+	{
+		WheelEvent event(xDelta, yDelta);
+		window->RaiseEvent(&event);
+	}
+
 	void WindowPrivate::Paint(const RectF& dirtyRect)
 	{
 		if (!skiaSurface)
@@ -182,6 +280,38 @@ namespace nani::canvas::internal
 		window->RaiseEvent(&event);
 		skiaGlContext->flushAndSubmit();
 		glfwSwapBuffers(glfwWindow);
+	}
+
+	void WindowPrivate::RegisterEventFilter(Event::IFilter* filter)
+	{
+		auto iter = std::find(eventFilters.cbegin(), eventFilters.cend(), filter);
+		if (iter != eventFilters.cend())
+		{
+			NANI_MESSAGE("filter already registered.");
+			return;
+		}
+		eventFilters.push_back(filter);
+	}
+
+	void WindowPrivate::UnRegisterEventFilter(Event::IFilter * filter)
+	{
+		auto iter = std::find(eventFilters.cbegin(), eventFilters.cend(), filter);
+		if (iter == eventFilters.cend())
+		{
+			NANI_MESSAGE("filter not registered.");
+			return;
+		}
+		eventFilters.erase(iter);
+	}
+
+	bool WindowPrivate::FilterEvent(Event * event)
+	{
+		for (Event::IFilter* filter : eventFilters | std::views::reverse)
+		{
+			if (filter->FilterEvent(event))
+				return true;
+		}
+		return false;
 	}
 
 	bool WindowPrivate::Initialize()
@@ -214,6 +344,11 @@ namespace nani::canvas::internal
 		glfwSetWindowSizeCallback(glfwWindow, _OnGLFWWindowSizeChanged);
 		glfwSetWindowPosCallback(glfwWindow, _OnGLFWWindowPositionChanged);
 		glfwSetWindowCloseCallback(glfwWindow, _OnGLFWWindowClose);
+		glfwSetCursorPosCallback(glfwWindow, _OnGLFWWindowMousePos);
+		glfwSetMouseButtonCallback(glfwWindow, _OnGLFWWindowMouseButton);
+		glfwSetCursorEnterCallback(glfwWindow, _OnGLFWWindowMouseEnter);
+		glfwSetScrollCallback(glfwWindow, _OnGLFWWindowWheelScroll);
+
 	}
 
 	void WindowPrivate::InitializeSkiaContext()
