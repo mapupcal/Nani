@@ -20,6 +20,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 add_subdirectory(nani)
 
 option(NANI_BUILD_SNIPPETS "Build dependency usage snippets" ON)
+option(NANI_BUILD_TESTS "Build unit tests" ON)
 
 if(NANI_BUILD_SNIPPETS)
   add_subdirectory(deps/snippets/simple_skia)
@@ -27,4 +28,8 @@ if(NANI_BUILD_SNIPPETS)
   add_subdirectory(deps/snippets/simple_quickjs_ng)
   add_subdirectory(deps/snippets/simple_curl)
   add_subdirectory(deps/snippets/simple_glfw3)
+endif()
+
+if(NANI_BUILD_TESTS)
+  add_subdirectory(nani/utests)
 endif()

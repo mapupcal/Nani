@@ -121,6 +121,8 @@ namespace nani::canvas::internal
 
 	bool WindowPrivate::IsVisible() const
 	{
+		if (!glfwWindow)
+			return false;
 		return glfwGetWindowAttrib(glfwWindow, GLFW_VISIBLE) == GLFW_TRUE;
 	}
 
