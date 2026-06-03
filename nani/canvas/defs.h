@@ -23,3 +23,7 @@
 #else
 #define NANI_API
 #endif
+
+#ifdef WIN32
+#define NANI_OS_WIN
+#endif

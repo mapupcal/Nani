@@ -13,6 +13,11 @@ add_library(canvas SHARED
 	basic/sizef.cpp
 	basic/sizef.h
 	
+	cursor.cpp
+	cursor.h
+	screen.cpp
+	screen.h
+
     event.cpp
     event.h
 	env.cpp
