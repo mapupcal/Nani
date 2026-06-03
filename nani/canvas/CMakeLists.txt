@@ -27,6 +27,8 @@ add_library(canvas SHARED
 
 	internal/env_p.cpp
 	internal/env_p.h
+	internal/platform.cpp
+	internal/platform.h
 	internal/window_p.cpp
 	internal/window_p.h
 )
