@@ -1,4 +1,4 @@
-#include "cursor.h"
+﻿#include "cursor.h"
 #include "internal/platform.h"
 using namespace nani::canvas::basic;
 

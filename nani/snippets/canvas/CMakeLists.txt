@@ -1,4 +1,4 @@
-nani_add_executable(canvas_snippets
+﻿nani_add_executable(canvas_snippets
 	main.cpp
 )
 

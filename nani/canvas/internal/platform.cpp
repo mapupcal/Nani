@@ -1,4 +1,4 @@
-#include "platform.h"
+﻿#include "platform.h"
 
 #if defined(NANI_OS_WIN)
 #include <Windows.h>

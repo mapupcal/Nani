@@ -1,4 +1,4 @@
-#include "env.h"
+﻿#include "env.h"
 #include "internal/env_p.h"
 namespace nani::canvas
 {

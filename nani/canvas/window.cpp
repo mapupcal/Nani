@@ -1,4 +1,4 @@
-#include "window.h"
+﻿#include "window.h"
 #include "internal/window_p.h"
 using namespace nani::canvas::basic;
 

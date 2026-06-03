@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include <GLFW/glfw3.h>
 #include <include/gpu/ganesh/gl/GrGLDirectContext.h>
 #include <core/SkSurface.h>

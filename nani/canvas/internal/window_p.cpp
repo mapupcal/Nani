@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "window_p.h"
 #include "window.h"
 #include "env_p.h"

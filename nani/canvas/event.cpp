@@ -1,4 +1,4 @@
-#include "event.h"
+﻿#include "event.h"
 namespace nani::canvas
 {
 	Event::Event(Type type_)

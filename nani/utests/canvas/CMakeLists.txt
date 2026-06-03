@@ -1,4 +1,4 @@
-find_package(GTest CONFIG REQUIRED)
+﻿find_package(GTest CONFIG REQUIRED)
 
 nani_add_executable(canvas_utests
 	main.cpp
