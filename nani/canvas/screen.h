@@ -2,11 +2,21 @@
 #include "defs.h"
 #include "basic/rectf.h"
 #include <vector>
+#include <memory>
+
+namespace nani::canvas::internal
+{
+	struct ScreenData;
+}
 
 namespace nani::canvas
 {
 	class NANI_API Screen
 	{
+	public:
+		Screen();
+		~Screen();
+
 	public:
 		const basic::RectF Rect() const;
 		const basic::RectF WorkAreaRect() const;
@@ -22,7 +32,6 @@ namespace nani::canvas
 		static std::vector<const Screen*> Screens();
 
 	private:
-		Screen();
-		~Screen();
+		internal::ScreenData* m_pData = nullptr;
 	};
 }
