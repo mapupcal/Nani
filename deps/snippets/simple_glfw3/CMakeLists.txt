@@ -1,7 +1,7 @@
 find_package(glfw3 CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
 
-add_executable(nani_simple_glfw3 main.cpp)
+nani_add_executable(nani_simple_glfw3 main.cpp)
 
 target_compile_features(nani_simple_glfw3 PRIVATE cxx_std_20)
 

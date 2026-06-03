@@ -1,6 +1,6 @@
 find_package(libuv CONFIG REQUIRED)
 
-add_executable(nani_simple_libuv main.cpp)
+nani_add_executable(nani_simple_libuv main.cpp)
 
 target_compile_features(nani_simple_libuv PRIVATE cxx_std_20)
 

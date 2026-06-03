@@ -15,7 +15,8 @@ namespace nani::canvas::internal
 		return PointF(pos.x, pos.y);
 #else
 		NANI_ASSERT(false);
-		NANI_MESSAGE("Not Implement!")
+		NANI_MESSAGE("Not Implement!");
+		return PointF();
 #endif
 	}
 

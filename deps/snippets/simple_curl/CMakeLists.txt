@@ -1,6 +1,6 @@
 find_package(CURL REQUIRED)
 
-add_executable(nani_simple_curl main.cpp)
+nani_add_executable(nani_simple_curl main.cpp)
 
 target_compile_features(nani_simple_curl PRIVATE cxx_std_20)
 

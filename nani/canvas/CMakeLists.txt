@@ -2,7 +2,7 @@ find_package(OpenGL REQUIRED)
 find_package(unofficial-skia CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 
-add_library(canvas SHARED
+nani_add_library(canvas SHARED
 	defs.h
 
 	basic/geometry_defs.h
