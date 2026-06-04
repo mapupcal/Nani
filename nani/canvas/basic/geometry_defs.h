@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "../defs.h"
+#include "basic_defs.h"
 #include <cmath>
 
 namespace nani::canvas::basic

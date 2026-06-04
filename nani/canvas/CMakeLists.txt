@@ -5,6 +5,9 @@ find_package(glfw3 CONFIG REQUIRED)
 nani_add_library(canvas SHARED
 	defs.h
 
+	basic/basic_defs.h
+	basic/color.cpp
+	basic/color.h
 	basic/geometry_defs.h
 	basic/pointf.cpp
 	basic/pointf.h
