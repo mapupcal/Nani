@@ -5,7 +5,7 @@
 #include "basic/pointf.h"
 #include "basic/sizef.h"
 #include "basic/rectf.h"
-#include "events/event.h"
+#include "events/event_defs.h"
 #include <vector>
 
 namespace nani::canvas
@@ -46,6 +46,7 @@ namespace nani::canvas::internal
 		void OnGLFWWindowMouseMove(double xPos, double yPos);
 		void OnGLFWWindowMouseButton(double xPos, double yPos, events::MouseButton button, bool bPress, events::Modifier modifier);
 		void OnGLFWWindowWheelScroll(double xDelta, double yDelta);
+		void OnGLFWWindowKeyEvent(events::Key key, int scancode, bool bPress, events::Modifier modifier);
 
 	public:
 		basic::PointF pos;

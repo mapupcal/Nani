@@ -73,24 +73,25 @@ namespace nani::canvas::events
 
 	}
 
-	KeyEvent::KeyEvent(Type type_, Key key_, Modifier modifier_)
+	KeyEvent::KeyEvent(Type type_, Key key_, Modifier modifier_, int scancode_)
 		: Event(type_)
 		, key(key_)
 		, modifier(modifier_)
+		, scancode(scancode_)
 	{
 
 	}
 
-	KeyPressEvent::KeyPressEvent(Key key_, Modifier modifier_)
-		: KeyEvent(Type::KeyPress, key_, modifier_)
+	KeyPressEvent::KeyPressEvent(Key key_, Modifier modifier_, int scancode_)
+		: KeyEvent(Type::KeyPress, key_, modifier_, scancode_)
 	{
 
 	}
 
-	KeyReleaseEvent::KeyReleaseEvent(Key key_, Modifier modifier_)
-		: KeyEvent(Type::KeyRelese, key_, modifier_)
+	KeyReleaseEvent::KeyReleaseEvent(Key key_, Modifier modifier_, int scancode_)
+		: KeyEvent(Type::KeyRelease, key_, modifier_, scancode_)
 	{
-	}
 
+	}
 }
 

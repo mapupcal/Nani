@@ -103,24 +103,26 @@ namespace nani::canvas::events
 	class NANI_API KeyEvent : public Event
 	{
 	public:
-		KeyEvent(Type type_, Key key_, Modifier modifier_);
+		KeyEvent(Type type_, Key key_, Modifier modifier_, int scancode_);
 		~KeyEvent() = default;
 
 	public:
 		const Key key = Key::Unknown;
 		const Modifier modifier = Modifier::None;
+		const int scancode = 0;
 	};
 
 	class NANI_API KeyPressEvent : public KeyEvent
 	{
 	public:
-		KeyPressEvent(Key key_, Modifier modifier_);
+		KeyPressEvent(Key key_, Modifier modifier_ = Modifier::None, int scancode_ = 0);
 		~KeyPressEvent() = default;
 	};
 
 	class NANI_API KeyReleaseEvent : public KeyEvent
 	{
-		KeyReleaseEvent(Key key_, Modifier modifier_);
+	public:
+		KeyReleaseEvent(Key key_, Modifier modifier_ = Modifier::None, int scancode_ = 0);
 		~KeyReleaseEvent() = default;
 	};
 }

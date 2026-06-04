@@ -24,7 +24,7 @@ namespace nani::canvas::events
 		Wheel,
 
 		KeyPress,
-		KeyRelese,
+		KeyRelease,
 
 		Show,
 		Hide,

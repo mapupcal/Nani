@@ -2,6 +2,7 @@
 #include "window_p.h"
 #include "window.h"
 #include "env_p.h"
+#include "events/event.h"
 #include <include/gpu/ganesh/gl/GrGLInterface.h>
 #include <include/gpu/ganesh/GrContextOptions.h>
 #include <include/gpu/ganesh/GrDirectContext.h>
@@ -106,6 +107,29 @@ namespace nani::canvas::internal
 			WindowPrivate* pImpl = reinterpret_cast<WindowPrivate*>(glfwGetWindowUserPointer(window));
 			if (pImpl)
 				pImpl->OnGLFWWindowWheelScroll(xOffset, yOffset);
+		}
+
+		void _OnGLFWWindowKeyEvent(GLFWwindow* window, int key, int scancode, int action, int mods)
+		{
+			WindowPrivate* pImpl = reinterpret_cast<WindowPrivate*>(glfwGetWindowUserPointer(window));
+			if (pImpl)
+			{
+				events::Key key_ = static_cast<events::Key>(key);
+				Modifier modifier = Modifier::None;
+				if (mods & GLFW_MOD_SHIFT)
+					modifier = modifier | Modifier::Shift;
+				if (mods & GLFW_MOD_ALT)
+					modifier = modifier | Modifier::Alt;
+				if (mods & GLFW_MOD_CONTROL)
+					modifier = modifier | Modifier::Ctrl;
+				if (mods & GLFW_MOD_CAPS_LOCK)
+					modifier = modifier | Modifier::CapsLock;
+				if (mods & GLFW_MOD_NUM_LOCK)
+					modifier = modifier | Modifier::NumLock;
+				if (mods & GLFW_MOD_SUPER)
+					modifier = modifier | Modifier::Super;
+				pImpl->OnGLFWWindowKeyEvent(key_, scancode, action == GLFW_PRESS, modifier);
+			}
 		}
 	}
 
@@ -269,6 +293,20 @@ namespace nani::canvas::internal
 		window->FireEvent(&event);
 	}
 
+	void WindowPrivate::OnGLFWWindowKeyEvent(events::Key key, int scancode, bool bPress, events::Modifier modifier)
+	{
+		if (bPress)
+		{
+			KeyPressEvent event(key, modifier, scancode);
+			window->FireEvent(&event);
+		}
+		else
+		{
+			KeyReleaseEvent event(key, modifier, scancode);
+			window->FireEvent(&event);
+		}
+	}
+
 	void WindowPrivate::Paint(const RectF& dirtyRect)
 	{
 		if (!skiaSurface)
@@ -319,6 +357,7 @@ namespace nani::canvas::internal
 		glfwSetMouseButtonCallback(glfwWindow, _OnGLFWWindowMouseButton);
 		glfwSetCursorEnterCallback(glfwWindow, _OnGLFWWindowMouseEnter);
 		glfwSetScrollCallback(glfwWindow, _OnGLFWWindowWheelScroll);
+		glfwSetKeyCallback(glfwWindow, _OnGLFWWindowKeyEvent);
 
 	}
 
