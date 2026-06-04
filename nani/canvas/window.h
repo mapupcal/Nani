@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "defs.h"
-#include "event.h"
+#include "events/event_target.h"
 #include "basic/pointf.h"
 #include "basic/sizef.h"
 #include "basic/rectf.h"
@@ -12,7 +12,7 @@ namespace nani::canvas::internal
 
 namespace nani::canvas
 {
-	class NANI_API Window
+	class NANI_API Window : public events::EventTarget
 	{
 	public:
 		explicit Window(const basic::PointF& pos, const basic::SizeF& size);
@@ -32,13 +32,10 @@ namespace nani::canvas
 		void Resize(const basic::SizeF& size);
 		void Update();
 
-		void RegisterEventFilter(Event::IFilter* filter);
-		void UnRegisterEventFilter(Event::IFilter* filter);
 	private:
-		void RaiseEvent(Event* e);
+		void OnEvent(events::Event* e);
 
 	private:
-		friend class internal::WindowPrivate;
 		internal::WindowPrivate* m_pImpl = nullptr;
 	};
 }

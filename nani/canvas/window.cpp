@@ -1,7 +1,7 @@
 ﻿#include "window.h"
 #include "internal/window_p.h"
 using namespace nani::canvas::basic;
-
+using namespace nani::canvas::events;
 namespace nani::canvas
 {
 	Window::Window(const PointF& pos, const SizeF& size)
@@ -71,20 +71,8 @@ namespace nani::canvas
 		m_pImpl->Paint(Rect());
 	}
 
-	void Window::RegisterEventFilter(Event::IFilter* filter)
+	void Window::OnEvent(Event* e)
 	{
-		m_pImpl->RegisterEventFilter(filter);
-	}
 
-	void Window::UnRegisterEventFilter(Event::IFilter* filter)
-	{
-		m_pImpl->UnRegisterEventFilter(filter);
-	}
-
-	void Window::RaiseEvent(Event* e)
-	{
-		if (m_pImpl->FilterEvent(e))
-			return;
-		//TODO:
 	}
 }

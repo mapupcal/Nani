@@ -12,6 +12,7 @@
 #include <core/SkColorSpace.h>
 #include <ranges>
 
+using namespace nani::canvas::events;
 using namespace nani::canvas::basic;
 
 namespace nani::canvas::internal
@@ -140,7 +141,7 @@ namespace nani::canvas::internal
 		glfwShowWindow(glfwWindow);
 
 		Event event(Event::Type::Show);
-		window->RaiseEvent(&event);
+		window->FireEvent(&event);
 		Paint(RectF(0, 0, size));
 	}
 
@@ -152,7 +153,7 @@ namespace nani::canvas::internal
 		glfwHideWindow(glfwWindow);
 
 		Event event(Event::Type::Hide);
-		window->RaiseEvent(&event);
+		window->FireEvent(&event);
 	}
 
 	void WindowPrivate::Close()
@@ -202,7 +203,7 @@ namespace nani::canvas::internal
 		ResetSkiaSurface();
 
 		ResizeEvent event(oldSize, size);
-		window->RaiseEvent(&event);
+		window->FireEvent(&event);
 	}
 
 	void WindowPrivate::OnGLFWWindowPositionChanged(int xPos, int yPos)
@@ -211,13 +212,13 @@ namespace nani::canvas::internal
 		pos = PointF(xPos, yPos);
 
 		MoveEvent event(oldPos, pos);
-		window->RaiseEvent(&event);
+		window->FireEvent(&event);
 	}
 
 	void WindowPrivate::OnGLFWWindowFocusChanged(bool bFocus)
 	{
 		Event event(bFocus ? Event::Type::FocusIn : Event::Type::FocusOut);
-		window->RaiseEvent(&event);
+		window->FireEvent(&event);
 	}
 
 	void WindowPrivate::OnGLFWWindowClose()
@@ -228,14 +229,14 @@ namespace nani::canvas::internal
 		skiaSurface.reset();
 
 		Event event(Event::Type::Close);
-		window->RaiseEvent(&event);
+		window->FireEvent(&event);
 	}
 
 	void WindowPrivate::OnGLFWWindowMouseEnter(bool bEnter)
 	{
 		Event::Type type = bEnter ? Event::Type::Enter : Event::Type::Leave;
 		Event event(type);
-		window->RaiseEvent(&event);
+		window->FireEvent(&event);
 	}
 
 	void WindowPrivate::OnGLFWWindowMouseMove(double xPos, double yPos)
@@ -243,7 +244,7 @@ namespace nani::canvas::internal
 		PointF pos_(xPos, yPos);
 		PointF globalPos = pos_ + pos;
 		MouseMoveEvent event(pos_, globalPos);
-		window->RaiseEvent(&event);
+		window->FireEvent(&event);
 	}
 
 	void WindowPrivate::OnGLFWWindowMouseButton(double xPos, double yPos, MouseButton button, bool bPress, Modifier modifier)
@@ -253,19 +254,19 @@ namespace nani::canvas::internal
 		if (bPress)
 		{
 			MousePressEvent event(button, pos_, globalPos, modifier);
-			window->RaiseEvent(&event);
+			window->FireEvent(&event);
 		}
 		else
 		{
 			MouseReleaseEvent event(button, pos_, globalPos, modifier);
-			window->RaiseEvent(&event);
+			window->FireEvent(&event);
 		}
 	}
 
 	void WindowPrivate::OnGLFWWindowWheelScroll(double xDelta, double yDelta)
 	{
 		WheelEvent event(xDelta, yDelta);
-		window->RaiseEvent(&event);
+		window->FireEvent(&event);
 	}
 
 	void WindowPrivate::Paint(const RectF& dirtyRect)
@@ -279,41 +280,9 @@ namespace nani::canvas::internal
 
 		canvas->clear(SK_ColorTRANSPARENT); //TODO:Dirty Rect Update.
 		PaintEvent event(dirtyRect);
-		window->RaiseEvent(&event);
+		window->FireEvent(&event);
 		skiaGlContext->flushAndSubmit();
 		glfwSwapBuffers(glfwWindow);
-	}
-
-	void WindowPrivate::RegisterEventFilter(Event::IFilter* filter)
-	{
-		auto iter = std::find(eventFilters.cbegin(), eventFilters.cend(), filter);
-		if (iter != eventFilters.cend())
-		{
-			NANI_MESSAGE("filter already registered.");
-			return;
-		}
-		eventFilters.push_back(filter);
-	}
-
-	void WindowPrivate::UnRegisterEventFilter(Event::IFilter * filter)
-	{
-		auto iter = std::find(eventFilters.cbegin(), eventFilters.cend(), filter);
-		if (iter == eventFilters.cend())
-		{
-			NANI_MESSAGE("filter not registered.");
-			return;
-		}
-		eventFilters.erase(iter);
-	}
-
-	bool WindowPrivate::FilterEvent(Event * event)
-	{
-		for (Event::IFilter* filter : eventFilters | std::views::reverse)
-		{
-			if (filter->FilterEvent(event))
-				return true;
-		}
-		return false;
 	}
 
 	bool WindowPrivate::Initialize()

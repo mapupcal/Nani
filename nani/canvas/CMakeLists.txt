@@ -12,14 +12,19 @@ nani_add_library(canvas SHARED
 	basic/rectf.h
 	basic/sizef.cpp
 	basic/sizef.h
+
+	events/event.cpp
+	events/event.h
+	events/event_filter.cpp
+	events/event_filter.h
+	events/event_target.cpp
+	events/event_target.h
 	
 	cursor.cpp
 	cursor.h
 	screen.cpp
 	screen.h
 
-    event.cpp
-    event.h
 	env.cpp
 	env.h
 	window.cpp

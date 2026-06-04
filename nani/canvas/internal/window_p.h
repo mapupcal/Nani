@@ -5,7 +5,7 @@
 #include "basic/pointf.h"
 #include "basic/sizef.h"
 #include "basic/rectf.h"
-#include "event.h"
+#include "events/event.h"
 #include <vector>
 
 namespace nani::canvas
@@ -37,10 +37,6 @@ namespace nani::canvas::internal
 
 		void Paint(const basic::RectF& dirtyRect);
 
-		void RegisterEventFilter(Event::IFilter* filter);
-		void UnRegisterEventFilter(Event::IFilter* filter);
-		bool FilterEvent(Event* event);
-
 	public:
 		void OnGLFWWindowSizeChanged(int width, int height);
 		void OnGLFWWindowPositionChanged(int xPos, int yPos);
@@ -48,7 +44,7 @@ namespace nani::canvas::internal
 		void OnGLFWWindowClose();
 		void OnGLFWWindowMouseEnter(bool bEnter);
 		void OnGLFWWindowMouseMove(double xPos, double yPos);
-		void OnGLFWWindowMouseButton(double xPos, double yPos, MouseButton button, bool bPress, Modifier modifier);
+		void OnGLFWWindowMouseButton(double xPos, double yPos, events::MouseButton button, bool bPress, events::Modifier modifier);
 		void OnGLFWWindowWheelScroll(double xDelta, double yDelta);
 
 	public:
@@ -58,6 +54,5 @@ namespace nani::canvas::internal
 		GLFWwindow* glfwWindow = nullptr;
 		sk_sp<GrDirectContext> skiaGlContext;
 		sk_sp<SkSurface> skiaSurface;
-		std::vector<Event::IFilter*> eventFilters;
 	};
 }

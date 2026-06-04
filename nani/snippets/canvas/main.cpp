@@ -1,13 +1,15 @@
-﻿#include "../canvas/env.h"
-#include "../canvas/window.h"
-#include "../canvas/event.h"
+﻿#include "canvas/env.h"
+#include "canvas/window.h"
+#include "canvas/events/event.h"
+#include "canvas/events/event_filter.h"
 #include <memory>
 #include <functional>
 
 using namespace nani::canvas::basic;
+using namespace nani::canvas::events;
 using namespace nani::canvas;
 
-struct WindowEventFilterDelegate : public Event::IFilter
+struct WindowEventFilterDelegate : public EventFilter
 {
 public:
 	WindowEventFilterDelegate(Window* window_)
@@ -23,7 +25,7 @@ public:
 			window->UnRegisterEventFilter(this);
 	}
 
-	virtual bool FilterEvent(Event* e)
+	bool Filter(EventTarget* target, Event* e) override
 	{
 		if (delegate)
 			return delegate(e);
