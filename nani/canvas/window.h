@@ -4,6 +4,7 @@
 #include "basic/pointf.h"
 #include "basic/sizef.h"
 #include "basic/rectf.h"
+#include "basic/color.h"
 
 namespace nani::canvas::internal
 {
@@ -31,6 +32,11 @@ namespace nani::canvas
 		void Move(const basic::PointF& pos);
 		void Resize(const basic::SizeF& size);
 		void Update();
+
+		void SetBackgroundColor(const basic::Color& color);
+		const basic::Color BackgroundColor() const;
+		void SetTitle(const std::string_view& title);
+		const std::string_view Title() const;
 
 	private:
 		void OnEvent(events::Event* e);

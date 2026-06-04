@@ -54,13 +54,13 @@ namespace nani::canvas::events
 	}
 
 	MousePressEvent::MousePressEvent(MouseButton button_, const basic::PointF& pos_, const basic::PointF& globalPos_, Modifier modifier_)
-		: MouseButtonEvent(Type::MousePress,button_, pos_, globalPos_, modifier_)
+		: MouseButtonEvent(Type::MousePress, button_, pos_, globalPos_, modifier_)
 	{
 
 	}
 
 	MouseReleaseEvent::MouseReleaseEvent(MouseButton button_, const basic::PointF& pos_, const basic::PointF& globalPos_, Modifier modifier_)
-		: MouseButtonEvent(Type::MousePress, button_, pos_, globalPos_, modifier_)
+		: MouseButtonEvent(Type::MouseRelease, button_, pos_, globalPos_, modifier_)
 	{
 
 	}

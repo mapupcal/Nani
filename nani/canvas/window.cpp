@@ -71,6 +71,26 @@ namespace nani::canvas
 		m_pImpl->Paint(Rect());
 	}
 
+	void Window::SetBackgroundColor(const basic::Color& color)
+	{
+		m_pImpl->SetBackgroundColor(color);
+	}
+
+	const basic::Color Window::BackgroundColor() const
+	{
+		return m_pImpl->backgroundColor;
+	}
+
+	void Window::SetTitle(const std::string_view& title)
+	{
+		m_pImpl->SetTitle(title);
+	}
+
+	const std::string_view Window::Title() const
+	{
+		return m_pImpl->title;
+	}
+
 	void Window::OnEvent(Event* e)
 	{
 

@@ -2,7 +2,7 @@
 #include "basic_defs.h"
 namespace nani::canvas::basic
 {
-	enum Colors
+	enum class Colors
 	{
 		Black,
 		White,

@@ -2,6 +2,7 @@
 #include "canvas/window.h"
 #include "canvas/events/event.h"
 #include "canvas/events/event_filter.h"
+#include "canvas/screen.h"
 #include <memory>
 #include <functional>
 
@@ -42,13 +43,15 @@ int main(int argc, char** argv)
 	Env env(argc, argv);
 
 	std::shared_ptr<Window> window = std::make_shared<Window>(PointF(0,0), SizeF(600,400));
+	window->SetTitle("Nani Canvas");
+	window->SetBackgroundColor(Color(Colors::Cyan));
 	window->Show();
 	printf("visible : %d \n", window->IsVisible());
 	window->Hide();
 	printf("visible : %d \n", window->IsVisible());
 	
 	printf("positon : %f, %f \n", window->Position().x, window->Position().y);
-	window->Move({ 100, 100 });
+	window->Move(Screen::Primary()->WorkAreaGeometry().Center());
 	printf("positon : %f, %f \n", window->Position().x, window->Position().y);
 	window->Show();
 
@@ -57,8 +60,12 @@ int main(int argc, char** argv)
 		if (e->type == Type::MousePress)
 		{
 			MousePressEvent* mpe = static_cast<MousePressEvent*>(e);
-			if (mpe->button == MouseButton::Left)
+			if (mpe->button == MouseButton::Middle)
 				window->Close();
+			else if (mpe->button == MouseButton::Left)
+				window->Move(window->Position() + PointF{ -50, 0 });
+			else if (mpe->button == MouseButton::Right)
+				window->Move(window->Position() + PointF{  50, 0 });
 		}
 		return false;
 	};

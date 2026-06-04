@@ -5,6 +5,7 @@
 #include "basic/pointf.h"
 #include "basic/sizef.h"
 #include "basic/rectf.h"
+#include "basic/color.h"
 #include "events/event_defs.h"
 #include <vector>
 
@@ -30,6 +31,9 @@ namespace nani::canvas::internal
 		void Move(const basic::PointF& pos);
 		void Resize(const basic::SizeF& size);
 
+		void SetBackgroundColor(const basic::Color& color);
+		void SetTitle(const std::string_view& title_);
+
 		bool Initialize();
 		void InitializeGLFWWindow();
 		void InitializeSkiaContext();
@@ -51,6 +55,8 @@ namespace nani::canvas::internal
 	public:
 		basic::PointF pos;
 		basic::SizeF size;
+		basic::Color backgroundColor = basic::Color(basic::Colors::Transparent);
+		std::string title;
 		Window* window = nullptr;
 		GLFWwindow* glfwWindow = nullptr;
 		sk_sp<GrDirectContext> skiaGlContext;

@@ -10,17 +10,17 @@ namespace
 	{
 		switch (color)
 		{
-		case Black:       return 0x000000FF; // R=0, G=0, B=0, A=255
-		case White:       return 0xFFFFFFFF; // R=255, G=255, B=255, A=255
-		case Red:         return 0xFF0000FF; // R=255, G=0, B=0, A=255
-		case Blue:        return 0x0000FFFF; // R=0, G=0, B=255, A=255
-		case Green:       return 0x00FF00FF; // R=0, G=255, B=0, A=255
-		case Gray:        return 0x808080FF; // R=128, G=128, B=128, A=255
-		case Yellow:      return 0xFFFF00FF; // R=255, G=255, B=0, A=255
-		case Cyan:        return 0x00FFFFFF; // R=0, G=255, B=255, A=255
-		case Magenta:     return 0xFF00FFFF; // R=255, G=0, B=255, A=255
-		case Transparent: return 0x00000000; // R=0, G=0, B=0, A=0
-		default:          return 0x000000FF; // fallback to black
+		case Colors::Black:       return 0x000000FF; // R=0, G=0, B=0, A=255
+		case Colors::White:       return 0xFFFFFFFF; // R=255, G=255, B=255, A=255
+		case Colors::Red:         return 0xFF0000FF; // R=255, G=0, B=0, A=255
+		case Colors::Blue:        return 0x0000FFFF; // R=0, G=0, B=255, A=255
+		case Colors::Green:       return 0x00FF00FF; // R=0, G=255, B=0, A=255
+		case Colors::Gray:        return 0x808080FF; // R=128, G=128, B=128, A=255
+		case Colors::Yellow:      return 0xFFFF00FF; // R=255, G=255, B=0, A=255
+		case Colors::Cyan:        return 0x00FFFFFF; // R=0, G=255, B=255, A=255
+		case Colors::Magenta:     return 0xFF00FFFF; // R=255, G=0, B=255, A=255
+		case Colors::Transparent: return 0x00000000; // R=0, G=0, B=0, A=0
+		default:                  return 0x000000FF; // fallback to black
 		}
 	}
 

@@ -74,7 +74,7 @@ namespace nani::canvas::internal
 				MouseButton button = MouseButton::Unknown;
 				if (btn == GLFW_MOUSE_BUTTON_LEFT)
 					button = MouseButton::Left;
-				if (btn == GLFW_MOUSE_BUTTON_MIDDLE)
+				else if (btn == GLFW_MOUSE_BUTTON_MIDDLE)
 					button = MouseButton::Middle;
 				else if(btn == GLFW_MOUSE_BUTTON_RIGHT)
 					button = MouseButton::Right;
@@ -214,6 +214,19 @@ namespace nani::canvas::internal
 		glfwSetWindowSize(glfwWindow, size.width, size.height);
 	}
 
+	void WindowPrivate::SetBackgroundColor(const basic::Color& color)
+	{
+		backgroundColor = color;
+		Paint(RectF(0, 0, size));
+	}
+
+	void WindowPrivate::SetTitle(const std::string_view & title_)
+	{
+		title = title_;
+		if(glfwWindow)
+			glfwSetWindowTitle(glfwWindow, title.c_str());
+	}
+
 	void WindowPrivate::OnGLFWWindowSizeChanged(int width, int height)
 	{
 		if (width <= 0 || height <= 0)
@@ -316,7 +329,8 @@ namespace nani::canvas::internal
 		if (!canvas)
 			return;
 
-		canvas->clear(SK_ColorTRANSPARENT); //TODO:Dirty Rect Update.
+		SkColor skColor = SkColorSetARGB(backgroundColor.a, backgroundColor.r, backgroundColor.g, backgroundColor.b);
+		canvas->clear(skColor); //TODO:Dirty Rect Update.
 		PaintEvent event(dirtyRect);
 		window->FireEvent(&event);
 		skiaGlContext->flushAndSubmit();
@@ -341,7 +355,7 @@ namespace nani::canvas::internal
 		glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 		glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 
-		glfwWindow = glfwCreateWindow(size.width, size.height, "Nani", nullptr, nullptr);
+		glfwWindow = glfwCreateWindow(size.width, size.height, title.c_str(), nullptr, nullptr);
 		if (!glfwWindow)
 			return;
 
