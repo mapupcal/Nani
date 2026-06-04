@@ -72,5 +72,25 @@ namespace nani::canvas
 	{
 
 	}
+
+	KeyEvent::KeyEvent(Type type_, Key key_, Modifier modifier_)
+		: Event(type_)
+		, key(key_)
+		, modifier(modifier_)
+	{
+
+	}
+
+	KeyPressEvent::KeyPressEvent(Key key_, Modifier modifier_)
+		: KeyEvent(Type::KeyPress, key_, modifier_)
+	{
+
+	}
+
+	KeyReleaseEvent::KeyReleaseEvent(Key key_, Modifier modifier_)
+		: KeyEvent(Type::KeyRelese, key_, modifier_)
+	{
+	}
+
 }
 
