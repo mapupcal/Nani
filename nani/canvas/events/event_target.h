@@ -1,11 +1,7 @@
 ﻿#pragma once
-#include "../defs.h"
-#include <vector>
+#include "event_defs.h"
 namespace nani::canvas::events
 {
-	class EventFilter;
-	class Event;
-
 	class NANI_API EventTarget
 	{
 	public:

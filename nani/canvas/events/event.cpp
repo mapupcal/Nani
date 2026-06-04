@@ -24,7 +24,7 @@ namespace nani::canvas::events
 	}
 
 	PaintEvent::PaintEvent(const basic::RectF& dirtyRect_)
-		: Event(Event::Type::Paint)
+		: Event(Type::Paint)
 		, dirtyRect(dirtyRect_)
 	{
 

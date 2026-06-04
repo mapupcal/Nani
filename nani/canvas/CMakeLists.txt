@@ -13,6 +13,7 @@ nani_add_library(canvas SHARED
 	basic/sizef.cpp
 	basic/sizef.h
 
+	events/event_defs.h
 	events/event.cpp
 	events/event.h
 	events/event_filter.cpp

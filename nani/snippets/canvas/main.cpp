@@ -54,7 +54,7 @@ int main(int argc, char** argv)
 
 	WindowEventFilterDelegate watcher(window.get());
 	watcher.delegate = [=](Event* e) -> bool {
-		if (e->type == Event::Type::MousePress)
+		if (e->type == Type::MousePress)
 		{
 			MousePressEvent* mpe = static_cast<MousePressEvent*>(e);
 			if (mpe->button == MouseButton::Left)

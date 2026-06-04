@@ -140,7 +140,7 @@ namespace nani::canvas::internal
 
 		glfwShowWindow(glfwWindow);
 
-		Event event(Event::Type::Show);
+		Event event(Type::Show);
 		window->FireEvent(&event);
 		Paint(RectF(0, 0, size));
 	}
@@ -152,7 +152,7 @@ namespace nani::canvas::internal
 
 		glfwHideWindow(glfwWindow);
 
-		Event event(Event::Type::Hide);
+		Event event(Type::Hide);
 		window->FireEvent(&event);
 	}
 
@@ -217,7 +217,7 @@ namespace nani::canvas::internal
 
 	void WindowPrivate::OnGLFWWindowFocusChanged(bool bFocus)
 	{
-		Event event(bFocus ? Event::Type::FocusIn : Event::Type::FocusOut);
+		Event event(bFocus ? Type::FocusIn : Type::FocusOut);
 		window->FireEvent(&event);
 	}
 
@@ -228,13 +228,13 @@ namespace nani::canvas::internal
 		skiaGlContext.reset();
 		skiaSurface.reset();
 
-		Event event(Event::Type::Close);
+		Event event(Type::Close);
 		window->FireEvent(&event);
 	}
 
 	void WindowPrivate::OnGLFWWindowMouseEnter(bool bEnter)
 	{
-		Event::Type type = bEnter ? Event::Type::Enter : Event::Type::Leave;
+		Type type = bEnter ? Type::Enter : Type::Leave;
 		Event event(type);
 		window->FireEvent(&event);
 	}
