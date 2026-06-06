@@ -52,9 +52,8 @@ namespace
 		// Validate length
 		if (cleaned.length() != 6 && cleaned.length() != 8)
 		{
-			NANI_ASSERT(false);
 			NANI_MESSAGE("Invalid hex color format. Expected 6 or 8 hex digits.");
-			return 0;
+			return 0x000000FF;
 		}
 
 		// Convert hex string to integer

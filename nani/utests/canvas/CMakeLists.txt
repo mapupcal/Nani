@@ -3,6 +3,7 @@
 nani_add_executable(canvas_utests
 	main.cpp
 	test_color.cpp
+	test_elements.cpp
 	test_window.cpp
 )
 

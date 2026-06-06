@@ -16,6 +16,14 @@ nani_add_library(canvas SHARED
 	basic/sizef.cpp
 	basic/sizef.h
 
+	elements/elements_defs.h
+	elements/element.cpp
+	elements/element.h
+	elements/elements_layer.cpp
+	elements/elements_layer.h
+	elements/properties.cpp
+	elements/properties.h
+
 	events/event_defs.h
 	events/event.cpp
 	events/event.h
