@@ -8,6 +8,7 @@
     "quickjs-ng",
     "curl",
     "glfw3",
+    "yoga",
     "gtest"
   ]
 }

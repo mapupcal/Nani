@@ -1,6 +1,7 @@
 ﻿find_package(OpenGL REQUIRED)
 find_package(unofficial-skia CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
+find_package(yoga CONFIG REQUIRED)
 
 nani_add_library(canvas SHARED
 	defs.h
@@ -58,4 +59,5 @@ target_link_libraries(canvas PRIVATE
 	OpenGL::GL
 	unofficial::skia::skia
 	glfw
+	yoga::yogacore
 )
