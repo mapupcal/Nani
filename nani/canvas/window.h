@@ -33,6 +33,12 @@ namespace nani::canvas
 		void Resize(const basic::SizeF& size);
 		void Update();
 
+		void SetRadius(basic::single fRadius);
+		basic::single Radius() const;
+		void SetBorderWidth(basic::single fWidth);
+		basic::single BorderWidth() const;
+		void SetBorderColor(const basic::Color& color);
+		const basic::Color BorderColor() const;
 		void SetBackgroundColor(const basic::Color& color);
 		const basic::Color BackgroundColor() const;
 		void SetTitle(const std::string_view& title);

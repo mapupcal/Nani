@@ -11,6 +11,8 @@
 #include <include/gpu/ganesh/GrBackendSurface.h>
 #include <core/SkCanvas.h>
 #include <core/SkColorSpace.h>
+#include <include/core/SkRRect.h>
+#include <include/core/SkRect.h>
 #include <ranges>
 
 using namespace nani::canvas::events;
@@ -214,6 +216,24 @@ namespace nani::canvas::internal
 		glfwSetWindowSize(glfwWindow, size.width, size.height);
 	}
 
+	void WindowPrivate::SetRadius(basic::single fRadius)
+	{
+		radius = fRadius;
+		Paint(RectF(0, 0, size));
+	}
+
+	void WindowPrivate::SetBorderWidth(basic::single fWidth)
+	{
+		borderWidth = fWidth;
+		Paint(RectF(0, 0, size));
+	}
+
+	void WindowPrivate::SetBorderColor(const basic::Color & color)
+	{
+		borderColor = color;
+		Paint(RectF(0, 0, size));
+	}
+
 	void WindowPrivate::SetBackgroundColor(const basic::Color& color)
 	{
 		backgroundColor = color;
@@ -329,8 +349,24 @@ namespace nani::canvas::internal
 		if (!canvas)
 			return;
 
-		SkColor skColor = SkColorSetARGB(backgroundColor.a, backgroundColor.r, backgroundColor.g, backgroundColor.b);
-		canvas->clear(skColor); //TODO:Dirty Rect Update.
+		canvas->clear(SK_ColorTRANSPARENT);
+
+		SkRect rect = SkRect::MakeXYWH(0, 0, size.width, size.height);
+		SkPaint fillPaint;
+		fillPaint.setAntiAlias(true);
+		fillPaint.setStyle(SkPaint::kFill_Style);
+		fillPaint.setColor(SkColorSetARGB(backgroundColor.a, backgroundColor.r, backgroundColor.g, backgroundColor.b));
+		canvas->drawRRect(SkRRect::MakeRectXY(rect, radius, radius), fillPaint);
+		if (borderWidth > 0)
+		{
+			SkPaint strokePaint;
+			strokePaint.setAntiAlias(true);
+			strokePaint.setStyle(SkPaint::kStroke_Style);
+			strokePaint.setStrokeWidth(borderWidth);
+			strokePaint.setColor(SkColorSetARGB(borderColor.a, borderColor.r, borderColor.g, borderColor.b));
+			canvas->drawRRect(SkRRect::MakeRectXY(rect, radius, radius), strokePaint);
+		}
+
 		PaintEvent event(dirtyRect);
 		window->FireEvent(&event);
 		skiaGlContext->flushAndSubmit();

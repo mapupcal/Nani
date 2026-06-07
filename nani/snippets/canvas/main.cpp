@@ -44,7 +44,10 @@ int main(int argc, char** argv)
 
 	std::shared_ptr<Window> window = std::make_shared<Window>(PointF(0,0), SizeF(600,400));
 	window->SetTitle("Nani Canvas");
-	window->SetBackgroundColor(Color(Colors::Cyan));
+	window->SetBackgroundColor(Colors::Transparent);
+	window->SetBorderWidth(2.0f);
+	window->SetRadius(20.0f);
+	window->SetBorderColor(Colors::Cyan);
 	window->Show();
 	printf("visible : %d \n", window->IsVisible());
 	window->Hide();

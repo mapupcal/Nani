@@ -71,6 +71,36 @@ namespace nani::canvas
 		m_pImpl->Paint(Rect());
 	}
 
+	void Window::SetRadius(basic::single fRadius)
+	{
+		m_pImpl->SetRadius(fRadius);
+	}
+
+	basic::single Window::Radius() const
+	{
+		return m_pImpl->radius;
+	}
+
+	void Window::SetBorderWidth(basic::single fWidth)
+	{
+		m_pImpl->SetBorderWidth(fWidth);
+	}
+
+	basic::single Window::BorderWidth() const
+	{
+		return m_pImpl->borderWidth;
+	}
+
+	void Window::SetBorderColor(const basic::Color& color)
+	{
+		m_pImpl->SetBorderColor(color);
+	}
+
+	const basic::Color Window::BorderColor() const
+	{
+		return m_pImpl->borderColor;
+	}
+
 	void Window::SetBackgroundColor(const basic::Color& color)
 	{
 		m_pImpl->SetBackgroundColor(color);

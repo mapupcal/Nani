@@ -31,6 +31,9 @@ namespace nani::canvas::internal
 		void Move(const basic::PointF& pos);
 		void Resize(const basic::SizeF& size);
 
+		void SetRadius(basic::single fRadius);
+		void SetBorderWidth(basic::single fWidth);
+		void SetBorderColor(const basic::Color& color);
 		void SetBackgroundColor(const basic::Color& color);
 		void SetTitle(const std::string_view& title_);
 
@@ -52,9 +55,15 @@ namespace nani::canvas::internal
 		void OnGLFWWindowWheelScroll(double xDelta, double yDelta);
 		void OnGLFWWindowKeyEvent(events::Key key, int scancode, bool bPress, events::Modifier modifier);
 
+	private:
+
+
 	public:
 		basic::PointF pos;
 		basic::SizeF size;
+		basic::single radius = 0.0f;
+		basic::single borderWidth = 0.0f;
+		basic::Color borderColor = basic::Color(basic::Colors::Transparent);
 		basic::Color backgroundColor = basic::Color(basic::Colors::Transparent);
 		std::string title;
 		Window* window = nullptr;
