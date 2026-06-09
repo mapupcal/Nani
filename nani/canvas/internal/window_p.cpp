@@ -2,6 +2,7 @@
 #include "window_p.h"
 #include "window.h"
 #include "env_p.h"
+#include "platform.h"
 #include "events/event.h"
 #include <include/gpu/ganesh/gl/GrGLInterface.h>
 #include <include/gpu/ganesh/GrContextOptions.h>
@@ -133,6 +134,14 @@ namespace nani::canvas::internal
 				pImpl->OnGLFWWindowKeyEvent(key_, scancode, action == GLFW_PRESS, modifier);
 			}
 		}
+
+		void _SetWindowHints(GLFWwindow* window, Window::Hint hints)
+		{
+			glfwSetWindowAttrib(window, GLFW_MOUSE_PASSTHROUGH, !!(hints & Window::TransparentPassThrough));
+			glfwSetWindowAttrib(window, GLFW_FLOATING, !!(hints & Window::Top));
+			//Window::Resizable handle internal.
+			internal::Platform::MakeToolWindow(window, !!(hints & Window::Tool));
+		}
 	}
 
 	WindowPrivate::WindowPrivate(Window* window_)
@@ -245,6 +254,13 @@ namespace nani::canvas::internal
 		title = title_;
 		if(glfwWindow)
 			glfwSetWindowTitle(glfwWindow, title.c_str());
+	}
+
+	void WindowPrivate::SetHints(unsigned int hints_)
+	{
+		hints = hints_;
+		if (glfwWindow)
+			_SetWindowHints(glfwWindow,(Window::Hint)hints);
 	}
 
 	void WindowPrivate::OnGLFWWindowSizeChanged(int width, int height)
@@ -390,10 +406,14 @@ namespace nani::canvas::internal
 	{
 		glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 		glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
+		
 		glfwWindow = glfwCreateWindow(size.width, size.height, title.c_str(), nullptr, nullptr);
 		if (!glfwWindow)
 			return;
+
+		_SetWindowHints(glfwWindow, (Window::Hint)hints);
 
 		EnvPrivate::Instance()->RegisterWindow(glfwWindow);
 		glfwMakeContextCurrent(glfwWindow);

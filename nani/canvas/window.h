@@ -16,6 +16,15 @@ namespace nani::canvas
 	class NANI_API Window : public events::EventTarget
 	{
 	public:
+		enum Hint
+		{
+			None					= 0,
+			Resizable				= 1,
+			Tool					= 1 << 1,
+			Top						= 1 << 2,
+			TransparentPassThrough	= 1 << 3,
+		};
+	public:
 		explicit Window(const basic::PointF& pos, const basic::SizeF& size);
 		~Window();
 
@@ -32,7 +41,7 @@ namespace nani::canvas
 		void Move(const basic::PointF& pos);
 		void Resize(const basic::SizeF& size);
 		void Update();
-
+		
 		void SetRadius(basic::single fRadius);
 		basic::single Radius() const;
 		void SetBorderWidth(basic::single fWidth);
@@ -44,10 +53,23 @@ namespace nani::canvas
 		void SetTitle(const std::string_view& title);
 		const std::string_view Title() const;
 
+		void SetHints(Hint hints);
+		Hint Hints() const;
+
 	private:
 		void OnEvent(events::Event* e);
 
 	private:
 		internal::WindowPrivate* m_pImpl = nullptr;
 	};
+
+	inline Window::Hint operator|(Window::Hint lhs, Window::Hint rhs)
+	{
+		return static_cast<Window::Hint>(static_cast<unsigned int>(lhs) | static_cast<unsigned int>(rhs));
+	}
+
+	inline Window::Hint operator&(Window::Hint lhs, Window::Hint rhs)
+	{
+		return static_cast<Window::Hint>(static_cast<unsigned int>(lhs) & static_cast<unsigned int>(rhs));
+	}
 }

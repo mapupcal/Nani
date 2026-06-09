@@ -121,6 +121,16 @@ namespace nani::canvas
 		return m_pImpl->title;
 	}
 
+	void Window::SetHints(Hint hints)
+	{
+		m_pImpl->SetHints(hints);
+	}
+
+	Window::Hint Window::Hints() const
+	{
+		return (Window::Hint)m_pImpl->hints;
+	}
+
 	void Window::OnEvent(Event* e)
 	{
 

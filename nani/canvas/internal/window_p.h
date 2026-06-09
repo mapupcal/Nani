@@ -36,6 +36,7 @@ namespace nani::canvas::internal
 		void SetBorderColor(const basic::Color& color);
 		void SetBackgroundColor(const basic::Color& color);
 		void SetTitle(const std::string_view& title_);
+		void SetHints(unsigned int hints_);
 
 		bool Initialize();
 		void InitializeGLFWWindow();
@@ -55,10 +56,8 @@ namespace nani::canvas::internal
 		void OnGLFWWindowWheelScroll(double xDelta, double yDelta);
 		void OnGLFWWindowKeyEvent(events::Key key, int scancode, bool bPress, events::Modifier modifier);
 
-	private:
-
-
 	public:
+		unsigned int hints = 0;
 		basic::PointF pos;
 		basic::SizeF size;
 		basic::single radius = 0.0f;
