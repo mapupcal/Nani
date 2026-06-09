@@ -121,6 +121,11 @@ namespace nani::canvas
 		return m_pImpl->title;
 	}
 
+	void Window::SetTruncatedColor(const basic::Color& color)
+	{
+		m_pImpl->SetTruncatedColor(color);
+	}
+
 	void Window::SetHints(Hint hints)
 	{
 		m_pImpl->SetHints(hints);

@@ -37,6 +37,7 @@ namespace nani::canvas::internal
 		void SetBackgroundColor(const basic::Color& color);
 		void SetTitle(const std::string_view& title_);
 		void SetHints(unsigned int hints_);
+		void SetTruncatedColor(const basic::Color& color);
 
 		bool Initialize();
 		void InitializeGLFWWindow();
@@ -64,6 +65,7 @@ namespace nani::canvas::internal
 		basic::single borderWidth = 0.0f;
 		basic::Color borderColor = basic::Color(basic::Colors::Transparent);
 		basic::Color backgroundColor = basic::Color(basic::Colors::Transparent);
+		basic::Color truncatedColor = basic::Color(basic::Colors::Transparent);
 		std::string title;
 		Window* window = nullptr;
 		GLFWwindow* glfwWindow = nullptr;

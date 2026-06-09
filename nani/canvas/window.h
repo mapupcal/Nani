@@ -22,7 +22,7 @@ namespace nani::canvas
 			Resizable				= 1,
 			Tool					= 1 << 1,
 			Top						= 1 << 2,
-			TransparentPassThrough	= 1 << 3,
+			TruncatedPassThrough	= 1 << 3,	// work with SetTruncatedColor, default is rgb(0, 0, 0)
 		};
 	public:
 		explicit Window(const basic::PointF& pos, const basic::SizeF& size);
@@ -53,6 +53,7 @@ namespace nani::canvas
 		void SetTitle(const std::string_view& title);
 		const std::string_view Title() const;
 
+		void SetTruncatedColor(const basic::Color& color);
 		void SetHints(Hint hints);
 		Hint Hints() const;
 

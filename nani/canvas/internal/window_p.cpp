@@ -135,11 +135,11 @@ namespace nani::canvas::internal
 			}
 		}
 
-		void _SetWindowHints(GLFWwindow* window, Window::Hint hints)
+		void _SetWindowHints(GLFWwindow* window, Window::Hint hints, const Color& transparentPassThroughColor)
 		{
-			glfwSetWindowAttrib(window, GLFW_MOUSE_PASSTHROUGH, !!(hints & Window::TransparentPassThrough));
 			glfwSetWindowAttrib(window, GLFW_FLOATING, !!(hints & Window::Top));
 			//Window::Resizable handle internal.
+			internal::Platform::MakeTruncatedPassThroughWindow(window, !!(hints & Window::TruncatedPassThrough), transparentPassThroughColor);
 			internal::Platform::MakeToolWindow(window, !!(hints & Window::Tool));
 		}
 	}
@@ -260,7 +260,14 @@ namespace nani::canvas::internal
 	{
 		hints = hints_;
 		if (glfwWindow)
-			_SetWindowHints(glfwWindow,(Window::Hint)hints);
+			_SetWindowHints(glfwWindow,(Window::Hint)hints, truncatedColor);
+		Paint(RectF(0, 0, size));
+	}
+
+	void WindowPrivate::SetTruncatedColor(const basic::Color& color)
+	{
+		truncatedColor = color;
+		SetHints(hints);
 	}
 
 	void WindowPrivate::OnGLFWWindowSizeChanged(int width, int height)
@@ -368,19 +375,25 @@ namespace nani::canvas::internal
 		canvas->clear(SK_ColorTRANSPARENT);
 
 		SkRect rect = SkRect::MakeXYWH(0, 0, size.width, size.height);
+
+		SkRect fillRect = rect;
+		fillRect.inset(borderWidth / 2, borderWidth / 2);
 		SkPaint fillPaint;
 		fillPaint.setAntiAlias(true);
-		fillPaint.setStyle(SkPaint::kFill_Style);
+		fillPaint.setStyle(SkPaint::kStrokeAndFill_Style);
 		fillPaint.setColor(SkColorSetARGB(backgroundColor.a, backgroundColor.r, backgroundColor.g, backgroundColor.b));
-		canvas->drawRRect(SkRRect::MakeRectXY(rect, radius, radius), fillPaint);
+		canvas->drawRRect(SkRRect::MakeRectXY(fillRect, radius, radius), fillPaint);
+
 		if (borderWidth > 0)
 		{
 			SkPaint strokePaint;
+			SkRect strokeRect = rect;
+			strokeRect.inset(borderWidth / 2, borderWidth / 2);
 			strokePaint.setAntiAlias(true);
 			strokePaint.setStyle(SkPaint::kStroke_Style);
 			strokePaint.setStrokeWidth(borderWidth);
 			strokePaint.setColor(SkColorSetARGB(borderColor.a, borderColor.r, borderColor.g, borderColor.b));
-			canvas->drawRRect(SkRRect::MakeRectXY(rect, radius, radius), strokePaint);
+			canvas->drawRRect(SkRRect::MakeRectXY(strokeRect, radius, radius), strokePaint);
 		}
 
 		PaintEvent event(dirtyRect);
@@ -413,7 +426,7 @@ namespace nani::canvas::internal
 		if (!glfwWindow)
 			return;
 
-		_SetWindowHints(glfwWindow, (Window::Hint)hints);
+		_SetWindowHints(glfwWindow, (Window::Hint)hints, truncatedColor);
 
 		EnvPrivate::Instance()->RegisterWindow(glfwWindow);
 		glfwMakeContextCurrent(glfwWindow);

@@ -53,4 +53,27 @@ namespace nani::canvas::internal
 		NANI_MESSAGE("Not Implement!")
 #endif
 	}
+
+	void Platform::MakeTruncatedPassThroughWindow(GLFWwindow* window, bool bPassThrough, const basic::Color& truncatedColor)
+	{
+#ifdef NANI_OS_WIN
+		HWND hwnd = glfwGetWin32Window(window);
+		if (bPassThrough)
+		{
+			LONG style = ::GetWindowLong(hwnd, GWL_EXSTYLE);
+			style |= WS_EX_LAYERED;
+			::SetWindowLong(hwnd, GWL_EXSTYLE, style);
+			SetLayeredWindowAttributes(hwnd, RGB(truncatedColor.r, truncatedColor.g, truncatedColor.b), 0, LWA_COLORKEY);
+		}
+		else
+		{
+			LONG style = ::GetWindowLong(hwnd, GWL_EXSTYLE);
+			style &= ~WS_EX_LAYERED;
+			::SetWindowLong(hwnd, GWL_EXSTYLE, style);
+		}
+#else
+		NANI_ASSERT(false);
+		NANI_MESSAGE("Not Implement!")
+#endif
+	}
 }
