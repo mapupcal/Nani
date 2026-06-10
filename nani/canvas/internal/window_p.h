@@ -71,5 +71,7 @@ namespace nani::canvas::internal
 		GLFWwindow* glfwWindow = nullptr;
 		sk_sp<GrDirectContext> skiaGlContext;
 		sk_sp<SkSurface> skiaSurface;
+
+		void* _originalWndProc = nullptr;
 	};
 }

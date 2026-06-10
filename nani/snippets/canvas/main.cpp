@@ -45,9 +45,9 @@ int main(int argc, char** argv)
 	std::shared_ptr<Window> window = std::make_shared<Window>(PointF(0,0), SizeF(600,400));
 	window->SetTitle("Nani Canvas");
 	window->SetBackgroundColor(Colors::Transparent);
-	window->SetHints(Window::Tool | Window::Top | Window::TruncatedPassThrough);
+	window->SetHints(Window::Tool | Window::Top | Window::TruncatedPassThrough | Window::Resizable);
 	window->SetTruncatedColor(window->BackgroundColor());
-	window->SetBorderWidth(20.0f);
+	window->SetBorderWidth(2.0f);
 	window->SetRadius(50.0f);
 	window->SetBorderColor(Colors::Cyan);
 	window->Show();
@@ -67,10 +67,6 @@ int main(int argc, char** argv)
 			MousePressEvent* mpe = static_cast<MousePressEvent*>(e);
 			if (mpe->button == MouseButton::Middle)
 				window->Close();
-			else if (mpe->button == MouseButton::Left)
-				window->Move(window->Position() + PointF{ -50, 0 });
-			else if (mpe->button == MouseButton::Right)
-				window->Move(window->Position() + PointF{  50, 0 });
 		}
 		return false;
 	};

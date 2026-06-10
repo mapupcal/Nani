@@ -135,11 +135,11 @@ namespace nani::canvas::internal
 			}
 		}
 
-		void _SetWindowHints(GLFWwindow* window, Window::Hint hints, const Color& transparentPassThroughColor)
+		void _SetWindowHints(GLFWwindow* window, Window::Hint hints)
 		{
 			glfwSetWindowAttrib(window, GLFW_FLOATING, !!(hints & Window::Top));
-			//Window::Resizable handle internal.
-			internal::Platform::MakeTruncatedPassThroughWindow(window, !!(hints & Window::TruncatedPassThrough), transparentPassThroughColor);
+			internal::Platform::MakeResizableWindow(window, !!(hints & Window::Resizable));
+			internal::Platform::MakeTruncatedPassThroughWindow(window, !!(hints & Window::TruncatedPassThrough));
 			internal::Platform::MakeToolWindow(window, !!(hints & Window::Tool));
 		}
 	}
@@ -260,7 +260,7 @@ namespace nani::canvas::internal
 	{
 		hints = hints_;
 		if (glfwWindow)
-			_SetWindowHints(glfwWindow,(Window::Hint)hints, truncatedColor);
+			_SetWindowHints(glfwWindow,(Window::Hint)hints);
 		Paint(RectF(0, 0, size));
 	}
 
@@ -426,13 +426,13 @@ namespace nani::canvas::internal
 		if (!glfwWindow)
 			return;
 
-		_SetWindowHints(glfwWindow, (Window::Hint)hints, truncatedColor);
+		glfwSetWindowUserPointer(glfwWindow, this);
+		_SetWindowHints(glfwWindow, (Window::Hint)hints);
 
 		EnvPrivate::Instance()->RegisterWindow(glfwWindow);
 		glfwMakeContextCurrent(glfwWindow);
 		glfwSwapInterval(1);
 
-		glfwSetWindowUserPointer(glfwWindow, this);
 		glfwSetWindowSizeCallback(glfwWindow, _OnGLFWWindowSizeChanged);
 		glfwSetWindowPosCallback(glfwWindow, _OnGLFWWindowPositionChanged);
 		glfwSetWindowCloseCallback(glfwWindow, _OnGLFWWindowClose);
