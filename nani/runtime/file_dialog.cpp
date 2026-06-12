@@ -14,32 +14,7 @@ namespace nani::runtime
 		}
 	}
 
-	FileDialog::DialogResult FileDialog::OpenSaveFileDialog(const std::vector<FilterItem>& filters, const std::string_view& defaultFileName, const std::string_view& defaultDirectory)
-	{
-		NFD::Guard nfdGuard;
-
-		std::vector<nfdu8filteritem_t> nfdFilters(filters.size());
-		for (int idx = 0; idx < filters.size(); idx++)
-		{
-			nfdFilters[idx].name = filters[idx].name.c_str();
-			nfdFilters[idx].spec = filters[idx].spec.c_str();
-		}
-		std::string directory(defaultDirectory);
-		const nfdu8char_t* nfdDefaultDirectory = directory.c_str();
-		std::string fileName(defaultFileName);
-		const nfdu8char_t* nfdDefaultFileName = fileName.c_str();
-
-		NFD::UniquePathU8 nfdPath;
-		auto result = NFD::SaveDialog(nfdPath, nfdFilters.data(), nfdFilters.size(), nfdDefaultDirectory, nfdDefaultFileName);
-		if (result == NFD_OKAY)
-		{
-			std::string path = nfdPath.get();
-			m_results.push_back(path);
-		}
-		return ConverNFDResult(result);
-	}
-
-	FileDialog::DialogResult FileDialog::OpenSelectFileDialog(const std::vector<FilterItem>& filters, const std::string_view& defaultDirectory, bool bMulti)
+	FileDialog::DialogResult FileDialog::OpenSaveFileDialog(const std::vector<FilterItem>& filters, const std::u8string_view& defaultFileName, const std::u8string_view& defaultDirectory)
 	{
 		m_results.clear();
 
@@ -48,11 +23,38 @@ namespace nani::runtime
 		std::vector<nfdu8filteritem_t> nfdFilters(filters.size());
 		for (int idx = 0; idx < filters.size(); idx++)
 		{
-			nfdFilters[idx].name = filters[idx].name.c_str();
-			nfdFilters[idx].spec = filters[idx].spec.c_str();
+			nfdFilters[idx].name = reinterpret_cast<const char*>(filters[idx].name.c_str());
+			nfdFilters[idx].spec = reinterpret_cast<const char*>(filters[idx].spec.c_str());
 		}
-		std::string directory(defaultDirectory);
-		const nfdu8char_t* nfdDefaultDirectory = directory.c_str();
+		std::u8string directory(defaultDirectory);
+		const nfdu8char_t* nfdDefaultDirectory = reinterpret_cast<const char*>(directory.c_str());
+		std::u8string fileName(defaultFileName);
+		const nfdu8char_t* nfdDefaultFileName = reinterpret_cast<const char*>(fileName.c_str());
+
+		NFD::UniquePathU8 nfdPath;
+		auto result = NFD::SaveDialog(nfdPath, nfdFilters.data(), nfdFilters.size(), nfdDefaultDirectory, nfdDefaultFileName);
+		if (result == NFD_OKAY)
+		{
+			std::u8string path = reinterpret_cast<const char8_t*>(nfdPath.get());
+			m_results.push_back(path);
+		}
+		return ConverNFDResult(result);
+	}
+
+	FileDialog::DialogResult FileDialog::OpenSelectFileDialog(const std::vector<FilterItem>& filters, const std::u8string_view& defaultDirectory, bool bMulti)
+	{
+		m_results.clear();
+
+		NFD::Guard nfdGuard;
+
+		std::vector<nfdu8filteritem_t> nfdFilters(filters.size());
+		for (int idx = 0; idx < filters.size(); idx++)
+		{
+			nfdFilters[idx].name = reinterpret_cast<const char*>(filters[idx].name.c_str());
+			nfdFilters[idx].spec = reinterpret_cast<const char*>(filters[idx].spec.c_str());
+		}
+		std::u8string directory(defaultDirectory);
+		const nfdu8char_t* nfdDefaultDirectory = reinterpret_cast<const char*>(directory.c_str());
 
 		if (bMulti)
 		{
@@ -66,7 +68,7 @@ namespace nani::runtime
 				{
 					NFD::UniquePathSetPathU8 nfdPath;
 					NFD::PathSet::GetPath(nfdPathSet, idx, nfdPath);
-					std::string path = nfdPath.get();
+					std::u8string path = reinterpret_cast<const char8_t*>(nfdPath.get());
 					m_results.push_back(path);
 				}
 			}
@@ -78,20 +80,20 @@ namespace nani::runtime
 			auto result = NFD::OpenDialog(nfdPath, nfdFilters.data(), nfdFilters.size(), nfdDefaultDirectory);
 			if (result == NFD_OKAY)
 			{
-				std::string path = nfdPath.get();
+				std::u8string path = reinterpret_cast<const char8_t*>(nfdPath.get());
 				m_results.push_back(path);
 			}
 			return ConverNFDResult(result);
 		}
 	}
 
-	FileDialog::DialogResult FileDialog::OpenSelectDirectoryDialog(const std::string_view& defaultDirectory, bool bMulti)
+	FileDialog::DialogResult FileDialog::OpenSelectDirectoryDialog(const std::u8string_view& defaultDirectory, bool bMulti)
 	{
 		m_results.clear();
 		NFD::Guard nfdGuard;
 
-		std::string directory(defaultDirectory);
-		const nfdu8char_t* nfdDefaultDirectory = directory.c_str();
+		std::u8string directory(defaultDirectory);
+		const nfdu8char_t* nfdDefaultDirectory = reinterpret_cast<const char*>(directory.c_str());
 
 		if (bMulti)
 		{
@@ -105,7 +107,7 @@ namespace nani::runtime
 				{
 					NFD::UniquePathSetPathU8 nfdPath;
 					NFD::PathSet::GetPath(nfdPathSet, idx, nfdPath);
-					std::string path = nfdPath.get();
+					std::u8string path = reinterpret_cast<const char8_t*>(nfdPath.get());
 					m_results.push_back(path);
 				}
 			}
@@ -117,14 +119,14 @@ namespace nani::runtime
 			auto result = NFD::PickFolder(nfdPath, nfdDefaultDirectory);
 			if (result == NFD_OKAY)
 			{
-				std::string path = nfdPath.get();
+				std::u8string path = reinterpret_cast<const char8_t*>(nfdPath.get());
 				m_results.push_back(path);
 			}
 			return ConverNFDResult(result);
 		}
 	}
 
-	std::vector<std::string> FileDialog::GetResults() const
+	std::vector<std::u8string> FileDialog::GetResults() const
 	{
 		return m_results;
 	}

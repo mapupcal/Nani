@@ -14,17 +14,17 @@ namespace nani::runtime
 
 		struct FilterItem
 		{
-			std::string name;
-			std::string spec;
+			std::u8string  name;
+			std::u8string  spec;
 		};
 
 	public:
-		DialogResult OpenSaveFileDialog(const std::vector<FilterItem>& filters, const std::string_view& defaultFileName = std::string_view(), const std::string_view& defaultDirectory = std::string_view());
-		DialogResult OpenSelectFileDialog(const std::vector<FilterItem>& filters, const std::string_view& defaultDirectory = std::string_view(), bool bMulti = false);
-		DialogResult OpenSelectDirectoryDialog(const std::string_view& defaultDirectory = std::string_view(), bool bMulti = false);
-		std::vector<std::string> GetResults() const;
+		DialogResult OpenSaveFileDialog(const std::vector<FilterItem>& filters, const std::u8string_view& defaultFileName = std::u8string_view(), const std::u8string_view& defaultDirectory = std::u8string_view());
+		DialogResult OpenSelectFileDialog(const std::vector<FilterItem>& filters, const std::u8string_view& defaultDirectory = std::u8string_view(), bool bMulti = false);
+		DialogResult OpenSelectDirectoryDialog(const std::u8string_view& defaultDirectory = std::u8string_view(), bool bMulti = false);
+		std::vector<std::u8string> GetResults() const;
 
 	private:
-		std::vector<std::string> m_results;
+		std::vector<std::u8string> m_results;
 	};
 }
