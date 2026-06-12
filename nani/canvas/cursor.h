@@ -3,7 +3,7 @@
 #include "basic/pointf.h"
 namespace nani::canvas
 {
-	class NANI_API Cursor
+	class NANI_CANVAS_API Cursor
 	{
 	public:
 		Cursor();

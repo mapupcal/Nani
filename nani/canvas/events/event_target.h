@@ -2,7 +2,7 @@
 #include "event_defs.h"
 namespace nani::canvas::events
 {
-	class NANI_API EventTarget
+	class NANI_CANVAS_API EventTarget
 	{
 	public:
 		EventTarget();

@@ -4,7 +4,7 @@
 
 namespace nani::canvas::elements
 {
-	class NANI_API Element
+	class NANI_CANVAS_API Element
 	{
 	public:
 		Element(Element* parent);

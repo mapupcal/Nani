@@ -3,7 +3,7 @@
 
 namespace nani::canvas::events
 {
-	struct NANI_API EventFilter
+	struct NANI_CANVAS_API EventFilter
 	{
 	public:
 		EventFilter();

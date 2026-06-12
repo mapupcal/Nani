@@ -53,7 +53,7 @@ nani_add_library(canvas SHARED
 target_include_directories(canvas PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
-target_compile_definitions(canvas PRIVATE NANI_IMPLEMENTATION)
+target_compile_definitions(canvas PRIVATE NANI_CANVAS_IMPLEMENTATION)
 target_compile_features(canvas PRIVATE cxx_std_20)
 target_link_libraries(canvas PRIVATE
 	OpenGL::GL

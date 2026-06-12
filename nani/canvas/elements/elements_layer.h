@@ -2,7 +2,7 @@
 #include "elements_defs.h"
 namespace nani::canvas::elements
 {
-	class NANI_API ElementsLayer
+	class NANI_CANVAS_API ElementsLayer
 	{
 	public:
 		ElementsLayer(Element* owner);

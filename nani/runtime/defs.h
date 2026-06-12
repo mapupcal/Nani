@@ -1,9 +1,9 @@
 ﻿#pragma once
 
-#ifdef NANI_CANVAS_IMPLEMENTATION
+#ifdef NANI_RUNTIME_IMPLEMENTATION
 #define NANI_IMPLEMENTATION
 #endif
 
 #include "../global_defs.h"
 
-#define NANI_CANVAS_API NANI_API
+#define NANI_RUNTIME_API NANI_API

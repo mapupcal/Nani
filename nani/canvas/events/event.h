@@ -3,7 +3,7 @@
 
 namespace nani::canvas::events
 {
-	class NANI_API Event
+	class NANI_CANVAS_API Event
 	{
 	public:
 		Event(Type type_);
@@ -12,7 +12,7 @@ namespace nani::canvas::events
 		const Type type = Type::Unknown;
 	};
 
-	class NANI_API MoveEvent : public Event
+	class NANI_CANVAS_API MoveEvent : public Event
 	{
 	public:
 		MoveEvent(const basic::PointF& oldPos_, const basic::PointF& newPos_);
@@ -21,7 +21,7 @@ namespace nani::canvas::events
 		const basic::PointF newPos;
 	};
 
-	class NANI_API ResizeEvent : public Event
+	class NANI_CANVAS_API ResizeEvent : public Event
 	{
 	public:
 		ResizeEvent(const basic::SizeF& oldSize_, const basic::SizeF& newSize_);
@@ -30,7 +30,7 @@ namespace nani::canvas::events
 		const basic::SizeF newSize;
 	};
 
-	class NANI_API PaintEvent : public Event
+	class NANI_CANVAS_API PaintEvent : public Event
 	{
 	public:
 		PaintEvent(const basic::RectF& dirtyRect_);
@@ -39,7 +39,7 @@ namespace nani::canvas::events
 		const basic::RectF dirtyRect;
 	};
 
-	class NANI_API MouseEvent : public Event
+	class NANI_CANVAS_API MouseEvent : public Event
 	{
 	public:
 		MouseEvent(Type type_, const basic::PointF& pos_, const basic::PointF& globalPos_);
@@ -49,7 +49,7 @@ namespace nani::canvas::events
 		basic::PointF globalPos;
 	};
 
-	class NANI_API MouseMoveEvent : public MouseEvent
+	class NANI_CANVAS_API MouseMoveEvent : public MouseEvent
 	{
 	public:
 		MouseMoveEvent(const basic::PointF& pos_, const basic::PointF& globalPos_);
@@ -66,7 +66,7 @@ namespace nani::canvas::events
 		return static_cast<Modifier>(static_cast<unsigned int>(lhs) & static_cast<unsigned int>(rhs));
 	}
 
-	class NANI_API MouseButtonEvent : public MouseEvent
+	class NANI_CANVAS_API MouseButtonEvent : public MouseEvent
 	{
 	public:
 		MouseButtonEvent(Type type_, MouseButton button_, const basic::PointF& pos_, const basic::PointF& globalPos_, Modifier modifier_);
@@ -76,21 +76,21 @@ namespace nani::canvas::events
 		const Modifier modifier = Modifier::None;
 	};
 
-	class NANI_API MousePressEvent : public MouseButtonEvent
+	class NANI_CANVAS_API MousePressEvent : public MouseButtonEvent
 	{
 	public:
 		MousePressEvent(MouseButton button_, const basic::PointF& pos_, const basic::PointF& globalPos_, Modifier modifier_ = Modifier::None);
 		~MousePressEvent() = default;
 	};
 
-	class NANI_API MouseReleaseEvent : public MouseButtonEvent
+	class NANI_CANVAS_API MouseReleaseEvent : public MouseButtonEvent
 	{
 	public:
 		MouseReleaseEvent(MouseButton button_, const basic::PointF& pos_, const basic::PointF& globalPos_, Modifier modifier_ = Modifier::None);
 		~MouseReleaseEvent() = default;
 	};
 
-	class NANI_API WheelEvent : public Event
+	class NANI_CANVAS_API WheelEvent : public Event
 	{
 	public:
 		WheelEvent(double deltaX_, double deltaY_);
@@ -100,7 +100,7 @@ namespace nani::canvas::events
 		const double deltaY = 0.0f;
 	};
 
-	class NANI_API KeyEvent : public Event
+	class NANI_CANVAS_API KeyEvent : public Event
 	{
 	public:
 		KeyEvent(Type type_, Key key_, Modifier modifier_, int scancode_);
@@ -112,14 +112,14 @@ namespace nani::canvas::events
 		const int scancode = 0;
 	};
 
-	class NANI_API KeyPressEvent : public KeyEvent
+	class NANI_CANVAS_API KeyPressEvent : public KeyEvent
 	{
 	public:
 		KeyPressEvent(Key key_, Modifier modifier_ = Modifier::None, int scancode_ = 0);
 		~KeyPressEvent() = default;
 	};
 
-	class NANI_API KeyReleaseEvent : public KeyEvent
+	class NANI_CANVAS_API KeyReleaseEvent : public KeyEvent
 	{
 	public:
 		KeyReleaseEvent(Key key_, Modifier modifier_ = Modifier::None, int scancode_ = 0);

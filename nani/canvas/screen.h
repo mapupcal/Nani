@@ -11,7 +11,7 @@ namespace nani::canvas::internal
 
 namespace nani::canvas
 {
-	class NANI_API Screen
+	class NANI_CANVAS_API Screen
 	{
 	public:
 		Screen();

@@ -16,7 +16,7 @@ namespace nani::canvas::basic
 		Transparent
 	};
 
-	struct NANI_API Color
+	struct NANI_CANVAS_API Color
 	{
 	public:
 		enum Format

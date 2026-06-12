@@ -13,7 +13,7 @@ namespace nani::canvas::internal
 
 namespace nani::canvas
 {
-	class NANI_API Window : public events::EventTarget
+	class NANI_CANVAS_API Window : public events::EventTarget
 	{
 	public:
 		enum Hint

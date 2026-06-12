@@ -2,7 +2,7 @@
 #include "geometry_defs.h"
 namespace nani::canvas::basic
 {
-	struct NANI_API PointF
+	struct NANI_CANVAS_API PointF
 	{
 	public:
 		PointF();

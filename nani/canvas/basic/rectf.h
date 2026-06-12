@@ -4,7 +4,7 @@
 #include "sizef.h"
 namespace nani::canvas::basic
 {
-	struct NANI_API RectF
+	struct NANI_CANVAS_API RectF
 	{
 	public:
 		RectF();

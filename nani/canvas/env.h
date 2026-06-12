@@ -3,7 +3,7 @@
 
 namespace nani::canvas
 {
-	class NANI_API Env
+	class NANI_CANVAS_API Env
 	{
 	public:
 		Env(int argc, char** argv);
