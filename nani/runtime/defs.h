@@ -5,5 +5,6 @@
 #endif
 
 #include "../global_defs.h"
+#include <vector>
 
 #define NANI_RUNTIME_API NANI_API
