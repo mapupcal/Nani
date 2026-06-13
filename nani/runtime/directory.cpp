@@ -126,11 +126,35 @@ namespace nani::runtime
 
 	vector<u8string> Directory::EnumFiles(const vector<u8string>& extensions) const
 	{
-		return vector<u8string>();
+		if (!Exists())
+			return vector<u8string>();
+		vector<u8string> paths;
+		for (const auto& entry : filesystem::directory_iterator(AbsolutePath()))
+		{
+			if (filesystem::is_regular_file(entry.status()))
+			{
+				u8string ext = entry.path().extension().u8string();
+				if (extensions.empty() || std::find(extensions.cbegin(), extensions.cend(), ext) != extensions.cend())
+				{
+					paths.push_back(entry.path().u8string());
+				}
+			}
+		}
+		return paths;
 	}
 
 	vector<u8string> Directory::EnumDirectories() const
 	{
-		return vector<u8string>();
+		if (!Exists())
+			return vector<u8string>();
+		vector<u8string> paths;
+		for (const auto& entry : filesystem::directory_iterator(AbsolutePath()))
+		{
+			if (filesystem::is_directory(entry.status()))
+			{
+				paths.push_back(entry.path().u8string());
+			}
+		}
+		return paths;
 	}
 }
