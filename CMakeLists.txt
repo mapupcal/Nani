@@ -19,7 +19,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 add_subdirectory(nani)
 
-option(NANI_BUILD_SNIPPETS "Build dependency usage snippets" ON)
+option(NANI_BUILD_SNIPPETS "Build dependency usage snippets" OFF)
 option(NANI_BUILD_TESTS "Build unit tests" ON)
 
 if(NANI_BUILD_SNIPPETS)
