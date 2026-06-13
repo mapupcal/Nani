@@ -8,3 +8,6 @@ target_link_libraries(nani_simple_curl
   PRIVATE
     CURL::libcurl
 )
+set_target_properties(nani_simple_curl PROPERTIES
+    FOLDER "deps/snippets"
+)

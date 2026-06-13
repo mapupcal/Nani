@@ -8,3 +8,6 @@ target_link_libraries(nani_simple_libuv
   PRIVATE
     $<IF:$<TARGET_EXISTS:libuv::uv_a>,libuv::uv_a,libuv::uv>
 )
+set_target_properties(nani_simple_libuv PROPERTIES
+    FOLDER "deps/snippets"
+)

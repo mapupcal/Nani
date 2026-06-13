@@ -9,3 +9,6 @@ target_link_libraries(nani_simple_glfw3
     ${OPENGL_gl_LIBRARY}  # 或者 OpenGL::GL
     glfw
 )
+set_target_properties(nani_simple_glfw3 PROPERTIES
+    FOLDER "deps/snippets"
+)

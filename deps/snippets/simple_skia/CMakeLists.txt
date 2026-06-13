@@ -8,3 +8,6 @@ target_link_libraries(nani_simple_skia
   PRIVATE
     unofficial::skia::skia
 )
+set_target_properties(nani_simple_skia PROPERTIES
+    FOLDER "deps/snippets"
+)

@@ -8,3 +8,6 @@ target_link_libraries(nani_simple_quickjs_ng
   PRIVATE
     qjs
 )
+set_target_properties(nani_simple_quickjs_ng PROPERTIES
+    FOLDER "deps/snippets"
+)

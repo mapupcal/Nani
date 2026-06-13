@@ -18,6 +18,10 @@ target_link_libraries(canvas_utests PRIVATE
 	GTest::gtest_main
 )
 
+set_target_properties(canvas_utests PROPERTIES
+    FOLDER "utests"
+)
+
 # Register test
 enable_testing()
-add_test(NAME canvas_tests COMMAND canvas_utests)
+add_test(NAME canvas_utests COMMAND canvas_utests)
