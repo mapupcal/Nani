@@ -25,6 +25,10 @@ nani_add_library(canvas SHARED
 	elements/properties.cpp
 	elements/properties.h
 
+	visuals/visuals_defs.h
+	visuals/visual.cpp
+	visuals/visual.h
+
 	events/event_defs.h
 	events/event.cpp
 	events/event.h

@@ -1,5 +1,7 @@
 ﻿#include "elements_layer.h"
 #include "element.h"
+using namespace nani::canvas::events;
+
 namespace nani::canvas::elements
 {
 	ElementsLayer::ElementsLayer(Element* owner)
@@ -29,6 +31,9 @@ namespace nani::canvas::elements
 
 		element->m_pParent = m_pOwner;
 		m_elements.push_back(element);
+
+		ElementModifyEvent event(Type::ElementAdd, element);
+		m_pOwner->FireEvent(&event);
 	}
 
 	void ElementsLayer::RemoveElement(Element * element)
@@ -47,6 +52,9 @@ namespace nani::canvas::elements
 		{
 			(*iter)->m_pParent = nullptr;
 			m_elements.erase(iter);
+
+			ElementModifyEvent event(Type::ElementRemove, element);
+			m_pOwner->FireEvent(&event);
 		}
 	}
 

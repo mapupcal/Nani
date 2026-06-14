@@ -125,4 +125,13 @@ namespace nani::canvas::events
 		KeyReleaseEvent(Key key_, Modifier modifier_ = Modifier::None, int scancode_ = 0);
 		~KeyReleaseEvent() = default;
 	};
+
+	class NANI_CANVAS_API ElementModifyEvent : public Event
+	{
+	public:
+		ElementModifyEvent(Type type, elements::Element* element_);
+		~ElementModifyEvent() = default;
+
+		elements::Element* const element = nullptr;
+	};
 }

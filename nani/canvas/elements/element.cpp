@@ -1,5 +1,8 @@
 ﻿#include "element.h"
 #include "elements_layer.h"
+#include "../visuals/visual.h"
+using namespace nani::canvas::visuals;
+
 namespace nani::canvas::elements
 {
 	Element::Element(Element* parent)
@@ -34,5 +37,10 @@ namespace nani::canvas::elements
 		if (!m_pLayer)
 			m_pLayer = new ElementsLayer(this);
 		return m_pLayer;
+	}
+
+	std::shared_ptr<Visual> Element::CreateVisual()
+	{
+		return std::move(std::make_shared<Visual>(this));
 	}
 }

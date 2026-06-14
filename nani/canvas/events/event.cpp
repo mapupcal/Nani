@@ -93,5 +93,12 @@ namespace nani::canvas::events
 	{
 
 	}
+
+	ElementModifyEvent::ElementModifyEvent(Type type, elements::Element* element_)
+		: Event(type)
+		, element(element_)
+	{
+
+	}
 }
 

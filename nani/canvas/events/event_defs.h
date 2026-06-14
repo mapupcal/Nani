@@ -4,7 +4,10 @@
 #include "../basic/sizef.h"
 #include "../basic/rectf.h"
 #include <vector>
-
+namespace nani::canvas::elements
+{
+	class Element;
+}
 namespace nani::canvas::events
 {
 	class Event;
@@ -36,6 +39,9 @@ namespace nani::canvas::events
 		Paint,
 		Enter,
 		Leave,
+
+		ElementAdd,
+		ElementRemove
 	};
 
 	enum class MouseButton : unsigned int
