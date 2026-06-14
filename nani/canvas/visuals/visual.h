@@ -10,8 +10,11 @@ namespace nani::canvas::visuals
 
 	public:
 		elements::Element* Element() const;
+		std::vector<std::shared_ptr<Visual>> Visuals() const;
+
 		virtual void BuildVisuals();
 		virtual void Relayout();
+
 	private:
 		virtual bool Filter(events::EventTarget* target, events::Event* e) override;
 

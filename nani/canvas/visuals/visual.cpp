@@ -24,6 +24,11 @@ namespace nani::canvas::visuals
 		return m_pElement;
 	}
 
+	std::vector<std::shared_ptr<Visual>> Visual::Visuals() const
+	{
+		return m_visuals;
+	}
+
 	void Visual::BuildVisuals()
 	{
 		if (!m_pElement)
