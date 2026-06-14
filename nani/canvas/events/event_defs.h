@@ -41,7 +41,8 @@ namespace nani::canvas::events
 		Leave,
 
 		ElementAdd,
-		ElementRemove
+		ElementRemove,
+		ElementStateChanged
 	};
 
 	enum class MouseButton : unsigned int

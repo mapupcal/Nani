@@ -22,6 +22,8 @@ nani_add_library(canvas SHARED
 	elements/element.h
 	elements/elements_layer.cpp
 	elements/elements_layer.h
+	elements/element_states.cpp
+	elements/element_states.h
 	elements/properties.cpp
 	elements/properties.h
 

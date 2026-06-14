@@ -72,6 +72,11 @@ namespace nani::canvas::visuals
 				m_visuals.erase(iter);
 				Relayout();
 			}
+			else if (e->type == Type::ElementStateChanged)
+			{
+				ElementStatesChangedEvent* event = static_cast<ElementStatesChangedEvent*>(e);
+				Relayout();
+			}
 		}
 		return false;
 	}

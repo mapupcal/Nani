@@ -1,5 +1,6 @@
 ﻿#include "element.h"
 #include "elements_layer.h"
+#include "element_states.h"
 #include "../visuals/visual.h"
 using namespace nani::canvas::visuals;
 
@@ -15,6 +16,7 @@ namespace nani::canvas::elements
 	Element::~Element()
 	{
 		delete m_pLayer;
+		delete m_pStates;
 		if(Parent())
 			Parent()->Layer()->RemoveElement(this);
 	}
@@ -37,6 +39,13 @@ namespace nani::canvas::elements
 		if (!m_pLayer)
 			m_pLayer = new ElementsLayer(this);
 		return m_pLayer;
+	}
+
+	ElementStates* Element::States()
+	{
+		if (!m_pStates)
+			m_pStates = new ElementStates(this);
+		return m_pStates;
 	}
 
 	std::shared_ptr<Visual> Element::CreateVisual()

@@ -100,5 +100,12 @@ namespace nani::canvas::events
 	{
 
 	}
+
+	ElementStatesChangedEvent::ElementStatesChangedEvent(elements::Element* element_)
+		: Event(Type::ElementStateChanged)
+		, element(element_)
+	{
+
+	}
 }
 

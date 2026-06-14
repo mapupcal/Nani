@@ -7,6 +7,8 @@ namespace nani::canvas::visuals
 }
 namespace nani::canvas::elements
 {
+	class ElementStates;
+
 	class NANI_CANVAS_API Element : public events::EventTarget
 	{
 	public:
@@ -20,11 +22,13 @@ namespace nani::canvas::elements
 		ElementsLayer* Layer();
 
 	public:
+		ElementStates* States();
 		std::shared_ptr<visuals::Visual> CreateVisual();
 
 	private:
 		friend class ElementsLayer;
 		Element* m_pParent = nullptr;
 		ElementsLayer* m_pLayer = nullptr;
+		ElementStates* m_pStates = nullptr;
 	};
 }
