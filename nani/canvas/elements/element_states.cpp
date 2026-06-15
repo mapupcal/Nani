@@ -66,6 +66,21 @@ namespace nani::canvas::elements
 		return IsSetFlag(Selected);
 	}
 
+	const char8_t* ElementStates::GetStateProps() const
+	{
+		if (!IsEnabled())
+			return u8"Disabled";
+		if (IsPressed())
+			return u8"Pressed";
+		if (IsHovered())
+			return u8"Hovered";
+		if (IsSelected())
+			return u8"Selected";
+		if (IsFocused())
+			return u8"Focused";
+		return u8"";
+	}
+
 	bool ElementStates::IsSetFlag(Flags flag) const
 	{
 		return m_flags & flag;

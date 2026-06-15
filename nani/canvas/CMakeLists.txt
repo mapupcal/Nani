@@ -26,8 +26,8 @@ nani_add_library(canvas SHARED
 	elements/element_states.h
 	elements/element_visibility.cpp
 	elements/element_visibility.h
-	elements/properties.cpp
-	elements/properties.h
+	elements/styles.cpp
+	elements/styles.h
 
 	visuals/visuals_defs.h
 	visuals/visual.cpp

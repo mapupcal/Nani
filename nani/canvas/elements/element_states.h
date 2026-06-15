@@ -34,6 +34,8 @@ namespace nani::canvas::elements
 		void SetSelected(bool bSelected);
 		bool IsSelected() const;
 
+		const char8_t* GetStateProps() const;
+
 	private:
 		bool IsSetFlag(Flags flag) const;
 		void SetFlag(Flags flag, bool bSet);

@@ -43,6 +43,38 @@ namespace nani::canvas::elements
 		return m_pLayer;
 	}
 
+	void Element::SetStyles(std::shared_ptr<Styles> styles)
+	{
+		m_spStyles = styles;
+	}
+
+	Styles* Element::GetStyles()
+	{
+		if (m_spStyles)
+			return m_spStyles.get();
+
+		auto parent = Parent();
+		while (parent)
+		{
+			if (parent->GetStyles())
+				return parent->GetStyles();
+			parent = Parent();
+		}
+
+		NANI_ASSERT(false);
+		return nullptr;
+	}
+
+	void Element::SetStyleClass(std::u8string_view& styleClass)
+	{
+		m_styleClass = styleClass;
+	}
+
+	const std::u8string_view Element::SylteClass() const
+	{
+		return m_styleClass;
+	}
+
 	ElementStates* Element::States()
 	{
 		if (!m_pStates)

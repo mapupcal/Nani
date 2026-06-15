@@ -5,9 +5,13 @@
 #include "../events/event_target.h"
 #include "../events/event.h"
 #include <vector>
+#include <map>
 #include <algorithm>
 namespace nani::canvas::elements
 {
 	class Element;
 	class ElementsLayer;
+	class ElementStates;
+	class ElementVisibility;
+	class Styles;
 }

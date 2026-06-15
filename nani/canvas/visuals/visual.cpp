@@ -1,5 +1,6 @@
 ﻿#include "visual.h"
 #include "../elements/element.h"
+#include "../elements/styles.h"
 
 using namespace nani::canvas::elements;
 using namespace nani::canvas::events;
@@ -46,7 +47,10 @@ namespace nani::canvas::visuals
 
 	void Visual::Relayout()
 	{
-		//TODO:
+		//TODO: 
+		//1. Get element computed style.
+		//2. Set up yoga layout node, build layout tree.
+		//3. reflow.
 	}
 
 	bool Visual::Filter(events::EventTarget* target, events::Event* e)

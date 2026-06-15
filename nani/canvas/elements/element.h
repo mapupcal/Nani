@@ -1,15 +1,11 @@
 ﻿#pragma once
 #include "elements_defs.h"
-#include "properties.h"
 namespace nani::canvas::visuals
 {
 	class Visual;
 }
 namespace nani::canvas::elements
 {
-	class ElementStates;
-	class ElementVisibility;
-
 	class NANI_CANVAS_API Element : public events::EventTarget
 	{
 	public:
@@ -22,7 +18,11 @@ namespace nani::canvas::elements
 		std::vector<Element*> Children();
 		ElementsLayer* Layer();
 
-	public:
+		void SetStyles(std::shared_ptr<Styles> styles);
+		Styles* GetStyles();
+		void SetStyleClass(std::u8string_view& styleClass);
+		const std::u8string_view SylteClass() const;
+
 		ElementStates* States();
 		ElementVisibility* Visibility();
 		std::shared_ptr<visuals::Visual> CreateVisual();
@@ -33,5 +33,7 @@ namespace nani::canvas::elements
 		ElementsLayer* m_pLayer = nullptr;
 		ElementStates* m_pStates = nullptr;
 		ElementVisibility* m_pVisibility = nullptr;
+		std::shared_ptr<Styles> m_spStyles;
+		std::u8string m_styleClass;
 	};
 }
