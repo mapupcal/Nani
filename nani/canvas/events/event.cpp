@@ -102,7 +102,14 @@ namespace nani::canvas::events
 	}
 
 	ElementStatesChangedEvent::ElementStatesChangedEvent(elements::Element* element_)
-		: Event(Type::ElementStateChanged)
+		: Event(Type::ElementStatesChanged)
+		, element(element_)
+	{
+
+	}
+
+	ElementVisibilityChangedEvent::ElementVisibilityChangedEvent(elements::Element* element_)
+		: Event(Type::ElementVisibilityChanged)
 		, element(element_)
 	{
 

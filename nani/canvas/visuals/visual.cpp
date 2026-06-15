@@ -72,9 +72,14 @@ namespace nani::canvas::visuals
 				m_visuals.erase(iter);
 				Relayout();
 			}
-			else if (e->type == Type::ElementStateChanged)
+			else if (e->type == Type::ElementStatesChanged)
 			{
 				ElementStatesChangedEvent* event = static_cast<ElementStatesChangedEvent*>(e);
+				Relayout();
+			}
+			else if (e->type == Type::ElementVisibilityChanged)
+			{
+				ElementVisibilityChangedEvent* event = static_cast<ElementVisibilityChangedEvent*>(e);
 				Relayout();
 			}
 		}

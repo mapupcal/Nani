@@ -143,4 +143,13 @@ namespace nani::canvas::events
 
 		elements::Element* const element = nullptr;
 	};
+
+	class NANI_CANVAS_API ElementVisibilityChangedEvent : public Event
+	{
+	public:
+		ElementVisibilityChangedEvent(elements::Element* element_);
+		~ElementVisibilityChangedEvent() = default;
+
+		elements::Element* const element = nullptr;
+	};
 }
