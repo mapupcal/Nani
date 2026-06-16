@@ -25,7 +25,7 @@ namespace nani::canvas::elements
 
 		ElementStates* States();
 		ElementVisibility* Visibility();
-		std::shared_ptr<visuals::Visual> CreateVisual();
+		virtual std::shared_ptr<visuals::Visual> CreateVisual(visuals::Visual* visualParent);
 
 	private:
 		friend class ElementsLayer;

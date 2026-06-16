@@ -7,8 +7,9 @@ using namespace nani::canvas::events;
 
 namespace nani::canvas::visuals
 {
-	Visual::Visual(elements::Element* element)
+	Visual::Visual(elements::Element* element, Visual* parent)
 		: m_pElement(element)
+		, m_pParent(parent)
 	{
 		if (m_pElement)
 			m_pElement->RegisterEventFilter(this);
@@ -18,6 +19,11 @@ namespace nani::canvas::visuals
 	{
 		if (m_pElement)
 			m_pElement->UnRegisterEventFilter(this);
+	}
+
+	Visual* Visual::Parent()
+	{
+		return m_pParent;
 	}
 
 	elements::Element* Visual::Element() const
@@ -39,7 +45,7 @@ namespace nani::canvas::visuals
 		auto elements = m_pElement->Children();
 		for (elements::Element* element : elements)
 		{
-			auto visual = element->CreateVisual();
+			auto visual = element->CreateVisual(this);
 			visual->BuildVisuals();
 			m_visuals.push_back(visual);
 		}
@@ -60,7 +66,7 @@ namespace nani::canvas::visuals
 			if (e->type == Type::ElementAdd)
 			{
 				ElementModifyEvent* event = static_cast<ElementModifyEvent*>(e);
-				auto visual = event->element->CreateVisual();
+				auto visual = event->element->CreateVisual(this);
 				visual->BuildVisuals();
 				m_visuals.push_back(visual);
 				Relayout();
