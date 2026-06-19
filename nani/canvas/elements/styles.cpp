@@ -14,6 +14,11 @@ namespace nani::canvas::elements
 
 	}
 
+	const ComputedStyle::DiffResult ComputedStyle::Diff(const ComputedStyle* other) const
+	{
+		return DiffResult();
+	}
+
 	Styles::Styles()
 	{
 

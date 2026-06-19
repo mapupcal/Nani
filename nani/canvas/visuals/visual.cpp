@@ -1,6 +1,7 @@
 ﻿#include "visual.h"
 #include "../elements/element.h"
 #include "../elements/styles.h"
+#include <yoga/Yoga.h>
 
 using namespace nani::canvas::elements;
 using namespace nani::canvas::events;
@@ -19,6 +20,16 @@ namespace nani::canvas::visuals
 	{
 		if (m_pElement)
 			m_pElement->UnRegisterEventFilter(this);
+
+		if (m_yogaNode)
+		{
+			if (Parent() && Parent()->m_yogaNode)
+			{
+				auto parentYogaNode = Parent()->m_yogaNode;
+				YGNodeRemoveChild(parentYogaNode, m_yogaNode);
+			}
+			YGNodeFree(m_yogaNode);
+		}
 	}
 
 	Visual* Visual::Parent()
@@ -40,8 +51,14 @@ namespace nani::canvas::visuals
 	{
 		if (!m_pElement)
 			return;
-		if (!m_visuals.empty())
+		if (!m_yogaNode)
 			return;
+		m_yogaNode = YGNodeNew();
+		if (Parent() && Parent()->m_yogaNode)
+		{
+			auto parentYogaNode = Parent()->m_yogaNode;
+			YGNodeInsertChild(parentYogaNode, m_yogaNode, YGNodeGetChildCount(parentYogaNode));
+		}
 		auto elements = m_pElement->Children();
 		for (elements::Element* element : elements)
 		{
@@ -51,12 +68,25 @@ namespace nani::canvas::visuals
 		}
 	}
 
-	void Visual::Relayout()
+	void Visual::Update()
 	{
-		//TODO: 
-		//1. Get element computed style.
-		//2. Set up yoga layout node, build layout tree.
-		//3. reflow.
+		ComputedStyle* newComputedStyle = Element()->GetStyles()->Compute(Element());
+		auto diff = newComputedStyle->Diff(m_pComputedStyle);
+		if (diff.layoutChanged)
+			Reflow();
+		if (diff.visualChanged)
+			Repaint();
+		m_pComputedStyle = newComputedStyle;
+	}
+
+	void Visual::Reflow()
+	{
+		
+	}
+
+	void Visual::Repaint()
+	{
+		
 	}
 
 	bool Visual::Filter(events::EventTarget* target, events::Event* e)
@@ -69,7 +99,7 @@ namespace nani::canvas::visuals
 				auto visual = event->element->CreateVisual(this);
 				visual->BuildVisuals();
 				m_visuals.push_back(visual);
-				Relayout();
+				Reflow();
 			}
 			else if (e->type == Type::ElementRemove)
 			{
@@ -80,17 +110,17 @@ namespace nani::canvas::visuals
 					});
 
 				m_visuals.erase(iter);
-				Relayout();
+				Reflow();
 			}
 			else if (e->type == Type::ElementStatesChanged)
 			{
 				ElementStatesChangedEvent* event = static_cast<ElementStatesChangedEvent*>(e);
-				Relayout();
+				Update();
 			}
 			else if (e->type == Type::ElementVisibilityChanged)
 			{
 				ElementVisibilityChangedEvent* event = static_cast<ElementVisibilityChangedEvent*>(e);
-				Relayout();
+				Update();
 			}
 		}
 		return false;
