@@ -22,7 +22,7 @@ namespace nani::canvas::elements
 
 	void ElementVisibility::SetHidden(bool bHidden)
 	{
-		if (!!(m_flags & Hidden) == bHidden)
+		if (IsHidden() == bHidden)
 			return;
 		m_flags = static_cast<Flags>(m_flags | Hidden);
 
@@ -37,7 +37,7 @@ namespace nani::canvas::elements
 
 	void ElementVisibility::SetCollapsed(bool bCollapsed)
 	{
-		if (!!(m_flags & Hidden) == bCollapsed)
+		if (IsCollapsed() == bCollapsed)
 			return;
 		m_flags = static_cast<Flags>(m_flags | Collapsed);
 
