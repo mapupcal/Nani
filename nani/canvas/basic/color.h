@@ -45,4 +45,14 @@ namespace nani::canvas::basic
 		uint8 b = 0;
 		uint8 a = 255;
 	};
+
+	inline bool operator==(const Color& lhs, const Color& rhs)
+	{
+		return (lhs.a == rhs.a) && (lhs.r == rhs.r) && (lhs.g == rhs.g) && (lhs.b == rhs.b);
+	}
+
+	inline bool operator!=(const Color& lhs, const Color& rhs)
+	{
+		return !(lhs == rhs);
+	}
 }

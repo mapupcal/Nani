@@ -72,11 +72,12 @@ namespace nani::canvas::visuals
 	{
 		ComputedStyle* newComputedStyle = Element()->GetStyles()->Compute(Element());
 		auto diff = newComputedStyle->Diff(m_pComputedStyle);
+		m_pComputedStyle = newComputedStyle;
+
 		if (diff.layoutChanged)
 			Reflow();
 		if (diff.visualChanged)
 			Repaint();
-		m_pComputedStyle = newComputedStyle;
 	}
 
 	void Visual::Reflow()

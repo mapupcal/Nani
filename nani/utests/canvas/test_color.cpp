@@ -26,11 +26,15 @@ TEST_F(ColorTest, ColorProperties)
 	EXPECT_EQ(defaultBlack.b, 0);
 	EXPECT_EQ(defaultBlack.a, 255);
 
+	EXPECT_EQ(defaultBlack, Color(0, 0, 0, 255));
+
 	Color white(Colors::White);
 	EXPECT_EQ(white.r, 255);
 	EXPECT_EQ(white.g, 255);
 	EXPECT_EQ(white.b, 255);
 	EXPECT_EQ(white.a, 255);
+
+	EXPECT_EQ(white, Color(255, 255, 255, 255));
 
 	Color red(Colors::Red);
 	EXPECT_EQ(red.r, 255);
@@ -88,6 +92,12 @@ TEST_F(ColorTest, ColorProperties)
 	EXPECT_EQ(rgba.g, 128);
 	EXPECT_EQ(rgba.b, 64);
 	EXPECT_EQ(rgba.a, 192);
+
+	EXPECT_EQ(rgba, Color(255, 128, 64, 192));
+	EXPECT_NE(rgba, Color(255, 128, 64, 191));
+	EXPECT_NE(rgba, Color(255, 128, 63, 192));
+	EXPECT_NE(rgba, Color(255, 127, 64, 192));
+	EXPECT_NE(rgba, Color(254, 128, 64, 192));
 
 	//from RGBA value
 	{
