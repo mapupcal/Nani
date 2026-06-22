@@ -24,6 +24,14 @@ namespace nani::canvas::visuals
 		void Reflow();
 		void Repaint();
 
+		const basic::MarginsF LayoutMarggins() const;
+		const basic::MarginsF LayoutBorder() const;
+		const basic::MarginsF LayoutPadding() const;
+		const basic::RectF LayoutBorderRect() const;
+		const basic::RectF LayoutContentRect() const;
+
+		virtual bool HitTest(const basic::PointF& pos, Visual** ppHitVisual);
+
 	private:
 		virtual bool Filter(events::EventTarget* target, events::Event* e) override;
 
@@ -33,6 +41,5 @@ namespace nani::canvas::visuals
 		std::vector<std::shared_ptr<Visual>> m_visuals;
 		YGNodeRef m_yogaNode = nullptr;
 		elements::ComputedStyle* m_pComputedStyle = nullptr;
-		basic::RectF m_frame;
 	};
 }

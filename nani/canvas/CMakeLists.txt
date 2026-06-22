@@ -16,6 +16,8 @@ nani_add_library(canvas SHARED
 	basic/rectf.h
 	basic/sizef.cpp
 	basic/sizef.h
+	basic/marginsf.cpp
+	basic/marginsf.h
 
 	elements/elements_defs.h
 	elements/element.cpp

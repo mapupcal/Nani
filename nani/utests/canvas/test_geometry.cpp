@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include "canvas/basic/marginsf.h"
 #include "canvas/basic/pointf.h"
 #include "canvas/basic/rectf.h"
 #include "canvas/basic/sizef.h"
@@ -161,4 +162,59 @@ TEST_F(GeometryTest, RectFCalculatesBoundsAndIntersections)
 
 	rect &= RectF(2.0f, 2.0f, 8.0f, 8.0f);
 	EXPECT_EQ(rect, RectF(2.0f, 2.0f, 8.0f, 8.0f));
+}
+
+TEST_F(GeometryTest, MarginsFConstructorsAndComparison)
+{
+	MarginsF defaultMargins;
+	EXPECT_EQ(defaultMargins, MarginsF(0.0f, 0.0f, 0.0f, 0.0f));
+
+	MarginsF margins(1.0f, 2.0f, 3.0f, 4.0f);
+	EXPECT_EQ(margins.left, 1.0f);
+	EXPECT_EQ(margins.top, 2.0f);
+	EXPECT_EQ(margins.right, 3.0f);
+	EXPECT_EQ(margins.bottom, 4.0f);
+
+	MarginsF copied(margins);
+	EXPECT_EQ(copied, margins);
+
+	MarginsF assigned;
+	assigned = margins;
+	EXPECT_EQ(assigned, margins);
+	EXPECT_NE(assigned, MarginsF());
+}
+
+TEST_F(GeometryTest, MarginsFSupportsArithmetic)
+{
+	MarginsF first(1.0f, 2.0f, 3.0f, 4.0f);
+	MarginsF second(0.5f, 1.0f, 1.5f, 2.0f);
+
+	EXPECT_EQ(first + second, MarginsF(1.5f, 3.0f, 4.5f, 6.0f));
+	EXPECT_EQ(first - second, MarginsF(0.5f, 1.0f, 1.5f, 2.0f));
+	EXPECT_EQ(-first, MarginsF(-1.0f, -2.0f, -3.0f, -4.0f));
+
+	first += second;
+	EXPECT_EQ(first, MarginsF(1.5f, 3.0f, 4.5f, 6.0f));
+
+	first -= MarginsF(0.5f, 1.0f, 1.5f, 2.0f);
+	EXPECT_EQ(first, MarginsF(1.0f, 2.0f, 3.0f, 4.0f));
+
+	first *= 2.0f;
+	EXPECT_EQ(first, MarginsF(2.0f, 4.0f, 6.0f, 8.0f));
+
+	first /= 4.0f;
+	EXPECT_EQ(first, MarginsF(0.5f, 1.0f, 1.5f, 2.0f));
+}
+
+TEST_F(GeometryTest, MarginsFInsetsAndOutsetsRectF)
+{
+	RectF rect(10.0f, 20.0f, 30.0f, 40.0f);
+	MarginsF inset(1.0f, 2.0f, 3.0f, 4.0f);
+
+	EXPECT_EQ(rect - inset, RectF(11.0f, 22.0f, 27.0f, 36.0f));
+	EXPECT_EQ(rect + inset, RectF(9.0f, 18.0f, 33.0f, 44.0f));
+
+	MarginsF border(1.0f, 1.0f, 1.0f, 1.0f);
+	MarginsF padding(2.0f, 3.0f, 4.0f, 5.0f);
+	EXPECT_EQ(rect - (border + padding), RectF(13.0f, 24.0f, 25.0f, 34.0f));
 }

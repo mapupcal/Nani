@@ -1,10 +1,12 @@
 ﻿#include "visual.h"
 #include "../elements/element.h"
+#include "../elements/element_visibility.h"
 #include "../elements/styles.h"
 #include <yoga/Yoga.h>
 
 using namespace nani::canvas::elements;
 using namespace nani::canvas::events;
+using namespace nani::canvas::basic;
 
 namespace nani::canvas::visuals
 {
@@ -94,7 +96,59 @@ namespace nani::canvas::visuals
 
 	void Visual::Repaint()
 	{
-		
+
+	}
+
+	const RectF Visual::LayoutBorderRect() const
+	{
+		RectF rect;
+		rect.left = YGNodeLayoutGetLeft(m_yogaNode);
+		rect.top = YGNodeLayoutGetTop(m_yogaNode);
+		rect.right = YGNodeLayoutGetRight(m_yogaNode);
+		rect.bottom = YGNodeLayoutGetBottom(m_yogaNode);
+		return rect;
+	}
+
+	const basic::MarginsF Visual::LayoutMarggins() const
+	{
+		MarginsF margins;
+		margins.left = YGNodeLayoutGetMargin(m_yogaNode, YGEdgeLeft);
+		margins.top = YGNodeLayoutGetMargin(m_yogaNode, YGEdgeTop);
+		margins.right = YGNodeLayoutGetMargin(m_yogaNode, YGEdgeRight);
+		margins.bottom = YGNodeLayoutGetMargin(m_yogaNode, YGEdgeBottom);
+		return margins;
+	}
+
+	const MarginsF Visual::LayoutBorder() const
+	{
+		MarginsF margins;
+		margins.left = YGNodeLayoutGetBorder(m_yogaNode, YGEdgeLeft);
+		margins.top = YGNodeLayoutGetBorder(m_yogaNode, YGEdgeTop);
+		margins.right = YGNodeLayoutGetBorder(m_yogaNode, YGEdgeRight);
+		margins.bottom = YGNodeLayoutGetBorder(m_yogaNode, YGEdgeBottom);
+		return margins;
+	}
+
+	const MarginsF Visual::LayoutPadding() const
+	{
+		MarginsF margins;
+		margins.left = YGNodeLayoutGetPadding(m_yogaNode, YGEdgeLeft);
+		margins.top = YGNodeLayoutGetPadding(m_yogaNode, YGEdgeTop);
+		margins.right = YGNodeLayoutGetPadding(m_yogaNode, YGEdgeRight);
+		margins.bottom = YGNodeLayoutGetPadding(m_yogaNode, YGEdgeBottom);
+		return margins;
+	}
+
+	const RectF Visual::LayoutContentRect() const
+	{
+		return LayoutBorderRect() - (LayoutBorder() + LayoutPadding());
+	}
+
+	bool Visual::HitTest(const basic::PointF& pos, Visual** ppHitVisual)
+	{
+		//TODO: border rect transform like transition, rotation and scale.
+		//not just simple layout rect.
+		return false;
 	}
 
 	bool Visual::Filter(events::EventTarget* target, events::Event* e)
