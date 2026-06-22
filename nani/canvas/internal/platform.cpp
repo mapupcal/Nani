@@ -37,6 +37,8 @@ namespace nani::canvas::internal
 	void Platform::MakeToolWindow(GLFWwindow* window, bool bTool)
 	{
 #ifdef NANI_OS_WIN
+		if (!window)
+			return;
 		HWND hwnd = glfwGetWin32Window(window);
 		LONG_PTR exStyle = ::GetWindowLongPtr(hwnd, GWL_EXSTYLE);
 		if (bTool)
@@ -65,7 +67,14 @@ namespace nani::canvas::internal
 
 		LRESULT CALLBACK CustomWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
-			WindowPrivate* pImpl = g_hwnd2ResizableWindowPrivates.at(hwnd);
+			auto iter = g_hwnd2ResizableWindowPrivates.find(hwnd);
+			if (iter == g_hwnd2ResizableWindowPrivates.end())
+				return ::DefWindowProc(hwnd, msg, wParam, lParam);
+
+			WindowPrivate* pImpl = iter->second;
+			if (!pImpl || !pImpl->_originalWndProc)
+				return ::DefWindowProc(hwnd, msg, wParam, lParam);
+
 			switch (msg)
 			{
 			case WM_NCCALCSIZE:
@@ -147,9 +156,13 @@ namespace nani::canvas::internal
 				return HTCLIENT;
 			}
 			case WM_DESTROY:
+			{
+				auto originalWndProc = pImpl->_originalWndProc;
 				g_hwnd2ResizableWindowPrivates.erase(hwnd);
-				::SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)(_WndProcType*)(pImpl->_originalWndProc));
-				break;
+				::SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)(_WndProcType*)(originalWndProc));
+				pImpl->_originalWndProc = nullptr;
+				return ::CallWindowProc((_WndProcType*)(originalWndProc), hwnd, msg, wParam, lParam);
+			}
 			}
 			return ::CallWindowProc((_WndProcType*)(pImpl->_originalWndProc), hwnd, msg, wParam, lParam);
 		}
@@ -158,8 +171,12 @@ namespace nani::canvas::internal
 	void Platform::MakeResizableWindow(GLFWwindow* window, bool bResizable)
 	{
 #ifdef NANI_OS_WIN
+		if (!window)
+			return;
 		HWND hwnd = glfwGetWin32Window(window);
 		WindowPrivate* pImpl = reinterpret_cast<WindowPrivate*>(glfwGetWindowUserPointer(window));
+		if (!pImpl)
+			return;
 		if (bResizable)
 		{
 			if (!pImpl->_originalWndProc)
@@ -188,10 +205,14 @@ namespace nani::canvas::internal
 	void Platform::MakeTruncatedPassThroughWindow(GLFWwindow* window, bool bPassThrough)
 	{
 #ifdef NANI_OS_WIN
+		if (!window)
+			return;
 		HWND hwnd = glfwGetWin32Window(window);
 		if (bPassThrough)
 		{
 			WindowPrivate* pImpl = reinterpret_cast<WindowPrivate*>(glfwGetWindowUserPointer(window));
+			if (!pImpl)
+				return;
 			Color truncatedColor = pImpl->truncatedColor;
 			LONG style = ::GetWindowLong(hwnd, GWL_EXSTYLE);
 			style |= WS_EX_LAYERED;

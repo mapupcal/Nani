@@ -70,10 +70,11 @@ namespace nani::canvas::elements
 		if (!element)
 			return nullptr;
 
-		const std::u8string_view styleClass = element->SylteClass();
+		const std::u8string_view styleClass = element->StyleClass();
 		const std::u8string_view stateProps = element->States()->GetStateProps();
 
-		std::u8string computeStyleId(styleClass.size() + stateProps.size(), u8'\0');
+		std::u8string computeStyleId;
+		computeStyleId.reserve(styleClass.size() + stateProps.size());
 		computeStyleId.append(styleClass);
 		computeStyleId.append(stateProps);
 
@@ -81,9 +82,9 @@ namespace nani::canvas::elements
 		if (iter != m_mapComputedStyles.cend())
 			return iter->second;
 
-		ComputedStyle* computedSytle = new ComputedStyle();
+		ComputedStyle* computedStyle = new ComputedStyle();
 		//TODO: Compute Style
-		m_mapComputedStyles.emplace(computeStyleId, computedSytle);
-		return computedSytle;
+		m_mapComputedStyles.emplace(computeStyleId, computedStyle);
+		return computedStyle;
 	}
 }

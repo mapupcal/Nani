@@ -20,8 +20,8 @@ namespace nani::canvas::elements
 
 		void SetStyles(std::shared_ptr<Styles> styles);
 		Styles* GetStyles();
-		void SetStyleClass(std::u8string_view& styleClass);
-		const std::u8string_view SylteClass() const;
+		void SetStyleClass(const std::u8string_view& styleClass);
+		const std::u8string_view StyleClass() const;
 
 		ElementStates* States();
 		ElementVisibility* Visibility();

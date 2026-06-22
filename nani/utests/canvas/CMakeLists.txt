@@ -15,7 +15,7 @@ target_compile_features(canvas_utests PRIVATE cxx_std_20)
 
 target_link_libraries(canvas_utests PRIVATE
 	canvas
-	GTest::gtest_main
+	GTest::gtest
 )
 
 set_target_properties(canvas_utests PROPERTIES

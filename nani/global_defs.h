@@ -24,6 +24,6 @@
 #define NANI_API
 #endif
 
-#ifdef WIN32
+#if defined(_WIN32) || defined(WIN32)
 #define NANI_OS_WIN
 #endif

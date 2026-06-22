@@ -169,6 +169,8 @@ namespace nani::canvas::internal
 			InitializeGLFWWindow();
 			InitializeSkiaContext();
 		}
+		if (!glfwWindow)
+			return;
 
 		if (IsVisible())
 			return;
@@ -196,7 +198,7 @@ namespace nani::canvas::internal
 		if (glfwWindow != nullptr)
 		{
 			EnvPrivate::Instance()->UnRegisterWindow(glfwWindow);
-			glfwWindowShouldClose(glfwWindow);
+			glfwSetWindowShouldClose(glfwWindow, GLFW_TRUE);
 			skiaGlContext.reset();
 			skiaSurface.reset();
 			glfwDestroyWindow(glfwWindow);
@@ -272,6 +274,8 @@ namespace nani::canvas::internal
 
 	void WindowPrivate::OnGLFWWindowSizeChanged(int width, int height)
 	{
+		if (!glfwWindow)
+			return;
 		if (width <= 0 || height <= 0)
 			return;
 
@@ -365,9 +369,10 @@ namespace nani::canvas::internal
 
 	void WindowPrivate::Paint(const RectF& dirtyRect)
 	{
-		if (!skiaSurface)
+		if (!glfwWindow || !skiaSurface || !skiaGlContext)
 			return;
 
+		glfwMakeContextCurrent(glfwWindow);
 		SkCanvas* canvas = skiaSurface->getCanvas();
 		if (!canvas)
 			return;
@@ -427,6 +432,7 @@ namespace nani::canvas::internal
 			return;
 
 		glfwSetWindowUserPointer(glfwWindow, this);
+		glfwSetWindowPos(glfwWindow, pos.x, pos.y);
 		_SetWindowHints(glfwWindow, (Window::Hint)hints);
 
 		EnvPrivate::Instance()->RegisterWindow(glfwWindow);
@@ -436,6 +442,7 @@ namespace nani::canvas::internal
 		glfwSetWindowSizeCallback(glfwWindow, _OnGLFWWindowSizeChanged);
 		glfwSetWindowPosCallback(glfwWindow, _OnGLFWWindowPositionChanged);
 		glfwSetWindowCloseCallback(glfwWindow, _OnGLFWWindowClose);
+		glfwSetWindowFocusCallback(glfwWindow, _OnGLFWWindowFocusChanged);
 		glfwSetCursorPosCallback(glfwWindow, _OnGLFWWindowMousePos);
 		glfwSetMouseButtonCallback(glfwWindow, _OnGLFWWindowMouseButton);
 		glfwSetCursorEnterCallback(glfwWindow, _OnGLFWWindowMouseEnter);

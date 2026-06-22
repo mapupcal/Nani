@@ -56,21 +56,20 @@ namespace nani::canvas::elements
 		auto parent = Parent();
 		while (parent)
 		{
-			if (parent->GetStyles())
-				return parent->GetStyles();
-			parent = Parent();
+			if (parent->m_spStyles)
+				return parent->m_spStyles.get();
+			parent = parent->Parent();
 		}
 
-		NANI_ASSERT(false);
 		return nullptr;
 	}
 
-	void Element::SetStyleClass(std::u8string_view& styleClass)
+	void Element::SetStyleClass(const std::u8string_view& styleClass)
 	{
 		m_styleClass = styleClass;
 	}
 
-	const std::u8string_view Element::SylteClass() const
+	const std::u8string_view Element::StyleClass() const
 	{
 		return m_styleClass;
 	}
@@ -91,6 +90,6 @@ namespace nani::canvas::elements
 
 	std::shared_ptr<Visual> Element::CreateVisual(Visual* visualParent)
 	{
-		return std::move(std::make_shared<Visual>(this, visualParent));
+		return std::make_shared<Visual>(this, visualParent);
 	}
 }

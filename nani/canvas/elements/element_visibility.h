@@ -26,6 +26,9 @@ namespace nani::canvas::elements
 		bool IsCollapsed() const;
 
 	private:
+		void SetFlag(Flags flag, bool bSet);
+
+	private:
 		Element* m_pOwner = nullptr;
 		Flags m_flags = Visible;
 	};

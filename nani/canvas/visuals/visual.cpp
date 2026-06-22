@@ -51,7 +51,7 @@ namespace nani::canvas::visuals
 	{
 		if (!m_pElement)
 			return;
-		if (!m_yogaNode)
+		if (m_yogaNode)
 			return;
 		m_yogaNode = YGNodeNew();
 		if (Parent() && Parent()->m_yogaNode)
@@ -70,7 +70,14 @@ namespace nani::canvas::visuals
 
 	void Visual::Update()
 	{
-		ComputedStyle* newComputedStyle = Element()->GetStyles()->Compute(Element());
+		Styles* styles = Element()->GetStyles();
+		if (!styles)
+			return;
+
+		ComputedStyle* newComputedStyle = styles->Compute(Element());
+		if (!newComputedStyle)
+			return;
+
 		auto diff = newComputedStyle->Diff(m_pComputedStyle);
 		m_pComputedStyle = newComputedStyle;
 
@@ -110,8 +117,11 @@ namespace nani::canvas::visuals
 						return visual->Element() == event->element;
 					});
 
-				m_visuals.erase(iter);
-				Reflow();
+				if (iter != m_visuals.cend())
+				{
+					m_visuals.erase(iter);
+					Reflow();
+				}
 			}
 			else if (e->type == Type::ElementStatesChanged)
 			{

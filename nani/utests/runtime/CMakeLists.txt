@@ -13,7 +13,7 @@ target_compile_features(runtime_utests PRIVATE cxx_std_20)
 
 target_link_libraries(runtime_utests PRIVATE
 	runtime
-	GTest::gtest_main
+	GTest::gtest
 )
 
 set_target_properties(runtime_utests PROPERTIES

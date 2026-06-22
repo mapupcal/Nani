@@ -1,6 +1,8 @@
 ﻿#include <gtest/gtest.h>
 #include "canvas/elements/element.h"
 #include "canvas/elements/elements_layer.h"
+#include "canvas/elements/element_visibility.h"
+#include "canvas/elements/styles.h"
 
 using namespace nani::canvas;
 using namespace nani::canvas::basic;
@@ -81,5 +83,47 @@ TEST_F(ElementTest, WindowProperties)
 		EXPECT_EQ(root->Children().size(), 0);
 		delete root;
 	}
+}
+
+TEST_F(ElementTest, VisibilityFlagsCanBeCleared)
+{
+	Element root(nullptr);
+
+	root.Visibility()->SetHidden(true);
+	EXPECT_TRUE(root.Visibility()->IsHidden());
+	EXPECT_FALSE(root.Visibility()->IsVisible());
+
+	root.Visibility()->SetHidden(false);
+	EXPECT_FALSE(root.Visibility()->IsHidden());
+	EXPECT_TRUE(root.Visibility()->IsVisible());
+
+	root.Visibility()->SetCollapsed(true);
+	EXPECT_TRUE(root.Visibility()->IsCollapsed());
+	EXPECT_FALSE(root.Visibility()->IsVisible());
+
+	root.Visibility()->SetCollapsed(false);
+	EXPECT_FALSE(root.Visibility()->IsCollapsed());
+	EXPECT_TRUE(root.Visibility()->IsVisible());
+}
+
+TEST_F(ElementTest, ChildInheritsParentStyles)
+{
+	auto styles = std::make_shared<Styles>();
+	Element root(nullptr);
+	Element child(&root);
+
+	EXPECT_EQ(root.GetStyles(), nullptr);
+	EXPECT_EQ(child.GetStyles(), nullptr);
+
+	root.SetStyles(styles);
+	EXPECT_EQ(child.GetStyles(), styles.get());
+}
+
+TEST_F(ElementTest, StyleClassAcceptsStringView)
+{
+	Element root(nullptr);
+
+	root.SetStyleClass(u8"button");
+	EXPECT_EQ(root.StyleClass(), u8"button");
 }
 
