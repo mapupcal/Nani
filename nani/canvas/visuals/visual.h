@@ -25,8 +25,8 @@ namespace nani::canvas::visuals
 		void Repaint();
 
 		const basic::MarginsF LayoutMarggins() const;
-		const basic::MarginsF LayoutBorder() const;
-		const basic::MarginsF LayoutPadding() const;
+		const basic::MarginsF LayoutBorders() const;
+		const basic::MarginsF LayoutPaddings() const;
 		const basic::RectF LayoutBorderRect() const;
 		const basic::RectF LayoutContentRect() const;
 

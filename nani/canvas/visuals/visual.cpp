@@ -3,7 +3,6 @@
 #include "../elements/element_visibility.h"
 #include "../elements/styles.h"
 #include "../internal/yoga_utils.h"
-#include <yoga/Yoga.h>
 
 using namespace nani::canvas::elements;
 using namespace nani::canvas::events;
@@ -115,47 +114,27 @@ namespace nani::canvas::visuals
 
 	const RectF Visual::LayoutBorderRect() const
 	{
-		RectF rect;
-		rect.left = YGNodeLayoutGetLeft(m_yogaNode);
-		rect.top = YGNodeLayoutGetTop(m_yogaNode);
-		rect.right = YGNodeLayoutGetRight(m_yogaNode);
-		rect.bottom = YGNodeLayoutGetBottom(m_yogaNode);
-		return rect;
+		return internal::yoga_utils::GetNodeBorderRect(m_yogaNode);
 	}
 
 	const basic::MarginsF Visual::LayoutMarggins() const
 	{
-		MarginsF margins;
-		margins.left = YGNodeLayoutGetMargin(m_yogaNode, YGEdgeLeft);
-		margins.top = YGNodeLayoutGetMargin(m_yogaNode, YGEdgeTop);
-		margins.right = YGNodeLayoutGetMargin(m_yogaNode, YGEdgeRight);
-		margins.bottom = YGNodeLayoutGetMargin(m_yogaNode, YGEdgeBottom);
-		return margins;
+		return internal::yoga_utils::GetNodeMargins(m_yogaNode);
 	}
 
-	const MarginsF Visual::LayoutBorder() const
+	const MarginsF Visual::LayoutBorders() const
 	{
-		MarginsF margins;
-		margins.left = YGNodeLayoutGetBorder(m_yogaNode, YGEdgeLeft);
-		margins.top = YGNodeLayoutGetBorder(m_yogaNode, YGEdgeTop);
-		margins.right = YGNodeLayoutGetBorder(m_yogaNode, YGEdgeRight);
-		margins.bottom = YGNodeLayoutGetBorder(m_yogaNode, YGEdgeBottom);
-		return margins;
+		return internal::yoga_utils::GetNodeBorders(m_yogaNode);
 	}
 
-	const MarginsF Visual::LayoutPadding() const
+	const MarginsF Visual::LayoutPaddings() const
 	{
-		MarginsF margins;
-		margins.left = YGNodeLayoutGetPadding(m_yogaNode, YGEdgeLeft);
-		margins.top = YGNodeLayoutGetPadding(m_yogaNode, YGEdgeTop);
-		margins.right = YGNodeLayoutGetPadding(m_yogaNode, YGEdgeRight);
-		margins.bottom = YGNodeLayoutGetPadding(m_yogaNode, YGEdgeBottom);
-		return margins;
+		return internal::yoga_utils::GetNodePaddings(m_yogaNode);
 	}
 
 	const RectF Visual::LayoutContentRect() const
 	{
-		return LayoutBorderRect() - (LayoutBorder() + LayoutPadding());
+		return internal::yoga_utils::GetNodeContentRect(m_yogaNode);
 	}
 
 	bool Visual::HitTest(const basic::PointF& pos, Visual** ppHitVisual)
@@ -224,6 +203,6 @@ namespace nani::canvas::visuals
 		using namespace facebook::yoga;
 		const Style& style = m_pComputedStyle->layoutProps.style;
 		YGNodeRef node = m_yogaNode;
-		internal::yoga_utils::SetYogaNodeStyle(node, style);
+		internal::yoga_utils::SetNodeStyle(node, style);
 	}
 }
