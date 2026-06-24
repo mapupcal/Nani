@@ -59,6 +59,8 @@ nani_add_library(canvas SHARED
 	internal/platform.h
 	internal/window_p.cpp
 	internal/window_p.h
+	internal/yoga_utils.cpp
+	internal/yoga_utils.h
 )
 target_include_directories(canvas PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}

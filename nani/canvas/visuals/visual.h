@@ -36,6 +36,10 @@ namespace nani::canvas::visuals
 		virtual bool Filter(events::EventTarget* target, events::Event* e) override;
 
 	private:
+		void BuildComputedStyle();
+		void SyncLayoutProperties();
+
+	private:
 		elements::Element* m_pElement = nullptr;
 		Visual* m_pParent = nullptr;
 		std::vector<std::shared_ptr<Visual>> m_visuals;

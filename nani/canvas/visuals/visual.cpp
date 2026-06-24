@@ -2,6 +2,7 @@
 #include "../elements/element.h"
 #include "../elements/element_visibility.h"
 #include "../elements/styles.h"
+#include "../internal/yoga_utils.h"
 #include <yoga/Yoga.h>
 
 using namespace nani::canvas::elements;
@@ -55,7 +56,11 @@ namespace nani::canvas::visuals
 			return;
 		if (m_yogaNode)
 			return;
+
 		m_yogaNode = YGNodeNew();
+		BuildComputedStyle();
+		SyncLayoutProperties();
+
 		if (Parent() && Parent()->m_yogaNode)
 		{
 			auto parentYogaNode = Parent()->m_yogaNode;
@@ -68,6 +73,8 @@ namespace nani::canvas::visuals
 			visual->BuildVisuals();
 			m_visuals.push_back(visual);
 		}
+
+		Reflow();
 	}
 
 	void Visual::Update()
@@ -84,19 +91,26 @@ namespace nani::canvas::visuals
 		m_pComputedStyle = newComputedStyle;
 
 		if (diff.layoutChanged)
+		{
+			SyncLayoutProperties();
 			Reflow();
-		if (diff.visualChanged)
+		}
+		else if (diff.visualChanged)
+		{
 			Repaint();
+		}
 	}
 
 	void Visual::Reflow()
 	{
-		
+		YGNodeMarkDirty(m_yogaNode);
+		//TODO: send layout request.
+		Repaint();
 	}
 
 	void Visual::Repaint()
 	{
-
+		//TODO: send paint request.
 	}
 
 	const RectF Visual::LayoutBorderRect() const
@@ -189,5 +203,27 @@ namespace nani::canvas::visuals
 			}
 		}
 		return false;
+	}
+
+	void Visual::BuildComputedStyle()
+	{
+		if (m_pComputedStyle)
+			return;
+		if (!m_pElement)
+			return;
+
+		auto styles = m_pElement->GetStyles();
+		if (!styles)
+			return;
+
+		m_pComputedStyle = styles->Compute(m_pElement);
+	}
+
+	void Visual::SyncLayoutProperties()
+	{
+		using namespace facebook::yoga;
+		const Style& style = m_pComputedStyle->layoutProps.style;
+		YGNodeRef node = m_yogaNode;
+		internal::yoga_utils::SetYogaNodeStyle(node, style);
 	}
 }
