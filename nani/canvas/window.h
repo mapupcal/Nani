@@ -10,6 +10,15 @@ namespace nani::canvas::internal
 {
 	class WindowPrivate;
 }
+namespace nani::canvas::elements
+{
+	class Element;
+	class Styles;
+}
+namespace nani::canvas::visuals
+{
+	class Visual;
+}
 
 namespace nani::canvas
 {
@@ -57,11 +66,18 @@ namespace nani::canvas
 		void SetHints(Hint hints);
 		Hint Hints() const;
 
+		elements::Element* RootElement();
+
 	private:
 		void OnEvent(events::Event* e);
 
 	private:
 		internal::WindowPrivate* m_pImpl = nullptr;
+		std::shared_ptr<elements::Styles> m_spStyles = nullptr;
+		elements::Element* m_pRootElement = nullptr;
+		std::shared_ptr<visuals::Visual> m_spRootVisual;
+		elements::Element* m_pFocusElement = nullptr;
+		elements::Element* m_pHoverElement = nullptr;
 	};
 
 	inline Window::Hint operator|(Window::Hint lhs, Window::Hint rhs)

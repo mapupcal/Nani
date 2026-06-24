@@ -7,7 +7,6 @@
 #include "basic/rectf.h"
 #include "basic/color.h"
 #include "events/event_defs.h"
-#include <vector>
 
 namespace nani::canvas
 {

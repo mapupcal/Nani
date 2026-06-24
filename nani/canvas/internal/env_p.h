@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "defs.h"
 #include <GLFW/glfw3.h>
-#include <vector>
 
 namespace nani::canvas::internal
 {

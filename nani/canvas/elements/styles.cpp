@@ -61,11 +61,10 @@ namespace nani::canvas::elements
 
 	Styles::~Styles()
 	{
-		for (auto pair : m_mapComputedStyles)
-			delete pair.second;
+
 	}
 
-	ComputedStyle* Styles::Compute(Element* element)
+	std::shared_ptr<ComputedStyle> Styles::Compute(Element* element)
 	{
 		if (!element)
 			return nullptr;
@@ -82,7 +81,7 @@ namespace nani::canvas::elements
 		if (iter != m_mapComputedStyles.cend())
 			return iter->second;
 
-		ComputedStyle* computedStyle = new ComputedStyle();
+		std::shared_ptr<ComputedStyle> computedStyle = std::make_shared<ComputedStyle>();
 		//TODO: Compute Style
 		m_mapComputedStyles.emplace(computeStyleId, computedStyle);
 		return computedStyle;

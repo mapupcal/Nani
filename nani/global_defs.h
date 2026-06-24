@@ -1,5 +1,15 @@
 ﻿#pragma once
+
+#include <vector>
+#include <map>
+#include <algorithm>
+#include <memory>
 #include <string>
+#include <format>
+#include <string_view>
+#include <cctype>
+#include <utility>
+
 
 #if defined _DEBUG
 #	include<cassert>

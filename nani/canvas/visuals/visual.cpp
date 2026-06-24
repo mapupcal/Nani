@@ -82,12 +82,12 @@ namespace nani::canvas::visuals
 		if (!styles)
 			return;
 
-		ComputedStyle* newComputedStyle = styles->Compute(Element());
+		auto newComputedStyle = styles->Compute(Element());
 		if (!newComputedStyle)
 			return;
 
-		auto diff = newComputedStyle->Diff(m_pComputedStyle);
-		m_pComputedStyle = newComputedStyle;
+		auto diff = newComputedStyle->Diff(m_spComputedStyle.get());
+		m_spComputedStyle = newComputedStyle;
 
 		if (diff.layoutChanged)
 		{
@@ -102,7 +102,8 @@ namespace nani::canvas::visuals
 
 	void Visual::Reflow()
 	{
-		YGNodeMarkDirty(m_yogaNode);
+		if(!YGNodeIsDirty(m_yogaNode))
+			YGNodeMarkDirty(m_yogaNode);
 		//TODO: send layout request.
 		Repaint();
 	}
@@ -186,22 +187,22 @@ namespace nani::canvas::visuals
 
 	void Visual::BuildComputedStyle()
 	{
-		if (m_pComputedStyle)
+		if (m_spComputedStyle)
 			return;
-		if (!m_pElement)
+		if (!Element())
 			return;
 
-		auto styles = m_pElement->GetStyles();
+		auto styles = Element()->GetStyles();
 		if (!styles)
 			return;
 
-		m_pComputedStyle = styles->Compute(m_pElement);
+		m_spComputedStyle = styles->Compute(Element());
 	}
 
 	void Visual::SyncLayoutProperties()
 	{
 		using namespace facebook::yoga;
-		const Style& style = m_pComputedStyle->layoutProps.style;
+		const Style& style = m_spComputedStyle->layoutProps.style;
 		YGNodeRef node = m_yogaNode;
 		internal::yoga_utils::SetNodeStyle(node, style);
 	}

@@ -1,5 +1,4 @@
 ﻿#include "sizef.h"
-#include <utility>
 namespace nani::canvas::basic
 {
 	SizeF::SizeF()

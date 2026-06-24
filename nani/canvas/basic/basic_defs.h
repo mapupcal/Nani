@@ -1,7 +1,5 @@
 ﻿#pragma once
 #include "../defs.h"
-#include <string>
-#include <format>
 
 namespace nani::canvas::basic
 {

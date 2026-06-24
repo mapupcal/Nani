@@ -168,6 +168,11 @@ namespace nani::canvas::internal
 		{
 			InitializeGLFWWindow();
 			InitializeSkiaContext();
+
+			Event event(Type::Show);
+			window->FireEvent(&event);
+			Paint(RectF(0, 0, size));
+			return;
 		}
 		if (!glfwWindow)
 			return;

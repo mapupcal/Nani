@@ -1,7 +1,14 @@
 ﻿#include "window.h"
 #include "internal/window_p.h"
+#include "elements/element.h"
+#include "elements/styles.h"
+#include "visuals/visual.h"
+
 using namespace nani::canvas::basic;
 using namespace nani::canvas::events;
+using namespace nani::canvas::elements;
+using namespace nani::canvas::visuals;
+
 namespace nani::canvas
 {
 	Window::Window(const PointF& pos, const SizeF& size)
@@ -14,6 +21,8 @@ namespace nani::canvas
 	Window::~Window()
 	{
 		delete m_pImpl;
+		m_spRootVisual.reset();
+		delete m_pRootElement;
 	}
 
 	const PointF Window::Position() const
@@ -136,8 +145,47 @@ namespace nani::canvas
 		return (Window::Hint)m_pImpl->hints;
 	}
 
+	Element* Window::RootElement()
+	{
+		if (!m_pRootElement)
+		{
+			m_pRootElement = new Element(nullptr);
+			m_spStyles = std::make_shared<Styles>();
+			//TODO: default add Window Styles.
+			m_pRootElement->SetStyles(m_spStyles);
+			m_pRootElement->SetStyleClass(u8"Window");
+		}
+		return m_pRootElement;
+	}
+
 	void Window::OnEvent(Event* e)
 	{
-
+		switch (e->type)
+		{
+		case Type::Show:
+		{
+			if (!m_spRootVisual)
+			{
+				m_spRootVisual = RootElement()->CreateVisual(nullptr);
+				m_spRootVisual->BuildVisuals();
+			}
+		}
+			break;
+		case Type::Close:
+		{
+			m_spRootVisual.reset();
+		}
+			break;
+		case Type::Resize:
+		{
+			if (m_spRootVisual)
+			{
+				m_spRootVisual->Update();
+			}
+		}
+			break;
+		default:
+			break;
+		}
 	}
 }

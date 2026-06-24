@@ -1,8 +1,6 @@
 ﻿#pragma once
 #include "defs.h"
 #include "basic/rectf.h"
-#include <vector>
-#include <memory>
 
 namespace nani::canvas::internal
 {

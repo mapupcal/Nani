@@ -3,11 +3,13 @@
 #include "canvas/events/event.h"
 #include "canvas/events/event_filter.h"
 #include "canvas/screen.h"
+#include "canvas/elements/element.h"
 #include <memory>
 #include <functional>
 
 using namespace nani::canvas::basic;
 using namespace nani::canvas::events;
+using namespace nani::canvas::elements;
 using namespace nani::canvas;
 
 struct WindowEventFilterDelegate : public EventFilter
@@ -49,16 +51,8 @@ int main(int argc, char** argv)
 	window->SetBorderWidth(2.0f);
 	window->SetRadius(50.0f);
 	window->SetBorderColor(Colors::Cyan);
+	auto element = new Element(window->RootElement());
 	window->Show();
-	printf("visible : %d \n", window->IsVisible());
-	window->Hide();
-	printf("visible : %d \n", window->IsVisible());
-	
-	printf("positon : %f, %f \n", window->Position().x, window->Position().y);
-	window->Move(Screen::Primary()->WorkAreaGeometry().Center());
-	printf("positon : %f, %f \n", window->Position().x, window->Position().y);
-	window->Show();
-
 	WindowEventFilterDelegate watcher(window.get());
 	watcher.delegate = [=](Event* e) -> bool {
 		if (e->type == Type::MousePress)

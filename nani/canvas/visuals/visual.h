@@ -1,10 +1,6 @@
 ﻿#pragma once
 #include "visuals_defs.h"
 struct YGNode;
-namespace nani::canvas::elements
-{
-	struct ComputedStyle;
-}
 namespace nani::canvas::visuals
 {
 	using YGNodeRef = YGNode*;
@@ -44,6 +40,6 @@ namespace nani::canvas::visuals
 		Visual* m_pParent = nullptr;
 		std::vector<std::shared_ptr<Visual>> m_visuals;
 		YGNodeRef m_yogaNode = nullptr;
-		elements::ComputedStyle* m_pComputedStyle = nullptr;
+		std::shared_ptr<elements::ComputedStyle> m_spComputedStyle;
 	};
 }

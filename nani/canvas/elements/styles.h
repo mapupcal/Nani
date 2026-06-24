@@ -61,9 +61,9 @@ namespace nani::canvas::elements
 		~Styles();
 
 	public:
-		ComputedStyle* Compute(Element* element);
+		std::shared_ptr<ComputedStyle> Compute(Element* element);
 
 	private:
-		std::map<std::u8string, ComputedStyle*> m_mapComputedStyles;
+		std::map<std::u8string, std::shared_ptr<ComputedStyle>> m_mapComputedStyles;
 	};
 }

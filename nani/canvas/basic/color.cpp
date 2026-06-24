@@ -1,7 +1,4 @@
 ﻿#include "color.h"
-#include <string>
-#include <string_view>
-#include <cctype>
 namespace
 {
 	using namespace nani::canvas::basic;

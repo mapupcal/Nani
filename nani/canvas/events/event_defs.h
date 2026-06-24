@@ -3,7 +3,6 @@
 #include "../basic/pointf.h"
 #include "../basic/sizef.h"
 #include "../basic/rectf.h"
-#include <vector>
 namespace nani::canvas::elements
 {
 	class Element;
