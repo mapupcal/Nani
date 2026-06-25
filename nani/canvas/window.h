@@ -54,6 +54,7 @@ namespace nani::canvas
 		Hint Hints() const;
 
 		elements::Element* RootElement();
+		visuals::View* GetView() const;
 		SkCanvas* GetCanvas();
 
 	private:
@@ -64,7 +65,7 @@ namespace nani::canvas
 
 		std::shared_ptr<elements::Styles> m_spStyles = nullptr;
 		elements::Element* m_pRootElement = nullptr;
-		std::shared_ptr<visuals::View> m_spView = nullptr;
+		visuals::View* m_pView = nullptr;
 	};
 
 	inline Window::Hint operator|(Window::Hint lhs, Window::Hint rhs)

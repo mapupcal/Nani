@@ -14,14 +14,15 @@ namespace nani::canvas
 {
 	Window::Window(const PointF& pos, const SizeF& size)
 		: m_pImpl(new internal::WindowPrivate(this))
+		, m_pView(new View(this))
 	{
 		m_pImpl->pos = pos;
 		m_pImpl->size = size;
-		m_spView = std::make_shared<visuals::View>(this);
 	}
 
 	Window::~Window()
 	{
+		delete m_pView;
 		delete m_pImpl;
 		delete m_pRootElement;
 	}
@@ -164,6 +165,11 @@ namespace nani::canvas
 		return m_pRootElement;
 	}
 
+	visuals::View* Window::GetView() const
+	{
+		return m_pView;
+	}
+
 	SkCanvas* Window::GetCanvas()
 	{
 		return m_pImpl->GetCanvas();
@@ -176,42 +182,42 @@ namespace nani::canvas
 		case events::Type::Resize:
 		{
 			ResizeEvent* resizeEvent = static_cast<ResizeEvent*>(e);
-			m_spView->Resize(resizeEvent->newSize);
+			m_pView->Resize(resizeEvent->newSize);
 			break;
 		}
 		case events::Type::Show:
 		{
-			m_spView->BuildVisuals();
+			m_pView->BuildVisuals();
 			break;
 		}
 		case events::Type::Close:
 		{
-			m_spView->MarkDirty();
+			m_pView->MarkDirty();
 			break;
 		}
 		case events::Type::MouseMove:
 		{
-			m_spView->OnMouseMove(static_cast<MouseMoveEvent*>(e));
+			m_pView->OnMouseMove(static_cast<MouseMoveEvent*>(e));
 			break;
 		}
 		case events::Type::MousePress:
 		{
-			m_spView->OnMousePress(static_cast<MousePressEvent*>(e));
+			m_pView->OnMousePress(static_cast<MousePressEvent*>(e));
 			break;
 		}
 		case events::Type::MouseRelease:
 		{
-			m_spView->OnMouseRelease(static_cast<MouseButtonEvent*>(e));
+			m_pView->OnMouseRelease(static_cast<MouseButtonEvent*>(e));
 			break;
 		}
 		case events::Type::KeyPress:
 		{
-			m_spView->OnKeyPress(static_cast<KeyPressEvent*>(e));
+			m_pView->OnKeyPress(static_cast<KeyPressEvent*>(e));
 			break;
 		}
 		case events::Type::KeyRelease:
 		{
-			m_spView->OnKeyRelease(static_cast<KeyReleaseEvent*>(e));
+			m_pView->OnKeyRelease(static_cast<KeyReleaseEvent*>(e));
 			break;
 		}
 		}
