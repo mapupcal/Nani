@@ -1,0 +1,137 @@
+﻿#include "view.h"
+#include "visual.h"
+#include "elements/element.h"
+#include <core/SkCanvas.h>
+using namespace nani::canvas::basic;
+namespace nani::canvas::visuals
+{
+	View::View(canvas::Window* window)
+		: m_pWindow(window)
+	{
+
+	}
+
+	View::~View()
+	{
+
+	}
+
+	canvas::Window* View::Window() const
+	{
+		return m_pWindow;
+	}
+
+	visuals::Visual* View::Visual()
+	{
+		return m_spVisual.get();
+	}
+
+	void View::BuildVisuals()
+	{
+		if (m_spVisual)
+		{
+			Flush();
+			return;
+		}
+		m_spVisual = Window()->RootElement()->CreateVisual(this, nullptr);
+	}
+
+	void View::MarkDirty()
+	{
+		m_bLayoutDirty = true;
+		m_bPaintDirty = true;
+		m_dirtyRect = Window()->ClientRect();
+	}
+
+	void View::Resize(const SizeF& size)
+	{
+		m_bLayoutDirty = true;
+		m_bPaintDirty = true;
+		m_dirtyRect = Window()->ClientRect();
+
+		Flush();
+	}
+
+	void View::Flush()
+	{
+		if (!m_spVisual)
+			return;
+
+		if(m_bLayoutDirty)
+		{
+			SizeF size = Window()->ClientRect().Size();
+
+			m_spVisual->CalculateLayout(size);
+
+			m_bLayoutDirty = false;
+			m_dirtyRect = RectF();
+		}
+
+		if (m_bPaintDirty)
+		{
+			SkCanvas* canvas = Window()->GetCanvas();
+			if (!canvas)
+				return;
+			RectF clientRect = Window()->ClientRect();
+			canvas->save();
+			canvas->clipRect(SkRect::MakeLTRB(clientRect.left, clientRect.top, clientRect.right, clientRect.bottom), true);
+			canvas->translate(clientRect.left, clientRect.top);
+			m_spVisual->Paint(canvas);
+			canvas->restore();
+			m_bPaintDirty = false;
+		}
+	}
+
+	void View::OnEvent(events::Event* e)
+	{
+		switch (e->type)
+		{
+		case events::Type::LayoutRequest:
+		{
+			OnLayoutRequest(static_cast<events::LayoutRequestEvent*>(e));
+			break;
+		}
+		case events::Type::PaintRequest:
+		{
+			OnPaintRequest(static_cast<events::PaintRequestEvent*>(e));
+			break;
+		}
+		}
+	}
+
+	void View::OnLayoutRequest(events::LayoutRequestEvent* e)
+	{
+		m_bLayoutDirty = true;
+	}
+
+	void View::OnPaintRequest(events::PaintRequestEvent* e)
+	{
+		m_bPaintDirty = true;
+		m_dirtyRect = m_dirtyRect | static_cast<events::PaintRequestEvent*>(e)->dirtyRect;
+	}
+
+	void View::OnMouseMove(events::MouseMoveEvent* e)
+	{
+
+	}
+
+	void View::OnMousePress(events::MousePressEvent* e)
+	{
+
+	}
+
+	void View::OnMouseRelease(events::MouseButtonEvent* e)
+	{
+
+	}
+
+	void View::OnKeyPress(events::KeyPressEvent* e)
+	{
+
+	}
+
+	void View::OnKeyRelease(events::KeyReleaseEvent* e)
+	{
+
+	}
+}

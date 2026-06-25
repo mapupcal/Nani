@@ -2,11 +2,6 @@
 #include "defs.h"
 #include "basic/rectf.h"
 
-namespace nani::canvas::internal
-{
-	struct ScreenData;
-}
-
 namespace nani::canvas
 {
 	class NANI_CANVAS_API Screen

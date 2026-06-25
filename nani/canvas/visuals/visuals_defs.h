@@ -4,11 +4,7 @@
 #include "../basic/marginsf.h"
 #include "../basic/color.h"
 #include "../events/event_filter.h"
+#include "../events/event_target.h"
 #include "../elements/elements_defs.h"
-#include <vector>
-#include <algorithm>
+#include "../window.h"
 
-namespace nani::canvas::visuals
-{
-	class Visual;
-}

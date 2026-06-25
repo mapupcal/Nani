@@ -6,20 +6,6 @@
 #include "basic/rectf.h"
 #include "basic/color.h"
 
-namespace nani::canvas::internal
-{
-	class WindowPrivate;
-}
-namespace nani::canvas::elements
-{
-	class Element;
-	class Styles;
-}
-namespace nani::canvas::visuals
-{
-	class Visual;
-}
-
 namespace nani::canvas
 {
 	class NANI_CANVAS_API Window : public events::EventTarget
@@ -41,6 +27,7 @@ namespace nani::canvas
 		const basic::PointF Position() const;
 		const basic::SizeF Size() const;
 		const basic::RectF Rect() const;
+		const basic::RectF ClientRect() const;
 		const basic::RectF Geometry() const;
 		bool IsVisible() const;
 
@@ -67,17 +54,17 @@ namespace nani::canvas
 		Hint Hints() const;
 
 		elements::Element* RootElement();
+		SkCanvas* GetCanvas();
 
 	private:
 		void OnEvent(events::Event* e);
 
 	private:
 		internal::WindowPrivate* m_pImpl = nullptr;
+
 		std::shared_ptr<elements::Styles> m_spStyles = nullptr;
 		elements::Element* m_pRootElement = nullptr;
-		std::shared_ptr<visuals::Visual> m_spRootVisual;
-		elements::Element* m_pFocusElement = nullptr;
-		elements::Element* m_pHoverElement = nullptr;
+		std::shared_ptr<visuals::View> m_spView = nullptr;
 	};
 
 	inline Window::Hint operator|(Window::Hint lhs, Window::Hint rhs)

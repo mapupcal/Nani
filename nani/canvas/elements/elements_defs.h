@@ -5,13 +5,3 @@
 #include "../basic/color.h"
 #include "../events/event_target.h"
 #include "../events/event.h"
-
-namespace nani::canvas::elements
-{
-	class Element;
-	class ElementsLayer;
-	class ElementStates;
-	class ElementVisibility;
-	class ComputedStyle;
-	class Styles;
-}

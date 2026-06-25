@@ -2,7 +2,7 @@
 #include "elements_defs.h"
 namespace nani::canvas::elements
 {
-	class ElementStates
+	class NANI_CANVAS_API ElementStates
 	{
 	public:
 		enum Flags : basic::uint32

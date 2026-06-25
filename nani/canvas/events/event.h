@@ -152,4 +152,32 @@ namespace nani::canvas::events
 
 		elements::Element* const element = nullptr;
 	};
+
+	class NANI_CANVAS_API LayoutRequestEvent : public Event
+	{
+	public:
+		LayoutRequestEvent(visuals::Visual* visual_);
+		~LayoutRequestEvent() = default;
+
+		visuals::Visual* const visual = nullptr;
+	};
+
+	class NANI_CANVAS_API PaintRequestEvent : public Event
+	{
+	public:
+		PaintRequestEvent(visuals::Visual* visual_, const basic::RectF& dirtyRect);
+		~PaintRequestEvent() = default;
+
+		visuals::Visual* const visual = nullptr;
+		const basic::RectF dirtyRect;
+	};
+
+	class NANI_CANVAS_API TargetDestroyedEvent : public Event
+	{
+	public:
+		TargetDestroyedEvent(EventTarget* target_);
+		~TargetDestroyedEvent() = default;
+
+		EventTarget* const target = nullptr;
+	};
 }

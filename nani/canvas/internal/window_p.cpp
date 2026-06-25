@@ -494,4 +494,9 @@ namespace nani::canvas::internal
 
 		Paint(RectF(0, 0, size));
 	}
+
+	SkCanvas* WindowPrivate::GetCanvas()
+	{
+		return skiaSurface ? skiaSurface->getCanvas() : nullptr;
+	}
 }

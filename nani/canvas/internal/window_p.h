@@ -8,11 +8,6 @@
 #include "basic/color.h"
 #include "events/event_defs.h"
 
-namespace nani::canvas
-{
-	class Window;
-}
-
 namespace nani::canvas::internal
 {
 	class WindowPrivate
@@ -42,6 +37,7 @@ namespace nani::canvas::internal
 		void InitializeGLFWWindow();
 		void InitializeSkiaContext();
 		void ResetSkiaSurface();
+		SkCanvas* GetCanvas();
 
 		void Paint(const basic::RectF& dirtyRect);
 

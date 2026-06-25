@@ -3,16 +3,8 @@
 #include "../basic/pointf.h"
 #include "../basic/sizef.h"
 #include "../basic/rectf.h"
-namespace nani::canvas::elements
-{
-	class Element;
-}
 namespace nani::canvas::events
 {
-	class Event;
-	class EventFilter;
-	class EventTarget;
-
 	enum class Type
 	{
 		Unknown,
@@ -43,6 +35,11 @@ namespace nani::canvas::events
 		ElementRemove,
 		ElementStatesChanged,
 		ElementVisibilityChanged,
+
+		LayoutRequest,
+		PaintRequest,
+
+		TargetDestroyed
 	};
 
 	enum class MouseButton : unsigned int

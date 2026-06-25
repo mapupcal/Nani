@@ -1,4 +1,5 @@
 ﻿#include "visual.h"
+#include "view.h"
 #include "../elements/element.h"
 #include "../elements/element_visibility.h"
 #include "../elements/styles.h"
@@ -10,8 +11,9 @@ using namespace nani::canvas::basic;
 
 namespace nani::canvas::visuals
 {
-	Visual::Visual(elements::Element* element, Visual* parent)
-		: m_pElement(element)
+	Visual::Visual(visuals::View* view, elements::Element* element, Visual* parent)
+		: m_pView(view)
+		, m_pElement(element)
 		, m_pParent(parent)
 	{
 		if (m_pElement)
@@ -49,6 +51,11 @@ namespace nani::canvas::visuals
 		return m_visuals;
 	}
 
+	visuals::View* Visual::View() const
+	{
+		return m_pView;
+	}
+
 	void Visual::BuildVisuals()
 	{
 		if (!m_pElement)
@@ -68,7 +75,7 @@ namespace nani::canvas::visuals
 		auto elements = m_pElement->Children();
 		for (elements::Element* element : elements)
 		{
-			auto visual = element->CreateVisual(this);
+			auto visual = element->CreateVisual(View(), this);
 			visual->BuildVisuals();
 			m_visuals.push_back(visual);
 		}
@@ -94,7 +101,8 @@ namespace nani::canvas::visuals
 			SyncLayoutProperties();
 			Reflow();
 		}
-		else if (diff.visualChanged)
+
+		if (diff.visualChanged)
 		{
 			Repaint();
 		}
@@ -102,15 +110,28 @@ namespace nani::canvas::visuals
 
 	void Visual::Reflow()
 	{
-		if(!YGNodeIsDirty(m_yogaNode))
-			YGNodeMarkDirty(m_yogaNode);
-		//TODO: send layout request.
-		Repaint();
+		if (!m_yogaNode)
+			return;
+
+		LayoutRequestEvent lre(this);
+		View()->FireEvent(&lre);
 	}
 
 	void Visual::Repaint()
 	{
-		//TODO: send paint request.
+		PaintRequestEvent pre(this, LayoutBorderRect());
+		View()->FireEvent(&pre);
+	}
+
+	void Visual::CalculateLayout(const basic::SizeF& size)
+	{
+		if (!m_yogaNode)
+			return;
+		if (!m_spComputedStyle)
+			return;
+
+		auto style = m_spComputedStyle->layoutProps.style;
+		YGNodeCalculateLayout(m_yogaNode, size.width, size.height, (YGDirection)style.direction());
 	}
 
 	const RectF Visual::LayoutBorderRect() const
@@ -145,6 +166,12 @@ namespace nani::canvas::visuals
 		return false;
 	}
 
+	void Visual::Paint(SkCanvas* canvas)
+	{
+		//TODO: paint background, border, content, shadow, etc.
+		//TODO: paint child visuals.
+	}
+
 	bool Visual::Filter(events::EventTarget* target, events::Event* e)
 	{
 		if (target == m_pElement)
@@ -152,7 +179,7 @@ namespace nani::canvas::visuals
 			if (e->type == Type::ElementAdd)
 			{
 				ElementModifyEvent* event = static_cast<ElementModifyEvent*>(e);
-				auto visual = event->element->CreateVisual(this);
+				auto visual = event->element->CreateVisual(View(), this);
 				visual->BuildVisuals();
 				m_visuals.push_back(visual);
 				Reflow();

@@ -1,9 +1,5 @@
 ﻿#pragma once
 #include "elements_defs.h"
-namespace nani::canvas::visuals
-{
-	class Visual;
-}
 namespace nani::canvas::elements
 {
 	class NANI_CANVAS_API Element : public events::EventTarget
@@ -25,7 +21,7 @@ namespace nani::canvas::elements
 
 		ElementStates* States();
 		ElementVisibility* Visibility();
-		virtual std::shared_ptr<visuals::Visual> CreateVisual(visuals::Visual* visualParent);
+		virtual std::shared_ptr<visuals::Visual> CreateVisual(visuals::View* view, visuals::Visual* visualParent);
 
 	private:
 		friend class ElementsLayer;

@@ -13,7 +13,8 @@ namespace nani::canvas::events
 
 	EventTarget::~EventTarget()
 	{
-
+		TargetDestroyedEvent e(this);
+		FireEvent(&e);
 	}
 
 	void EventTarget::RegisterEventFilter(EventFilter* filter)

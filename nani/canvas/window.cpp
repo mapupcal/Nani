@@ -3,6 +3,7 @@
 #include "elements/element.h"
 #include "elements/styles.h"
 #include "visuals/visual.h"
+#include "visuals/view.h"
 
 using namespace nani::canvas::basic;
 using namespace nani::canvas::events;
@@ -16,12 +17,12 @@ namespace nani::canvas
 	{
 		m_pImpl->pos = pos;
 		m_pImpl->size = size;
+		m_spView = std::make_shared<visuals::View>(this);
 	}
 
 	Window::~Window()
 	{
 		delete m_pImpl;
-		m_spRootVisual.reset();
 		delete m_pRootElement;
 	}
 
@@ -38,6 +39,11 @@ namespace nani::canvas
 	const RectF Window::Rect() const
 	{
 		return RectF(0, 0, Size());
+	}
+
+	const basic::RectF Window::ClientRect() const
+	{
+		return Rect() - basic::MarginsF(BorderWidth(), BorderWidth(), BorderWidth(), BorderWidth());
 	}
 
 	const RectF Window::Geometry() const
@@ -158,34 +164,56 @@ namespace nani::canvas
 		return m_pRootElement;
 	}
 
+	SkCanvas* Window::GetCanvas()
+	{
+		return m_pImpl->GetCanvas();
+	}
+
 	void Window::OnEvent(Event* e)
 	{
 		switch (e->type)
 		{
-		case Type::Show:
+		case events::Type::Resize:
 		{
-			if (!m_spRootVisual)
-			{
-				m_spRootVisual = RootElement()->CreateVisual(nullptr);
-				m_spRootVisual->BuildVisuals();
-			}
-		}
+			ResizeEvent* resizeEvent = static_cast<ResizeEvent*>(e);
+			m_spView->Resize(resizeEvent->newSize);
 			break;
-		case Type::Close:
+		}
+		case events::Type::Show:
 		{
-			m_spRootVisual.reset();
-		}
+			m_spView->BuildVisuals();
 			break;
-		case Type::Resize:
+		}
+		case events::Type::Close:
 		{
-			if (m_spRootVisual)
-			{
-				m_spRootVisual->Update();
-			}
+			m_spView->MarkDirty();
+			break;
 		}
+		case events::Type::MouseMove:
+		{
+			m_spView->OnMouseMove(static_cast<MouseMoveEvent*>(e));
 			break;
-		default:
+		}
+		case events::Type::MousePress:
+		{
+			m_spView->OnMousePress(static_cast<MousePressEvent*>(e));
 			break;
+		}
+		case events::Type::MouseRelease:
+		{
+			m_spView->OnMouseRelease(static_cast<MouseButtonEvent*>(e));
+			break;
+		}
+		case events::Type::KeyPress:
+		{
+			m_spView->OnKeyPress(static_cast<KeyPressEvent*>(e));
+			break;
+		}
+		case events::Type::KeyRelease:
+		{
+			m_spView->OnKeyRelease(static_cast<KeyReleaseEvent*>(e));
+			break;
+		}
 		}
 	}
 }

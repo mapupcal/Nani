@@ -1,4 +1,5 @@
 ﻿#include "event.h"
+#include "event_target.h"
 namespace nani::canvas::events
 {
 	Event::Event(Type type_)
@@ -111,6 +112,28 @@ namespace nani::canvas::events
 	ElementVisibilityChangedEvent::ElementVisibilityChangedEvent(elements::Element* element_)
 		: Event(Type::ElementVisibilityChanged)
 		, element(element_)
+	{
+
+	}
+
+	LayoutRequestEvent::LayoutRequestEvent(visuals::Visual* visual_)
+		: Event(Type::LayoutRequest)
+		, visual(visual_)
+	{
+
+	}
+
+	PaintRequestEvent::PaintRequestEvent(visuals::Visual* visual_, const basic::RectF& dirtyRect_)
+		: Event(Type::PaintRequest)
+		, visual(visual_)
+		, dirtyRect(dirtyRect_)
+	{
+
+	}
+
+	TargetDestroyedEvent::TargetDestroyedEvent(EventTarget* target_)
+		: Event(Type::TargetDestroyed)
+		, target(target_)
 	{
 
 	}

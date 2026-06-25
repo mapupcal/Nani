@@ -88,8 +88,8 @@ namespace nani::canvas::elements
 		return m_pVisibility;
 	}
 
-	std::shared_ptr<Visual> Element::CreateVisual(Visual* visualParent)
+	std::shared_ptr<Visual> Element::CreateVisual(View* view, Visual* visualParent)
 	{
-		return std::make_shared<Visual>(this, visualParent);
+		return std::make_shared<Visual>(view, this, visualParent);
 	}
 }

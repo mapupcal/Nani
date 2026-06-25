@@ -34,6 +34,8 @@ nani_add_library(canvas SHARED
 	visuals/visuals_defs.h
 	visuals/visual.cpp
 	visuals/visual.h
+	visuals/view.cpp
+	visuals/view.h
 
 	events/event_defs.h
 	events/event.cpp
