@@ -33,6 +33,9 @@ namespace nani::canvas::visuals
 		void OnKeyRelease(events::KeyReleaseEvent* e);
 
 	private:
+		elements::Element* HoverElement(elements::Element* candidate);
+
+	private:
 		friend class canvas::Window;
 		canvas::Window* m_pWindow = nullptr;
 		std::shared_ptr<visuals::Visual> m_spVisual;
@@ -41,9 +44,7 @@ namespace nani::canvas::visuals
 		bool m_bPaintDirty = true;
 		basic::RectF m_dirtyRect;
 
-		//TODO: use target_ptr to avoid dangling pointer.
-		//TODO: implement target_ptr to support weak reference.
-		//events::target_ptr<elements::Element> m_pHoverElement;
-		//events::target_ptr<elements::Element> m_pFocusElement;
+		events::target_ptr<elements::Element> m_spHoverElement;
+		events::target_ptr<elements::Element> m_spFocusElement;
 	};
 }

@@ -44,6 +44,7 @@ nani_add_library(canvas SHARED
 	events/event_filter.h
 	events/event_target.cpp
 	events/event_target.h
+	events/target_ptr.hpp
 	
 	cursor.cpp
 	cursor.h

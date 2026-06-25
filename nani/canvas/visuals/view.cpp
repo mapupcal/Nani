@@ -1,8 +1,12 @@
 ﻿#include "view.h"
 #include "visual.h"
 #include "elements/element.h"
+#include "elements/element_states.h"
+#include "events/event.h"
 #include <core/SkCanvas.h>
 using namespace nani::canvas::basic;
+using namespace nani::canvas::events;
+
 namespace nani::canvas::visuals
 {
 	View::View(canvas::Window* window)
@@ -133,5 +137,29 @@ namespace nani::canvas::visuals
 	void View::OnKeyRelease(events::KeyReleaseEvent* e)
 	{
 
+	}
+
+	elements::Element* View::HoverElement(elements::Element* candidate)
+	{
+		if (m_spHoverElement == candidate)
+			return candidate;
+
+		if (m_spHoverElement)
+		{
+			Event le(Type::Leave);
+			m_spHoverElement->FireEvent(&le);
+			m_spHoverElement->States()->SetHovered(false);
+		}
+
+		m_spHoverElement = candidate;
+
+		if (m_spHoverElement)
+		{
+			Event ee(Type::Enter);
+			m_spHoverElement->FireEvent(&ee);
+			m_spHoverElement->States()->SetHovered(true);
+		}
+
+		return m_spHoverElement;
 	}
 }

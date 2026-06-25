@@ -6,6 +6,7 @@ namespace nani::canvas::events
 	{
 	public:
 		EventTarget();
+		EventTarget(const EventTarget& other) = delete;
 		virtual ~EventTarget();
 
 	public:
