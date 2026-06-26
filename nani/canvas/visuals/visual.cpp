@@ -119,7 +119,7 @@ namespace nani::canvas::visuals
 
 	void Visual::Repaint()
 	{
-		PaintRequestEvent pre(this, LayoutBorderRect());
+		PaintRequestEvent pre(this, VisualGeometry().BoundingBox());
 		View()->FireEvent(&pre);
 	}
 
@@ -132,31 +132,6 @@ namespace nani::canvas::visuals
 
 		auto style = m_spComputedStyle->layoutProps.style;
 		YGNodeCalculateLayout(m_yogaNode, size.width, size.height, (YGDirection)style.direction());
-	}
-
-	const RectF Visual::LayoutBorderRect() const
-	{
-		return internal::yoga_utils::GetNodeBorderRect(m_yogaNode);
-	}
-
-	const basic::MarginsF Visual::LayoutMarggins() const
-	{
-		return internal::yoga_utils::GetNodeMargins(m_yogaNode);
-	}
-
-	const MarginsF Visual::LayoutBorders() const
-	{
-		return internal::yoga_utils::GetNodeBorders(m_yogaNode);
-	}
-
-	const MarginsF Visual::LayoutPaddings() const
-	{
-		return internal::yoga_utils::GetNodePaddings(m_yogaNode);
-	}
-
-	const RectF Visual::LayoutContentRect() const
-	{
-		return internal::yoga_utils::GetNodeContentRect(m_yogaNode);
 	}
 
 	bool Visual::HitTest(const basic::PointF& pos, Visual** ppHitVisual)
@@ -232,5 +207,13 @@ namespace nani::canvas::visuals
 		const Style& style = m_spComputedStyle->layoutProps.style;
 		YGNodeRef node = m_yogaNode;
 		internal::yoga_utils::SetNodeStyle(node, style);
+	}
+
+	const PolygonF Visual::VisualGeometry()
+	{
+		RectF lbr = internal::yoga_utils::GetNodeBorderRect(m_yogaNode);
+		PolygonF polygon = PolygonF(lbr);
+		//TODO:: add transform.
+		return polygon;
 	}
 }

@@ -47,15 +47,6 @@ namespace nani::canvas::visuals
 		m_dirtyRect = Window()->ClientRect();
 	}
 
-	void View::Resize(const SizeF& size)
-	{
-		m_bLayoutDirty = true;
-		m_bPaintDirty = true;
-		m_dirtyRect = Window()->ClientRect();
-
-		Flush();
-	}
-
 	void View::Flush()
 	{
 		if (!m_spVisual)
@@ -125,6 +116,11 @@ namespace nani::canvas::visuals
 	}
 
 	void View::OnMouseRelease(events::MouseButtonEvent* e)
+	{
+
+	}
+
+	void View::OnWheel(events::WheelEvent* e)
 	{
 
 	}

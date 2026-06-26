@@ -181,8 +181,8 @@ namespace nani::canvas
 		{
 		case events::Type::Resize:
 		{
-			ResizeEvent* resizeEvent = static_cast<ResizeEvent*>(e);
-			m_pView->Resize(resizeEvent->newSize);
+			m_pView->MarkDirty();
+			m_pView->Flush();
 			break;
 		}
 		case events::Type::Show:

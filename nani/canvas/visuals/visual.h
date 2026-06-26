@@ -20,12 +20,6 @@ namespace nani::canvas::visuals
 		void Repaint();
 		void CalculateLayout(const basic::SizeF& size);
 
-		const basic::MarginsF LayoutMarggins() const;
-		const basic::MarginsF LayoutBorders() const;
-		const basic::MarginsF LayoutPaddings() const;
-		const basic::RectF LayoutBorderRect() const;
-		const basic::RectF LayoutContentRect() const;
-
 		virtual bool HitTest(const basic::PointF& pos, Visual** ppHitVisual);
 		virtual void Paint(SkCanvas* canvas);
 
@@ -35,6 +29,7 @@ namespace nani::canvas::visuals
 	private:
 		void BuildComputedStyle();
 		void SyncLayoutProperties();
+		const basic::PolygonF VisualGeometry();
 
 	private:
 		elements::Element* m_pElement = nullptr;
