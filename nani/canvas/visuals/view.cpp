@@ -107,7 +107,20 @@ namespace nani::canvas::visuals
 
 	void View::OnMouseMove(events::MouseMoveEvent* e)
 	{
+		if (!m_spVisual)
+			return;
 
+		PointF pos = e->pos;
+		RectF clientRect = Window()->ClientRect();
+		pos -= clientRect.TopLeft();
+		pos = m_spVisual->Transform().Reversed().ApplyTo(pos);
+		visuals::Visual* hitVisual = nullptr;
+		if (m_spVisual->HitTest(pos, &hitVisual))
+		{
+			elements::Element* hitElement = HoverElement(hitVisual->Element());
+			if (hitElement)
+				hitElement->FireEvent(e);
+		}
 	}
 
 	void View::OnMousePress(events::MousePressEvent* e)
@@ -115,7 +128,7 @@ namespace nani::canvas::visuals
 
 	}
 
-	void View::OnMouseRelease(events::MouseButtonEvent* e)
+	void View::OnMouseRelease(events::MouseReleaseEvent* e)
 	{
 
 	}

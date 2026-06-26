@@ -4,6 +4,7 @@
 #include "../elements/element_visibility.h"
 #include "../elements/styles.h"
 #include "../internal/yoga_utils.h"
+#include <ranges>
 
 using namespace nani::canvas::elements;
 using namespace nani::canvas::events;
@@ -134,11 +135,72 @@ namespace nani::canvas::visuals
 		YGNodeCalculateLayout(m_yogaNode, size.width, size.height, (YGDirection)style.direction());
 	}
 
-	bool Visual::HitTest(const basic::PointF& pos, Visual** ppHitVisual)
+	const basic::RectF Visual::LayoutRect() const
 	{
-		//TODO: border rect transform like transition, rotation and scale.
-		//not just simple layout rect.
-		return false;
+		return internal::yoga_utils::GetNodeBorderRect(m_yogaNode);
+	}
+
+	const basic::TransformF Visual::Transform() const
+	{
+		if (!m_spComputedStyle)
+			return TransformF();
+		return m_spComputedStyle->visualProps.transform;;
+	}
+
+	bool Visual::HitTest(const basic::PointF& localPos, Visual** ppHitVisual)
+	{
+		if (!m_yogaNode)
+			return false;
+		if (!m_spComputedStyle)
+			return false;
+
+		if (Element()->Visibility()->IsHidden())
+		{
+			// the entire visuals tree is not visible.
+			return false;
+		}
+
+		auto _HitTestChildVisual = [&]() -> bool
+		{
+			for (auto child : std::views::reverse(m_visuals))
+			{
+				PointF childLocalPos = localPos - child->LayoutRect().TopLeft();
+				childLocalPos = child->Transform().Reversed().ApplyTo(childLocalPos);
+				if (child->HitTest(childLocalPos, ppHitVisual))
+					return true;
+			}
+			return false;
+		};
+
+		if (Element()->Visibility()->IsCollapsed())
+		{
+			//current visual not visible, but children visuals may be visible.
+			return _HitTestChildVisual();
+		}
+
+		RectF localRect = LayoutRect();
+		localRect.MoveTo(PointF(0, 0));
+		bool bSelfHit = localRect.IsContains(localPos) && HitTestOverride(localPos);
+
+		bool bOverFlowVisible = m_spComputedStyle->layoutProps.style.overflow() != facebook::yoga::Overflow::Hidden;
+		if (!bSelfHit && !bOverFlowVisible)
+		{
+			//overflow children visuals will be clipped, no hittesting needed.
+			return false;
+		}
+
+		if (_HitTestChildVisual())
+			return true;
+
+		if (bSelfHit)
+			*ppHitVisual = this;
+
+		return bSelfHit;
+	}
+
+	bool Visual::HitTestOverride(const basic::PointF& localPos)
+	{
+		return true;
 	}
 
 	void Visual::Paint(SkCanvas* canvas)
@@ -211,7 +273,7 @@ namespace nani::canvas::visuals
 
 	const PolygonF Visual::VisualGeometry()
 	{
-		RectF lbr = internal::yoga_utils::GetNodeBorderRect(m_yogaNode);
+		RectF lbr = LayoutRect();
 		PolygonF polygon = PolygonF(lbr);
 		//TODO:: add transform.
 		return polygon;

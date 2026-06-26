@@ -20,7 +20,11 @@ namespace nani::canvas::visuals
 		void Repaint();
 		void CalculateLayout(const basic::SizeF& size);
 
-		virtual bool HitTest(const basic::PointF& pos, Visual** ppHitVisual);
+		const basic::RectF LayoutRect() const;
+		const basic::TransformF Transform() const;
+
+		bool HitTest(const basic::PointF& localPos, Visual** ppHitVisual);
+		virtual bool HitTestOverride(const basic::PointF& localPos);
 		virtual void Paint(SkCanvas* canvas);
 
 	public:

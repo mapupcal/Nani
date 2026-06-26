@@ -27,7 +27,7 @@ namespace nani::canvas::visuals
 		// from window.
 		void OnMouseMove(events::MouseMoveEvent* e);
 		void OnMousePress(events::MousePressEvent* e);
-		void OnMouseRelease(events::MouseButtonEvent* e);
+		void OnMouseRelease(events::MouseReleaseEvent* e);
 		void OnWheel(events::WheelEvent* e);
 		void OnKeyPress(events::KeyPressEvent* e);
 		void OnKeyRelease(events::KeyReleaseEvent* e);

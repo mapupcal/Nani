@@ -45,6 +45,7 @@ namespace nani::canvas::elements
 			basic::Color color;
 			basic::Color backgroundColor;
 			basic::Color borderColor;
+			basic::TransformF transform;
 			basic::scalar opacity = 1.0f;
 			BorderRadius radius;
 			Shadow shadow;

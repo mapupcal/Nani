@@ -207,7 +207,7 @@ namespace nani::canvas
 		}
 		case events::Type::MouseRelease:
 		{
-			m_pView->OnMouseRelease(static_cast<MouseButtonEvent*>(e));
+			m_pView->OnMouseRelease(static_cast<MouseReleaseEvent*>(e));
 			break;
 		}
 		case events::Type::KeyPress:
