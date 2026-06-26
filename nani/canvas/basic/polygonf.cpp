@@ -36,35 +36,6 @@ namespace nani::canvas::basic
 			if (vertex.y > maxY) maxY = vertex.y;
 		}
 
-		return RectF(minX, minY, maxX - minX, maxY - minY);
-	}
-
-	bool PolygonF::IsContains(const PointF& pt) const
-	{
-		if (vertices.size() < 3)
-		{
-			return false;
-		}
-
-		// Ray casting algorithm: count intersections of a horizontal ray from the point
-		bool inside = false;
-		size_t n = vertices.size();
-
-		for (size_t i = 0, j = n - 1; i < n; j = i++)
-		{
-			const PointF& vi = vertices[i];
-			const PointF& vj = vertices[j];
-
-			// Check if the ray intersects with edge (vi, vj)
-			bool intersect = ((vi.y > pt.y) != (vj.y > pt.y)) &&
-				(pt.x < (vj.x - vi.x) * (pt.y - vi.y) / (vj.y - vi.y) + vi.x);
-
-			if (intersect)
-			{
-				inside = !inside;
-			}
-		}
-
-		return inside;
+		return RectF(minX, minY, maxX, maxY);
 	}
 }

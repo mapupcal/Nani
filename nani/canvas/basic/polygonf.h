@@ -14,7 +14,6 @@ namespace nani::canvas::basic
 
 	public:
 		const RectF BoundingBox() const;
-		bool IsContains(const PointF& pt) const;
 
 	public:
 		std::vector<PointF> vertices;

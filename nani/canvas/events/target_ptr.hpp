@@ -82,7 +82,7 @@ namespace nani::canvas::events
 			}
 
 		private:
-			Target* m_pTarget;
+			Target* m_pTarget = nullptr;
 		};
 
 	public:

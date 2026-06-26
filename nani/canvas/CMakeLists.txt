@@ -20,6 +20,8 @@ nani_add_library(canvas SHARED
 	basic/marginsf.h
 	basic/polygonf.cpp
 	basic/polygonf.h
+	basic/transformf.cpp
+	basic/transformf.h
 
 	elements/elements_defs.h
 	elements/element.cpp
