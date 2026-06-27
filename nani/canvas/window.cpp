@@ -158,9 +158,8 @@ namespace nani::canvas
 		{
 			m_pRootElement = new Element(nullptr);
 			m_spStyles = std::make_shared<Styles>();
-			//TODO: default add Window Styles.
 			m_pRootElement->SetStyles(m_spStyles);
-			m_pRootElement->SetStyleClass(u8"Window");
+			m_pRootElement->SetStyleClass(u8"NaniWindow");
 		}
 		return m_pRootElement;
 	}

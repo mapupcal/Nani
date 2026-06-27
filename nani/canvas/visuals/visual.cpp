@@ -132,7 +132,7 @@ namespace nani::canvas::visuals
 			return;
 
 		auto style = m_spComputedStyle->layoutProps.style;
-		YGNodeCalculateLayout(m_yogaNode, size.width, size.height, YGDirectionLTR);
+		YGNodeCalculateLayout(m_yogaNode, size.width, size.height, (YGDirection)style.direction());
 	}
 
 	const basic::RectF Visual::LayoutRect() const

@@ -139,43 +139,42 @@ namespace nani::canvas::events
 
 		Target& operator*() const
 		{
-			auto ptr = GetRawPtr();
+			auto ptr = get();
 			assert(ptr != nullptr);
 			return *ptr;
 		}
 
 		Target* operator->() const
 		{
-			return GetRawPtr();
+			return get();
 		}
 
 		operator Target* () const
 		{
-			return GetRawPtr();
+			return get();
 		}
 
 		explicit operator bool() const
 		{
-			return GetRawPtr() != nullptr;
+			return get() != nullptr;
 		}
 
 		bool operator!() const
 		{
-			return GetRawPtr() == nullptr;
+			return get() == nullptr;
 		}
 
 		bool operator==(const target_ptr& other) const
 		{
-			return GetRawPtr() == other.GetRawPtr();
+			return get() == other.get();
 		}
 
 		bool operator!=(const target_ptr& other) const
 		{
-			return GetRawPtr() != other.GetRawPtr();
+			return get() != other.get();
 		}
 
-	private:
-		Target* GetRawPtr() const
+		Target* get() const
 		{
 			return m_safeTarget.Get();
 		}
@@ -187,48 +186,48 @@ namespace nani::canvas::events
 	template<TargetType Target>
 	bool operator==(Target* lhs, const target_ptr<Target>& rhs)
 	{
-		return rhs == lhs;
+		return lhs == rhs.get();
 	}
 
 	template<TargetType Target>
 	bool operator!=(Target* lhs, const target_ptr<Target>& rhs)
 	{
-		return rhs != lhs;
+		return lhs != rhs.get();
 	}
 
 	template<TargetType Target>
 	bool operator==(std::nullptr_t, const target_ptr<Target>& rhs)
 	{
-		return rhs == nullptr;
+		return rhs.get() == nullptr;
 	}
 
 	template<TargetType Target>
 	bool operator!=(std::nullptr_t, const target_ptr<Target>& rhs)
 	{
-		return rhs != nullptr;
+		return rhs.get() != nullptr;
 	}
 
 	template<TargetType Target>
 	bool operator==(const target_ptr<Target>& lhs, Target* rhs)
 	{
-		return rhs == lhs;
+		return lhs.get() == lhs;
 	}
 
 	template<TargetType Target>
 	bool operator!=(const target_ptr<Target>& lhs, Target* rhs)
 	{
-		return rhs == lhs;
+		return lhs.get() != lhs;
 	}
 
 	template<TargetType Target>
-	bool operator==(const target_ptr<Target>& rhs, std::nullptr_t)
+	bool operator==(const target_ptr<Target>& lhs, std::nullptr_t)
 	{
-		return rhs == nullptr;
+		return lhs.get() == nullptr;
 	}
 
 	template<TargetType Target>
-	bool operator!=(const target_ptr<Target>& rhs, std::nullptr_t)
+	bool operator!=(const target_ptr<Target>& lhs, std::nullptr_t)
 	{
-		return rhs != nullptr;
+		return lhs.get() != nullptr;
 	}
 }

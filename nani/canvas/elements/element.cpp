@@ -12,6 +12,7 @@ namespace nani::canvas::elements
 		if (!parent)
 			return;
 		parent->Layer()->AddElement(this);
+		SetStyleClass(u8"Element");
 	}
 
 	Element::~Element()

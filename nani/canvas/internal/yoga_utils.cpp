@@ -48,8 +48,8 @@ namespace nani::canvas::internal::yoga_utils
 		RectF rect;
 		rect.left = YGNodeLayoutGetLeft(node);
 		rect.top = YGNodeLayoutGetTop(node);
-		rect.right = YGNodeLayoutGetRight(node);
-		rect.bottom = YGNodeLayoutGetBottom(node);
+		rect.right = rect.left + YGNodeLayoutGetWidth(node);
+		rect.bottom = rect.top + YGNodeLayoutGetHeight(node);
 		return rect;
 	}
 

@@ -77,7 +77,13 @@ namespace nani::canvas::elements
 		computeStyleId.append(styleClass);
 		computeStyleId.append(stateProps);
 
+		// style with states.
 		auto iter = m_mapComputedStyles.find(computeStyleId);
+		if (iter != m_mapComputedStyles.cend())
+			return iter->second;
+
+		// fallback to style without states.
+		iter = m_mapComputedStyles.find(std::u8string(styleClass));
 		if (iter != m_mapComputedStyles.cend())
 			return iter->second;
 
