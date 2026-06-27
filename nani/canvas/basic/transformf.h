@@ -22,9 +22,7 @@ namespace nani::canvas::basic
 		static const TransformF Compose(std::initializer_list<TransformF> transforms);
 
 	public:
-		TransformF& Append(const TransformF& transform);
-		TransformF& Prepend(const TransformF& transform);
-
+		TransformF& Apply(const TransformF& transform);
 		const TransformF Reversed() const;
 		const TransformF Then(const TransformF& transform) const;
 

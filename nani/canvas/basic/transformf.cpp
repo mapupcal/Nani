@@ -1,19 +1,22 @@
 ﻿#include "transformf.h"
 namespace nani::canvas::basic
 {
-	const TransformF Multiply(const TransformF& rhs, const TransformF& lhs)
+	namespace
 	{
-		TransformF result;
+		const TransformF ApplyTransformInOrder(const TransformF& current, const TransformF& next)
+		{
+			TransformF result;
 
-		result.m11 = lhs.m11 * rhs.m11 + lhs.m12 * rhs.m21;
-		result.m12 = lhs.m11 * rhs.m12 + lhs.m12 * rhs.m22;
-		result.dx = lhs.m11 * rhs.dx + lhs.m12 * rhs.dy + lhs.dx;
+			result.m11 = next.m11 * current.m11 + next.m12 * current.m21;
+			result.m12 = next.m11 * current.m12 + next.m12 * current.m22;
+			result.dx = next.m11 * current.dx + next.m12 * current.dy + next.dx;
 
-		result.m21 = lhs.m21 * rhs.m11 + lhs.m22 * rhs.m21;
-		result.m22 = lhs.m21 * rhs.m12 + lhs.m22 * rhs.m22;
-		result.dy = lhs.m21 * rhs.dx + lhs.m22 * rhs.dy + lhs.dy;
+			result.m21 = next.m21 * current.m11 + next.m22 * current.m21;
+			result.m22 = next.m21 * current.m12 + next.m22 * current.m22;
+			result.dy = next.m21 * current.dx + next.m22 * current.dy + next.dy;
 
-		return result;
+			return result;
+		}
 	}
 
 	TransformF::TransformF()
@@ -114,21 +117,14 @@ namespace nani::canvas::basic
 		TransformF result;
 		for (const auto& t : transforms)
 		{
-			result.Append(t);
+			result.Apply(t);
 		}
 		return result;
 	}
 
-	TransformF& TransformF::Append(const TransformF& transform)
+	TransformF& TransformF::Apply(const TransformF& transform)
 	{
-		TransformF result = Multiply(*this, transform);
-		*this = result;
-		return *this;
-	}
-
-	TransformF& TransformF::Prepend(const TransformF& transform)
-	{
-		TransformF result = Multiply(transform, *this);
+		TransformF result = ApplyTransformInOrder(*this, transform);
 		*this = result;
 		return *this;
 	}
@@ -158,7 +154,7 @@ namespace nani::canvas::basic
 	const TransformF TransformF::Then(const TransformF& transform) const
 	{
 		TransformF result = *this;
-		result.Append(transform);
+		result.Apply(transform);
 		return result;
 	}
 

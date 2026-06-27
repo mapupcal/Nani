@@ -154,40 +154,14 @@ TEST_F(TransformFTest, ComposeMultipleTransforms)
     EXPECT_TRUE(IsScalarEqual(result.y, 9.0f));
 }
 
-TEST_F(TransformFTest, AppendChainsTransforms)
+TEST_F(TransformFTest, ApplyChainsTransforms)
 {
     TransformF t = TransformF::Translation(1.0f, 0.0f);
-    t.Append(TransformF::Translation(0.0f, 2.0f));
+    t.Apply(TransformF::Translation(0.0f, 2.0f));
 
     PointF result = t.ApplyTo(PointF(0.0f, 0.0f));
 
     EXPECT_EQ(result, PointF(1.0f, 2.0f));
-}
-
-TEST_F(TransformFTest, PrependPrependsTransform)
-{
-    TransformF t = TransformF::Translation(0.0f, 2.0f);
-    t.Prepend(TransformF::Translation(1.0f, 0.0f));
-
-    PointF result = t.ApplyTo(PointF(0.0f, 0.0f));
-
-    EXPECT_EQ(result, PointF(1.0f, 2.0f));
-}
-
-TEST_F(TransformFTest, AppendAndPrependOrderMatters)
-{
-    TransformF scale = TransformF::Scaling(2.0f, 2.0f);
-    TransformF translate = TransformF::Translation(3.0f, 0.0f);
-
-    TransformF scaleThenTranslate = scale;
-    scaleThenTranslate.Append(translate);
-    PointF resultST = scaleThenTranslate.ApplyTo(PointF(1.0f, 0.0f));
-    EXPECT_EQ(resultST, PointF(5.0f, 0.0f));
-
-    TransformF translateThenScale = scale;
-    translateThenScale.Prepend(translate);
-    PointF resultTS = translateThenScale.ApplyTo(PointF(1.0f, 0.0f));
-    EXPECT_EQ(resultTS, PointF(8.0f, 0.0f));
 }
 
 TEST_F(TransformFTest, ThenReturnsNewTransform)
