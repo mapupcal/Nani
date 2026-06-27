@@ -171,7 +171,7 @@ namespace nani::canvas::internal
 
 			Event event(Type::Show);
 			window->FireEvent(&event);
-			Paint(RectF(0, 0, size));
+			Repaint();
 			return;
 		}
 		if (!glfwWindow)
@@ -184,7 +184,7 @@ namespace nani::canvas::internal
 
 		Event event(Type::Show);
 		window->FireEvent(&event);
-		Paint(RectF(0, 0, size));
+		Repaint();
 	}
 
 	void WindowPrivate::Hide()
@@ -235,25 +235,25 @@ namespace nani::canvas::internal
 	void WindowPrivate::SetRadius(basic::single fRadius)
 	{
 		radius = fRadius;
-		Paint(RectF(0, 0, size));
+		Repaint();
 	}
 
 	void WindowPrivate::SetBorderWidth(basic::single fWidth)
 	{
 		borderWidth = fWidth;
-		Paint(RectF(0, 0, size));
+		Repaint();
 	}
 
 	void WindowPrivate::SetBorderColor(const basic::Color & color)
 	{
 		borderColor = color;
-		Paint(RectF(0, 0, size));
+		Repaint();
 	}
 
 	void WindowPrivate::SetBackgroundColor(const basic::Color& color)
 	{
 		backgroundColor = color;
-		Paint(RectF(0, 0, size));
+		Repaint();
 	}
 
 	void WindowPrivate::SetTitle(const std::string_view & title_)
@@ -268,7 +268,7 @@ namespace nani::canvas::internal
 		hints = hints_;
 		if (glfwWindow)
 			_SetWindowHints(glfwWindow,(Window::Hint)hints);
-		Paint(RectF(0, 0, size));
+		Repaint();
 	}
 
 	void WindowPrivate::SetTruncatedColor(const basic::Color& color)
@@ -372,7 +372,12 @@ namespace nani::canvas::internal
 		}
 	}
 
-	void WindowPrivate::Paint(const RectF& dirtyRect)
+	void WindowPrivate::onTick()
+	{
+		window->Update();
+	}
+
+	void nani::canvas::internal::WindowPrivate::Repaint()
 	{
 		if (!glfwWindow || !skiaSurface || !skiaGlContext)
 			return;
@@ -406,7 +411,7 @@ namespace nani::canvas::internal
 			canvas->drawRRect(SkRRect::MakeRectXY(strokeRect, radius, radius), strokePaint);
 		}
 
-		PaintEvent event(dirtyRect);
+		PaintEvent event(RectF(PointF(0.0f, 0.0f), size));
 		window->FireEvent(&event);
 		skiaGlContext->flushAndSubmit();
 		glfwSwapBuffers(glfwWindow);
@@ -492,7 +497,7 @@ namespace nani::canvas::internal
 			nullptr
 		);
 
-		Paint(RectF(0, 0, size));
+		Repaint();
 	}
 
 	SkCanvas* WindowPrivate::GetCanvas()

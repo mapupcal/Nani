@@ -22,6 +22,9 @@ namespace nani::canvas::internal
 		~EnvPrivate();
 
 	private:
+		void Tick();
+
+	private:
 		std::vector<GLFWwindow*> m_lstWindows;
 	};
 }

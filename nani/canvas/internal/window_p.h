@@ -39,7 +39,7 @@ namespace nani::canvas::internal
 		void ResetSkiaSurface();
 		SkCanvas* GetCanvas();
 
-		void Paint(const basic::RectF& dirtyRect);
+		void Repaint();
 
 	public:
 		void OnGLFWWindowSizeChanged(int width, int height);
@@ -51,6 +51,7 @@ namespace nani::canvas::internal
 		void OnGLFWWindowMouseButton(double xPos, double yPos, events::MouseButton button, bool bPress, events::Modifier modifier);
 		void OnGLFWWindowWheelScroll(double xDelta, double yDelta);
 		void OnGLFWWindowKeyEvent(events::Key key, int scancode, bool bPress, events::Modifier modifier);
+		void onTick();
 
 	public:
 		unsigned int hints = 0;

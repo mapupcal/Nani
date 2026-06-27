@@ -25,7 +25,7 @@ namespace nani::canvas::visuals
 
 		bool HitTest(const basic::PointF& localPos, Visual** ppHitVisual);
 		virtual bool HitTestOverride(const basic::PointF& localPos);
-		virtual void Paint(SkCanvas* canvas);
+		virtual void Paint(SkCanvas* canvas, const basic::RectF& dirtyRect);
 
 	public:
 		bool Filter(events::EventTarget* target, events::Event* e) override;

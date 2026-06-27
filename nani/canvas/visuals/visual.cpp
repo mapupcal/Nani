@@ -132,7 +132,7 @@ namespace nani::canvas::visuals
 			return;
 
 		auto style = m_spComputedStyle->layoutProps.style;
-		YGNodeCalculateLayout(m_yogaNode, size.width, size.height, (YGDirection)style.direction());
+		YGNodeCalculateLayout(m_yogaNode, size.width, size.height, YGDirectionLTR);
 	}
 
 	const basic::RectF Visual::LayoutRect() const
@@ -203,7 +203,7 @@ namespace nani::canvas::visuals
 		return true;
 	}
 
-	void Visual::Paint(SkCanvas* canvas)
+	void Visual::Paint(SkCanvas* canvas, const basic::RectF& dirtyRect)
 	{
 		//TODO: paint background, border, content, shadow, etc.
 		//TODO: paint child visuals.

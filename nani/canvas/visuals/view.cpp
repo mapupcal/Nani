@@ -38,6 +38,7 @@ namespace nani::canvas::visuals
 			return;
 		}
 		m_spVisual = Window()->RootElement()->CreateVisual(this, nullptr);
+		m_spVisual->BuildVisuals();
 	}
 
 	void View::MarkDirty()
@@ -59,7 +60,6 @@ namespace nani::canvas::visuals
 			m_spVisual->CalculateLayout(size);
 
 			m_bLayoutDirty = false;
-			m_dirtyRect = RectF();
 		}
 
 		if (m_bPaintDirty)
@@ -67,13 +67,14 @@ namespace nani::canvas::visuals
 			SkCanvas* canvas = Window()->GetCanvas();
 			if (!canvas)
 				return;
-			RectF clientRect = Window()->ClientRect();
+
 			canvas->save();
-			canvas->clipRect(SkRect::MakeLTRB(clientRect.left, clientRect.top, clientRect.right, clientRect.bottom), true);
-			canvas->translate(clientRect.left, clientRect.top);
-			m_spVisual->Paint(canvas);
+			canvas->clipRect(SkRect::MakeLTRB(m_dirtyRect.left, m_dirtyRect.top, m_dirtyRect.right, m_dirtyRect.bottom), true);
+			m_spVisual->Paint(canvas, m_dirtyRect);
 			canvas->restore();
+
 			m_bPaintDirty = false;
+			m_dirtyRect = RectF();
 		}
 	}
 

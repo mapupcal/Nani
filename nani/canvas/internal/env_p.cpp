@@ -1,4 +1,5 @@
 ﻿#include "env_p.h"
+#include "window_p.h"
 
 namespace nani::canvas::internal
 {
@@ -39,6 +40,7 @@ namespace nani::canvas::internal
 		while (!m_lstWindows.empty())
 		{
 			glfwWaitEvents();
+			Tick();
 			glfwPollEvents();
 		}
 
@@ -53,6 +55,16 @@ namespace nani::canvas::internal
 	EnvPrivate::~EnvPrivate()
 	{
 
+	}
+
+	void EnvPrivate::Tick()
+	{
+		for (auto glfwWindow : m_lstWindows)
+		{
+			WindowPrivate* pImpl = reinterpret_cast<WindowPrivate*>(glfwGetWindowUserPointer(glfwWindow));
+			if (pImpl)
+				pImpl->onTick();
+		}
 	}
 }
 

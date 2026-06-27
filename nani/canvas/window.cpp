@@ -84,7 +84,7 @@ namespace nani::canvas
 
 	void Window::Update()
 	{
-		m_pImpl->Paint(Rect());
+		m_pView->Flush();
 	}
 
 	void Window::SetRadius(basic::single fRadius)
