@@ -1,10 +1,5 @@
 #include <gtest/gtest.h>
-#include "canvas/basic/marginsf.h"
-#include "canvas/basic/pointf.h"
-#include "canvas/basic/rectf.h"
-#include "canvas/basic/sizef.h"
-
-using namespace nani::canvas::basic;
+#include "defs.h"
 
 class GeometryTest : public ::testing::Test
 {
@@ -141,7 +136,7 @@ TEST_F(GeometryTest, RectFContainsBoundaryPoints)
 	RectF rect(10.0f, 20.0f, 30.0f, 40.0f);
 
 	EXPECT_TRUE(rect.IsContains(PointF(10.0f, 20.0f)));
-	EXPECT_TRUE(rect.IsContains(PointF(30.0f, 40.0f)));
+	EXPECT_FALSE(rect.IsContains(PointF(30.0f, 40.0f)));
 	EXPECT_TRUE(rect.IsContains(PointF(20.0f, 30.0f)));
 	EXPECT_FALSE(rect.IsContains(PointF(9.9f, 20.0f)));
 	EXPECT_FALSE(rect.IsContains(PointF(30.1f, 40.0f)));

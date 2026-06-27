@@ -63,6 +63,7 @@ namespace nani::canvas::elements
 
 	public:
 		std::shared_ptr<ComputedStyle> Compute(Element* element);
+		void Override(const std::u8string_view& id, const ComputedStyle& style);
 
 	private:
 		std::map<std::u8string, std::shared_ptr<ComputedStyle>> m_mapComputedStyles;

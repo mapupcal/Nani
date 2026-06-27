@@ -92,4 +92,9 @@ namespace nani::canvas::elements
 		m_mapComputedStyles.emplace(computeStyleId, computedStyle);
 		return computedStyle;
 	}
+
+	void Styles::Override(const std::u8string_view& id, const ComputedStyle& style)
+	{
+		m_mapComputedStyles.insert_or_assign(std::u8string(id), std::make_shared<ComputedStyle>(style));
+	}
 }

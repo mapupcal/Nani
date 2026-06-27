@@ -1,8 +1,5 @@
 #include <gtest/gtest.h>
-#include "canvas/basic/polygonf.h"
-#include "canvas/basic/rectf.h"
-
-using namespace nani::canvas::basic;
+#include "defs.h"
 
 class PolygonFTest : public ::testing::Test
 {

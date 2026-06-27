@@ -2,12 +2,14 @@
 
 nani_add_executable(canvas_utests
 	main.cpp
+	defs.h
 	test_color.cpp
 	test_elements.cpp
 	test_geometry.cpp
 	test_polygonf.cpp
 	test_transformf.cpp
 	test_window.cpp
+	test_view.cpp
 )
 
 target_include_directories(canvas_utests PRIVATE

@@ -169,8 +169,8 @@ namespace nani::canvas::basic
 
 	bool RectF::IsContains(const PointF& pt) const
 	{
-		return left <= pt.x && pt.x <= right &&
-			top <= pt.y && pt.y <= bottom;
+		return left <= pt.x && pt.x < right &&
+			top <= pt.y && pt.y < bottom;
 	}
 
 	scalar RectF::Area() const

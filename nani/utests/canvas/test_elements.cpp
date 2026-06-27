@@ -1,12 +1,5 @@
 ﻿#include <gtest/gtest.h>
-#include "canvas/elements/element.h"
-#include "canvas/elements/elements_layer.h"
-#include "canvas/elements/element_visibility.h"
-#include "canvas/elements/styles.h"
-
-using namespace nani::canvas;
-using namespace nani::canvas::basic;
-using namespace nani::canvas::elements;
+#include "defs.h"
 
 class ElementTest : public ::testing::Test
 {

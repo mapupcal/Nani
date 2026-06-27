@@ -1,7 +1,5 @@
 ﻿#include <gtest/gtest.h>
-#include "canvas/basic/color.h"
-
-using namespace nani::canvas::basic;
+#include "defs.h"
 
 class ColorTest : public ::testing::Test
 {

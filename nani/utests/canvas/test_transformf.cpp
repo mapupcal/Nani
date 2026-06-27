@@ -1,11 +1,5 @@
 #include <gtest/gtest.h>
-#include "canvas/basic/transformf.h"
-#include "canvas/basic/pointf.h"
-#include "canvas/basic/polygonf.h"
-#include "canvas/basic/rectf.h"
-#include "canvas/basic/geometry_defs.h"
-
-using namespace nani::canvas::basic;
+#include "defs.h"
 
 class TransformFTest : public ::testing::Test
 {

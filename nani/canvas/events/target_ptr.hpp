@@ -210,13 +210,13 @@ namespace nani::canvas::events
 	template<TargetType Target>
 	bool operator==(const target_ptr<Target>& lhs, Target* rhs)
 	{
-		return lhs.get() == lhs;
+		return lhs.get() == rhs;
 	}
 
 	template<TargetType Target>
 	bool operator!=(const target_ptr<Target>& lhs, Target* rhs)
 	{
-		return lhs.get() != lhs;
+		return lhs.get() != rhs;
 	}
 
 	template<TargetType Target>

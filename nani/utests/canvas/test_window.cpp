@@ -1,10 +1,5 @@
 ﻿#include <gtest/gtest.h>
-#include "canvas/env.h"
-#include "canvas/window.h"
-
-using namespace nani::canvas;
-using namespace nani::canvas::basic;
-
+#include "defs.h"
 class WindowTest : public ::testing::Test
 {
 protected:

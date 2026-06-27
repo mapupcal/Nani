@@ -37,8 +37,10 @@ namespace nani::canvas::visuals
 			Flush();
 			return;
 		}
+
 		m_spVisual = Window()->RootElement()->CreateVisual(this, nullptr);
 		m_spVisual->BuildVisuals();
+		Flush();
 	}
 
 	void View::MarkDirty()
@@ -115,13 +117,12 @@ namespace nani::canvas::visuals
 		RectF clientRect = Window()->ClientRect();
 		pos -= clientRect.TopLeft();
 		pos = m_spVisual->Transform().Reversed().ApplyTo(pos);
+
 		visuals::Visual* hitVisual = nullptr;
-		if (m_spVisual->HitTest(pos, &hitVisual))
-		{
-			elements::Element* hitElement = HoverElement(hitVisual->Element());
-			if (hitElement)
-				hitElement->FireEvent(e);
-		}
+		m_spVisual->HitTest(pos, &hitVisual);
+		elements::Element* hitElement = HoverElement(hitVisual ? hitVisual->Element() : nullptr);
+		if (hitElement)
+			hitElement->FireEvent(e);
 	}
 
 	void View::OnMousePress(events::MousePressEvent* e)
