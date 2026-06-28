@@ -2,6 +2,7 @@
 find_package(unofficial-skia CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
 find_package(yoga CONFIG REQUIRED)
+find_package(pugixml CONFIG REQUIRED)
 
 nani_add_library(canvas SHARED
 	defs.h
@@ -70,6 +71,8 @@ nani_add_library(canvas SHARED
 	internal/yoga_utils.h
 	internal/computed_style.cpp
 	internal/computed_style.h
+	internal/computed_style_builder.cpp
+	internal/computed_style_builder.h
 )
 target_include_directories(canvas PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -81,4 +84,6 @@ target_link_libraries(canvas PRIVATE
 	unofficial::skia::skia
 	glfw
 	yoga::yogacore
+	pugixml::shared
+	pugixml::pugixml
 )

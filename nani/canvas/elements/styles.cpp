@@ -2,7 +2,16 @@
 #include "element.h"
 #include "element_states.h"
 #include "../internal/computed_style.h"
+#include "../internal/computed_style_builder.h"
+#include <pugixml.hpp>
 using namespace nani::canvas::internal;
+namespace
+{
+	std::u8string to_u8string(const std::string& str)
+	{
+		return std::u8string(reinterpret_cast<const char8_t*>(str.data()), str.size());
+	}
+}
 
 namespace nani::canvas::elements
 {
@@ -14,6 +23,54 @@ namespace nani::canvas::elements
 	Styles::~Styles()
 	{
 
+	}
+
+	void Styles::LoadFromXML(const std::string& utf8XMLData)
+	{
+		pugi::xml_document doc;
+		pugi::xml_parse_result result = doc.load_string(utf8XMLData.c_str());
+		if (!result)
+		{
+			NANI_ASSERT(false);
+			NANI_MESSAGE(result.description());
+			return;
+		}
+
+		auto lstStyleXMLNode = doc.child("Styles").children("Style");
+		for (const auto& styleNode : lstStyleXMLNode)
+		{
+			std::u8string styleClass = to_u8string(styleNode.attribute("class").as_string());
+			if (styleClass.empty())
+				continue;
+
+			//load
+			std::shared_ptr<ComputedStyleBuilder> builder = std::make_shared<ComputedStyleBuilder>();
+			builder->Load(styleNode);
+
+			//inherit
+			std::u8string inheritStyleClass = to_u8string(styleNode.attribute("inherit").as_string());
+			auto iterBuilder = m_mapComputedStyleBuilders.find(styleClass);
+			if (iterBuilder != m_mapComputedStyleBuilders.cend())
+				builder->Inherit(iterBuilder->second.get());
+
+			m_mapComputedStyleBuilders.insert_or_assign(styleClass, builder);
+
+			//update old inherit.
+			auto inheritsIter = m_mapInherits.find(styleClass);
+			if (inheritsIter == m_mapInherits.cend())
+				return;
+			std::set<std::u8string> inheritsSet = inheritsIter->second;
+			for (const std::u8string& oldInheritClass : inheritsSet)
+			{
+				auto oldInheritBuilderIter = m_mapComputedStyleBuilders.find(oldInheritClass);
+				if (oldInheritBuilderIter == m_mapComputedStyleBuilders.cend())
+					continue;
+				oldInheritBuilderIter->second->Inherit(builder.get());
+			}
+		}
+
+		// refresh all computed styles.
+		m_mapComputedStyles.clear();
 	}
 
 	std::shared_ptr<ComputedStyle> Styles::Compute(Element* element)
@@ -34,13 +91,20 @@ namespace nani::canvas::elements
 		if (iter != m_mapComputedStyles.cend())
 			return iter->second;
 
+		auto iterBuilder = m_mapComputedStyleBuilders.find(computeStyleId);
+		if (iterBuilder != m_mapComputedStyleBuilders.cend())
+			return std::make_shared<ComputedStyle>(iterBuilder->second->Compute());
+
 		// fallback to style without states.
 		iter = m_mapComputedStyles.find(std::u8string(styleClass));
 		if (iter != m_mapComputedStyles.cend())
 			return iter->second;
 
+		iterBuilder = m_mapComputedStyleBuilders.find(std::u8string(styleClass));
+		if (iterBuilder != m_mapComputedStyleBuilders.cend())
+			return std::make_shared<ComputedStyle>(iterBuilder->second->Compute());
+
 		std::shared_ptr<ComputedStyle> computedStyle = std::make_shared<ComputedStyle>();
-		//TODO: Compute Style
 		m_mapComputedStyles.emplace(computeStyleId, computedStyle);
 		return computedStyle;
 	}

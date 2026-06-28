@@ -9,7 +9,6 @@ namespace nani::canvas::elements
 		~Styles();
 
 	public:
-		void LoadFromFile(const std::u8string_view& filePath);
 		void LoadFromXML(const std::string& utf8XMLData);
 
 	private:
@@ -20,5 +19,7 @@ namespace nani::canvas::elements
 
 	private:
 		std::map<std::u8string, std::shared_ptr<internal::ComputedStyle>> m_mapComputedStyles;
+		std::map<std::u8string, std::shared_ptr<internal::ComputedStyleBuilder>> m_mapComputedStyleBuilders;
+		std::map<std::u8string, std::set<std::u8string>> m_mapInherits;
 	};
 }

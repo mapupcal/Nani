@@ -11,6 +11,7 @@ namespace nani::canvas::internal
 	class WindowPrivate;
 	struct ScreenData;
 	class ComputedStyle;
+	class ComputedStyleBuilder;
 }
 namespace nani::canvas
 {

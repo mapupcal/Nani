@@ -10,6 +10,7 @@
 #include <cctype>
 #include <utility>
 #include <ranges>
+#include <set>
 
 
 #if defined _DEBUG
