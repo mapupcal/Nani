@@ -28,6 +28,23 @@ namespace nani::canvas
 
 	}
 
+	void Styles::LoadFromFile(const std::u8string_view& filePath)
+	{
+		pugi::xml_document doc;
+
+		std::string utf8Path(filePath.begin(), filePath.end());
+		pugi::xml_parse_result result = doc.load_file(utf8Path.c_str());
+
+		if (!result)
+		{
+			NANI_ASSERT(false);
+			NANI_MESSAGE(result.description());
+			return;
+		}
+
+		LoadXMLDocuemnt(&doc);
+	}
+
 	void Styles::LoadFromXML(const std::string& utf8XMLData)
 	{
 		pugi::xml_document doc;
@@ -39,6 +56,16 @@ namespace nani::canvas
 			return;
 		}
 
+		LoadXMLDocuemnt(&doc);
+	}
+
+	void Styles::LoadXMLDocuemnt(std::any pXmlDocument)
+	{
+		pugi::xml_document* pDoc = std::any_cast<pugi::xml_document*>(pXmlDocument);
+		if (!pDoc)
+			return;
+
+		pugi::xml_document& doc = *pDoc;
 		auto lstStyleXMLNode = doc.child("Styles").children("Style");
 		for (const auto& styleNode : lstStyleXMLNode)
 		{
