@@ -25,7 +25,10 @@ namespace nani::canvas::internal
 		ComputeStyleBuilderOptionalProperty(facebook::yoga::FlexDirection, FlexDirection);
 		ComputeStyleBuilderOptionalProperty(facebook::yoga::StyleLength, Width);
 		ComputeStyleBuilderOptionalProperty(facebook::yoga::StyleLength, Height);
-
+		ComputeStyleBuilderOptionalProperty(facebook::yoga::StyleLength, MinWidth);
+		ComputeStyleBuilderOptionalProperty(facebook::yoga::StyleLength, MinHeight);
+		ComputeStyleBuilderOptionalProperty(facebook::yoga::StyleLength, MaxWidth);
+		ComputeStyleBuilderOptionalProperty(facebook::yoga::StyleLength, MaxHeight);
 	private:
 		const ComputedStyleBuilder* m_inheritBuilder = nullptr;
 	};

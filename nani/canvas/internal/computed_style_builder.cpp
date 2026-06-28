@@ -68,6 +68,10 @@ namespace nani::canvas::internal
 		FlexDirection = AsYogaFlexDirection(GetStyleNodeValue(styleNode, "FlexDirection"));
 		Width = AsYogaStyleLength(GetStyleNodeValue(styleNode, "Width"));
 		Height = AsYogaStyleLength(GetStyleNodeValue(styleNode, "Height"));
+		MinWidth = AsYogaStyleLength(GetStyleNodeValue(styleNode, "MinWidth"));
+		MinHeight = AsYogaStyleLength(GetStyleNodeValue(styleNode, "MinHeight"));
+		MaxWidth = AsYogaStyleLength(GetStyleNodeValue(styleNode, "MaxWidth"));
+		MaxHeight = AsYogaStyleLength(GetStyleNodeValue(styleNode, "MaxHeight"));
 	}
 
 	void ComputedStyleBuilder::Inherit(const ComputedStyleBuilder * inheritBuilder)
@@ -88,6 +92,18 @@ namespace nani::canvas::internal
 
 		if (auto v = ComputeWidth(); v.has_value())
 			styleRef.setDimension(Dimension::Height, v.value());
+
+		if (auto v = ComputeMinWidth(); v.has_value())
+			styleRef.setMinDimension(Dimension::Width, v.value());
+
+		if (auto v = ComputeMinHeight(); v.has_value())
+			styleRef.setMinDimension(Dimension::Height, v.value());
+
+		if (auto v = ComputeMaxWidth(); v.has_value())
+			styleRef.setMaxDimension(Dimension::Width, v.value());
+
+		if (auto v = ComputeMaxHeight(); v.has_value())
+			styleRef.setMaxDimension(Dimension::Height, v.value());
 
 		return computedStyle;
 	}
