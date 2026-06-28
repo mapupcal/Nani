@@ -22,13 +22,26 @@ namespace nani::canvas::internal
 		ComputedStyle Compute() const;
 
 	public:
+		//Layout
+		ComputeStyleBuilderOptionalProperty(facebook::yoga::Direction, Direction);
 		ComputeStyleBuilderOptionalProperty(facebook::yoga::FlexDirection, FlexDirection);
+
 		ComputeStyleBuilderOptionalProperty(facebook::yoga::StyleLength, Width);
 		ComputeStyleBuilderOptionalProperty(facebook::yoga::StyleLength, Height);
 		ComputeStyleBuilderOptionalProperty(facebook::yoga::StyleLength, MinWidth);
 		ComputeStyleBuilderOptionalProperty(facebook::yoga::StyleLength, MinHeight);
 		ComputeStyleBuilderOptionalProperty(facebook::yoga::StyleLength, MaxWidth);
 		ComputeStyleBuilderOptionalProperty(facebook::yoga::StyleLength, MaxHeight);
+
+		//Visual
+		ComputeStyleBuilderOptionalProperty(basic::Color, Color);
+		ComputeStyleBuilderOptionalProperty(basic::Color, BackgroundColor);
+		ComputeStyleBuilderOptionalProperty(basic::Color, BorderColor);
+		ComputeStyleBuilderOptionalProperty(basic::TransformF, Transform);
+		ComputeStyleBuilderOptionalProperty(basic::scalar, Opacity);
+		ComputeStyleBuilderOptionalProperty(ComputedStyle::VisualProperties::BorderRadius, Radius);
+		ComputeStyleBuilderOptionalProperty(ComputedStyle::VisualProperties::Shadow, Shadow);
+
 	private:
 		const ComputedStyleBuilder* m_inheritBuilder = nullptr;
 	};

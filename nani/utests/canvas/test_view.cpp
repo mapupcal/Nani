@@ -10,16 +10,13 @@ protected:
 		window = new Window(PointF(), SizeF(600, 400));
 		window->RootElement()->GetStyles()->LoadFromXML(R"(
 			<Styles>
-				<Style class="NaniWindow">
-					<FlexDirection value="row"/>
+				<Style class="NaniWindow" flex="row">
 				</Style>
 				<Style class="Rectangle">
-					<Width value="200"/>
-					<Height value="100"/>
+					<Dimension width="200" height="100" />
 				</Style>
 				<Style class="Square">
-					<Width value="100"/>
-					<Height value="100"/>
+					<Dimension width="100" height="100" />
 				</Style>
 			</Styles>
 		)");
