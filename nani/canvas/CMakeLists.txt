@@ -33,8 +33,6 @@ nani_add_library(canvas SHARED
 	elements/element_states.h
 	elements/element_visibility.cpp
 	elements/element_visibility.h
-	elements/styles.cpp
-	elements/styles.h
 
 	visuals/visuals_defs.h
 	visuals/visual.cpp
@@ -60,6 +58,9 @@ nani_add_library(canvas SHARED
 	env.h
 	window.cpp
 	window.h
+
+	styles.cpp
+	styles.h
 
 	internal/env_p.cpp
 	internal/env_p.h

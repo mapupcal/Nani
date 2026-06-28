@@ -2,7 +2,7 @@
 #include "view.h"
 #include "../elements/element.h"
 #include "../elements/element_visibility.h"
-#include "../elements/styles.h"
+#include "../styles.h"
 #include "../internal/yoga_utils.h"
 #include "../internal/computed_style.h"
 

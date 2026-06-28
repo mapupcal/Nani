@@ -63,7 +63,7 @@ namespace nani::canvas
 	private:
 		internal::WindowPrivate* m_pImpl = nullptr;
 
-		std::shared_ptr<elements::Styles> m_spStyles = nullptr;
+		std::shared_ptr<Styles> m_spStyles = nullptr;
 		elements::Element* m_pRootElement = nullptr;
 		visuals::View* m_pView = nullptr;
 	};

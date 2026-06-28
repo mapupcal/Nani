@@ -1,7 +1,7 @@
 ﻿#include "window.h"
 #include "internal/window_p.h"
+#include "styles.h"
 #include "elements/element.h"
-#include "elements/styles.h"
 #include "visuals/visual.h"
 #include "visuals/view.h"
 

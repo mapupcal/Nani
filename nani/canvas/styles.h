@@ -1,6 +1,6 @@
 ﻿#pragma once
-#include "elements_defs.h"
-namespace nani::canvas::elements
+#include "elements/elements_defs.h"
+namespace nani::canvas
 {
 	class NANI_CANVAS_API Styles
 	{
@@ -14,7 +14,7 @@ namespace nani::canvas::elements
 	private:
 		friend class visuals::View;
 		friend class visuals::Visual;
-		std::shared_ptr<internal::ComputedStyle> Compute(Element* element);
+		std::shared_ptr<internal::ComputedStyle> Compute(elements::Element* element);
 		void Override(const std::u8string_view& id, const internal::ComputedStyle& style);
 
 	private:

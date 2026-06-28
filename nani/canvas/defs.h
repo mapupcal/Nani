@@ -15,7 +15,11 @@ namespace nani::canvas::internal
 }
 namespace nani::canvas
 {
+	class Cursor;
+	class Env;
 	class Window;
+	class Styles;
+	class Screen;
 }
 namespace nani::canvas::elements
 {
@@ -23,7 +27,6 @@ namespace nani::canvas::elements
 	class ElementsLayer;
 	class ElementStates;
 	class ElementVisibility;
-	class Styles;
 }
 namespace nani::canvas::visuals
 {

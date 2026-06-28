@@ -1,10 +1,13 @@
 ﻿#include "styles.h"
-#include "element.h"
-#include "element_states.h"
-#include "../internal/computed_style.h"
-#include "../internal/computed_style_builder.h"
+#include "elements/element.h"
+#include "elements/element_states.h"
+#include "internal/computed_style.h"
+#include "internal/computed_style_builder.h"
 #include <pugixml.hpp>
+
 using namespace nani::canvas::internal;
+using namespace nani::canvas::elements;
+
 namespace
 {
 	std::u8string to_u8string(const std::string& str)
@@ -13,7 +16,7 @@ namespace
 	}
 }
 
-namespace nani::canvas::elements
+namespace nani::canvas
 {
 	Styles::Styles()
 	{
