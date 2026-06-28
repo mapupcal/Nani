@@ -11,6 +11,7 @@
 #include <utility>
 #include <ranges>
 #include <set>
+#include <optional>
 
 
 #if defined _DEBUG

@@ -61,7 +61,7 @@ namespace nani::canvas
 			//update old inherit.
 			auto inheritsIter = m_mapInherits.find(styleClass);
 			if (inheritsIter == m_mapInherits.cend())
-				return;
+				continue;
 			std::set<std::u8string> inheritsSet = inheritsIter->second;
 			for (const std::u8string& oldInheritClass : inheritsSet)
 			{
