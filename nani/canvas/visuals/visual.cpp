@@ -4,11 +4,12 @@
 #include "../elements/element_visibility.h"
 #include "../elements/styles.h"
 #include "../internal/yoga_utils.h"
-#include <ranges>
+#include "../internal/computed_style.h"
 
 using namespace nani::canvas::elements;
 using namespace nani::canvas::events;
 using namespace nani::canvas::basic;
+using namespace nani::canvas::internal;
 
 namespace nani::canvas::visuals
 {

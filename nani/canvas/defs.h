@@ -10,6 +10,7 @@ namespace nani::canvas::internal
 {
 	class WindowPrivate;
 	struct ScreenData;
+	class ComputedStyle;
 }
 namespace nani::canvas
 {
@@ -21,7 +22,6 @@ namespace nani::canvas::elements
 	class ElementsLayer;
 	class ElementStates;
 	class ElementVisibility;
-	class ComputedStyle;
 	class Styles;
 }
 namespace nani::canvas::visuals

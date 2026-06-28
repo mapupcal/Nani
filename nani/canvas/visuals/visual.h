@@ -41,6 +41,6 @@ namespace nani::canvas::visuals
 		Visual* m_pParent = nullptr;
 		std::vector<std::shared_ptr<Visual>> m_visuals;
 		YGNodeRef m_yogaNode = nullptr;
-		std::shared_ptr<elements::ComputedStyle> m_spComputedStyle;
+		std::shared_ptr<internal::ComputedStyle> m_spComputedStyle;
 	};
 }

@@ -9,6 +9,7 @@
 #include <string_view>
 #include <cctype>
 #include <utility>
+#include <ranges>
 
 
 #if defined _DEBUG
