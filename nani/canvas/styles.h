@@ -11,6 +11,7 @@ namespace nani::canvas
 	public:
 		void LoadFromFile(const std::u8string_view& filePath);
 		void LoadFromXML(const std::string& utf8XMLData);
+		std::shared_ptr<internal::ComputedStyle> Compute(const std::u8string_view& styleClass);
 
 	private:
 		friend class visuals::View;

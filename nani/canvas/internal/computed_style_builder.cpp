@@ -76,7 +76,7 @@ namespace
 
 		scalar value;
 		auto [ptr, ec] = std::from_chars(str.data(), str.data() + str.size(), value);
-		if (ec != std::errc())
+		if (ec == std::errc())
 			return value;
 
 		return std::optional<scalar>();
@@ -234,7 +234,7 @@ namespace nani::canvas::internal
 		if (auto v = ComputeWidth(); v.has_value())
 			layoutPropsRef.style.setDimension(Dimension::Width, v.value());
 
-		if (auto v = ComputeWidth(); v.has_value())
+		if (auto v = ComputeHeight(); v.has_value())
 			layoutPropsRef.style.setDimension(Dimension::Height, v.value());
 
 		if (auto v = ComputeMinWidth(); v.has_value())

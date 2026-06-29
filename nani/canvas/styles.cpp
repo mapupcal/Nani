@@ -67,40 +67,75 @@ namespace nani::canvas
 
 		pugi::xml_document& doc = *pDoc;
 		auto lstStyleXMLNode = doc.child("Styles").children("Style");
+
+		struct SrcStyleInfo
+		{
+			std::u8string styleClass;
+			std::u8string inheritStyleClass;
+			std::shared_ptr<ComputedStyleBuilder> builder;
+		};
+
+		// Pass 1: load all builders, record inherit relationships.
+		std::vector<SrcStyleInfo> loadedInfos;
 		for (const auto& styleNode : lstStyleXMLNode)
 		{
 			std::u8string styleClass = to_u8string(styleNode.attribute("class").as_string());
 			if (styleClass.empty())
 				continue;
 
-			//load
 			std::shared_ptr<ComputedStyleBuilder> builder = std::make_shared<ComputedStyleBuilder>();
 			builder->Load(styleNode);
 
-			//inherit
 			std::u8string inheritStyleClass = to_u8string(styleNode.attribute("inherit").as_string());
-			auto iterBuilder = m_mapComputedStyleBuilders.find(styleClass);
-			if (iterBuilder != m_mapComputedStyleBuilders.cend())
-				builder->Inherit(iterBuilder->second.get());
-
 			m_mapComputedStyleBuilders.insert_or_assign(styleClass, builder);
+			loadedInfos.push_back({ std::move(styleClass), std::move(inheritStyleClass), builder });
+		}
 
-			//update old inherit.
-			auto inheritsIter = m_mapInherits.find(styleClass);
-			if (inheritsIter == m_mapInherits.cend())
-				continue;
-			std::set<std::u8string> inheritsSet = inheritsIter->second;
-			for (const std::u8string& oldInheritClass : inheritsSet)
+		// Pass 2: wire up inherit and update old inheritors.
+		for (const auto& info : loadedInfos)
+		{
+			if (!info.inheritStyleClass.empty())
 			{
-				auto oldInheritBuilderIter = m_mapComputedStyleBuilders.find(oldInheritClass);
-				if (oldInheritBuilderIter == m_mapComputedStyleBuilders.cend())
-					continue;
-				oldInheritBuilderIter->second->Inherit(builder.get());
+				// Wire new builder's inherit.
+				auto iterBase = m_mapComputedStyleBuilders.find(info.inheritStyleClass);
+				if (iterBase != m_mapComputedStyleBuilders.cend())
+					info.builder->Inherit(iterBase->second.get());
+
+				// Track: styleClass -> parent's class, for later hot-reload lookup.
+				m_mapInherits[info.inheritStyleClass].insert(info.styleClass);
+			}
+
+			// Hot reload: update old inheritors of this class to point to the new builder.
+			auto inheritsIter = m_mapInherits.find(info.styleClass);
+			if (inheritsIter != m_mapInherits.cend())
+			{
+				for (const std::u8string& oldInheritorClass : inheritsIter->second)
+				{
+					auto oldInheritorIter = m_mapComputedStyleBuilders.find(oldInheritorClass);
+					if (oldInheritorIter == m_mapComputedStyleBuilders.cend())
+						continue;
+					oldInheritorIter->second->Inherit(info.builder.get());
+				}
 			}
 		}
 
 		// refresh all computed styles.
 		m_mapComputedStyles.clear();
+	}
+
+	std::shared_ptr<ComputedStyle> Styles::Compute(const std::u8string_view& styleClass)
+	{
+		auto iter = m_mapComputedStyles.find(std::u8string(styleClass));
+		if (iter != m_mapComputedStyles.cend())
+			return iter->second;
+
+		auto iterBuilder = m_mapComputedStyleBuilders.find(std::u8string(styleClass));
+		if (iterBuilder != m_mapComputedStyleBuilders.cend())
+			return std::make_shared<ComputedStyle>(iterBuilder->second->Compute());
+
+		std::shared_ptr<ComputedStyle> computedStyle = std::make_shared<ComputedStyle>();
+		m_mapComputedStyles.emplace(std::u8string(styleClass), computedStyle);
+		return computedStyle;
 	}
 
 	std::shared_ptr<ComputedStyle> Styles::Compute(Element* element)

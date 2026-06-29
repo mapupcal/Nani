@@ -6,7 +6,7 @@
 
 namespace nani::canvas::internal
 {
-	class ComputedStyle
+	class NANI_CANVAS_API ComputedStyle
 	{
 	public:
 		ComputedStyle();

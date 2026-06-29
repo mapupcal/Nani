@@ -7,6 +7,7 @@ nani_add_executable(canvas_utests
 	test_elements.cpp
 	test_geometry.cpp
 	test_polygonf.cpp
+	test_styles.cpp
 	test_transformf.cpp
 	test_window.cpp
 	test_view.cpp
