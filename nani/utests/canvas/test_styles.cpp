@@ -1,4 +1,4 @@
-#include <gtest/gtest.h>
+﻿#include <gtest/gtest.h>
 #include "defs.h"
 #include "canvas/internal/computed_style.h"
 
