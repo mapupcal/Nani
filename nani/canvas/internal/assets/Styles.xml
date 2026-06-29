@@ -1,6 +1,6 @@
 <Styles>
     <Style class="NaniWindow" flex="row" direction="ltr">
-        <Gaps all="1.0" row="2.0" column="4.0"/>
+        <Gaps gap="1.0" row="2.0" column="4.0"/>
     </Style>
     <Style class="Rectangle">
         <Dimension width="200" height="100" />

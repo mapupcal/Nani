@@ -147,19 +147,19 @@ namespace nani::canvas::internal
 		if (auto v = ComputeMaxHeight(); v.has_value())
 			layoutPropsRef.style.setMaxDimension(Dimension::Height, v.value());
 
-		if (auto v = RowGap; v.has_value())
+		if (auto v = ComputeRowGap(); v.has_value())
 			layoutPropsRef.style.setGap(Gutter::Row, v.value());
 
-		if (auto v = ColumnGap; v.has_value())
+		if (auto v = ComputeColumnGap(); v.has_value())
 			layoutPropsRef.style.setGap(Gutter::Column, v.value());
 
-		if (auto v = Margins; v.has_value())
+		if (auto v = ComputeMargins(); v.has_value())
 			SetYogaStyleEdges(layoutPropsRef.style, v.value(), &Style::setMargin);
 
-		if (auto v = Paddings; v.has_value())
+		if (auto v = ComputePaddings(); v.has_value())
 			SetYogaStyleEdges(layoutPropsRef.style, v.value(), &Style::setPadding);
 
-		if (auto v = Borders; v.has_value())
+		if (auto v = ComputeBorders(); v.has_value())
 			SetYogaStyleEdges(layoutPropsRef.style, v.value(), &Style::setBorder);
 
 		if (auto v = ComputeColor(); v.has_value())

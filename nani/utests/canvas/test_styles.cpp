@@ -479,7 +479,7 @@ TEST_F(StylesTest, LoadFromXML_InheritTransform)
 }
 
 // -----------------------------------------------------------
-// Inherit — child DONOT inherits parent's gap, gap.
+// Inherit — child inherits parent's gap, gap.
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_InheritGaps)
 {
@@ -500,12 +500,12 @@ TEST_F(StylesTest, LoadFromXML_InheritGaps)
 
 	auto cs = styles_->Compute(u8"DerivedGap");
 	ASSERT_NE(cs, nullptr);
-	EXPECT_TRUE(cs->layoutProps.style.gap(facebook::yoga::Gutter::Row).isUndefined());
-	EXPECT_TRUE(cs->layoutProps.style.gap(facebook::yoga::Gutter::Column).isUndefined());
+	EXPECT_EQ(cs->layoutProps.style.gap(facebook::yoga::Gutter::Row).value().unwrap(), 2.0f);
+	EXPECT_EQ(cs->layoutProps.style.gap(facebook::yoga::Gutter::Column).value().unwrap(), 2.0f);
 }
 
 // -----------------------------------------------------------
-// Inherit — child DONOT inherits parent's gap, row and column.
+// Inherit — child inherits parent's gap, row and column.
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_InheritGapsRowAndColumn)
 {
@@ -528,12 +528,12 @@ TEST_F(StylesTest, LoadFromXML_InheritGapsRowAndColumn)
 	auto cs = styles_->Compute(u8"DerivedGap");
 	ASSERT_NE(cs, nullptr);
 	EXPECT_EQ(cs->layoutProps.style.gap(facebook::yoga::Gutter::Row).value().unwrap(), 2.0f);
-	EXPECT_TRUE(cs->layoutProps.style.gap(facebook::yoga::Gutter::Column).isUndefined());
+	EXPECT_EQ(cs->layoutProps.style.gap(facebook::yoga::Gutter::Column).value().unwrap(), 3.0f);
 }
 
 
 // -----------------------------------------------------------
-// Inherit — child DONOT inherits parent's Edges.
+// Inherit — child inherits parent's Edges.
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_InheritEdges)
 {
@@ -569,15 +569,16 @@ TEST_F(StylesTest, LoadFromXML_InheritEdges)
 
 	auto cs = styles_->Compute(u8"DerivedEdges");
 	ASSERT_NE(cs, nullptr);
-	EXPECT_TRUE(cs->layoutProps.style.margin(facebook::yoga::Edge::Left).isUndefined());
-	EXPECT_TRUE(cs->layoutProps.style.margin(facebook::yoga::Edge::Top).isUndefined());
-	EXPECT_TRUE(cs->layoutProps.style.margin(facebook::yoga::Edge::Right).isUndefined());
-	EXPECT_TRUE(cs->layoutProps.style.margin(facebook::yoga::Edge::Bottom).isUndefined());
 
-	EXPECT_TRUE(cs->layoutProps.style.padding(facebook::yoga::Edge::Left).isUndefined());
-	EXPECT_TRUE(cs->layoutProps.style.padding(facebook::yoga::Edge::Top).isUndefined());
-	EXPECT_TRUE(cs->layoutProps.style.padding(facebook::yoga::Edge::Right).isUndefined());
-	EXPECT_TRUE(cs->layoutProps.style.padding(facebook::yoga::Edge::Bottom).isUndefined());
+	EXPECT_EQ(cs->layoutProps.style.margin(facebook::yoga::Edge::Left).value().unwrap(), 1.0f);
+	EXPECT_EQ(cs->layoutProps.style.margin(facebook::yoga::Edge::Top).value().unwrap(), 1.0f);
+	EXPECT_EQ(cs->layoutProps.style.margin(facebook::yoga::Edge::Right).value().unwrap(), 1.0f);
+	EXPECT_EQ(cs->layoutProps.style.margin(facebook::yoga::Edge::Bottom).value().unwrap(), 1.0f);
+
+	EXPECT_EQ(cs->layoutProps.style.padding(facebook::yoga::Edge::Left).value().unwrap(), 2.0f);
+	EXPECT_EQ(cs->layoutProps.style.padding(facebook::yoga::Edge::Top).value().unwrap(), 3.0f);
+	EXPECT_EQ(cs->layoutProps.style.padding(facebook::yoga::Edge::Right).value().unwrap(), 4.0f);
+	EXPECT_EQ(cs->layoutProps.style.padding(facebook::yoga::Edge::Bottom).value().unwrap(), 5.0f);
 
 	EXPECT_TRUE(cs->layoutProps.style.border(facebook::yoga::Edge::Left).isUndefined());
 	EXPECT_EQ(cs->layoutProps.style.border(facebook::yoga::Edge::Top).value().unwrap(), 8.0f);

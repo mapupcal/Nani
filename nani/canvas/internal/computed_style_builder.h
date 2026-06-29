@@ -3,9 +3,6 @@
 #include <pugixml.hpp>
 #include <yoga/style/Style.h>
 
-#define ComputeStyleBuilderProperty(value_class, value_name)				\
-	std::optional<value_class> value_name									\
-
 #define ComputeStyleBuilderInheritProperty(value_class, value_name)			\
 	std::optional<value_class> value_name;									\
 	std::optional<value_class> Compute##value_name() const					\
@@ -36,8 +33,8 @@ namespace nani::canvas::internal
 		ComputeStyleBuilderInheritProperty(facebook::yoga::StyleLength, MaxWidth);
 		ComputeStyleBuilderInheritProperty(facebook::yoga::StyleLength, MaxHeight);
 
-		ComputeStyleBuilderProperty(facebook::yoga::StyleLength, RowGap);
-		ComputeStyleBuilderProperty(facebook::yoga::StyleLength, ColumnGap);
+		ComputeStyleBuilderInheritProperty(facebook::yoga::StyleLength, RowGap);
+		ComputeStyleBuilderInheritProperty(facebook::yoga::StyleLength, ColumnGap);
 		struct Edges
 		{
 			std::optional<facebook::yoga::StyleLength> Left;
@@ -45,9 +42,9 @@ namespace nani::canvas::internal
 			std::optional<facebook::yoga::StyleLength> Right;
 			std::optional<facebook::yoga::StyleLength> Bottom;
 		};
-		ComputeStyleBuilderProperty(Edges, Margins);
-		ComputeStyleBuilderProperty(Edges, Paddings);
-		ComputeStyleBuilderProperty(Edges, Borders);
+		ComputeStyleBuilderInheritProperty(Edges, Margins);
+		ComputeStyleBuilderInheritProperty(Edges, Paddings);
+		ComputeStyleBuilderInheritProperty(Edges, Borders);
 		//Visual
 		ComputeStyleBuilderInheritProperty(basic::Color, Color);
 		ComputeStyleBuilderInheritProperty(basic::Color, BackgroundColor);
