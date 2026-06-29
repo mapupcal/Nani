@@ -25,7 +25,7 @@ protected:
 };
 
 // -----------------------------------------------------------
-// 1. Basic dimension: width / height
+// Basic dimension: width / height
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_BasicDimension)
 {
@@ -47,7 +47,7 @@ TEST_F(StylesTest, LoadFromXML_BasicDimension)
 }
 
 // -----------------------------------------------------------
-// 2. Colors node
+// Colors node
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_WithColors)
 {
@@ -68,7 +68,7 @@ TEST_F(StylesTest, LoadFromXML_WithColors)
 }
 
 // -----------------------------------------------------------
-// 3. Opacity
+// Opacity
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_WithOpacity)
 {
@@ -87,7 +87,7 @@ TEST_F(StylesTest, LoadFromXML_WithOpacity)
 }
 
 // -----------------------------------------------------------
-// 4. Uniform border-radius
+// Uniform border-radius
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_WithBorderRadius_Uniform)
 {
@@ -109,7 +109,7 @@ TEST_F(StylesTest, LoadFromXML_WithBorderRadius_Uniform)
 }
 
 // -----------------------------------------------------------
-// 5. Individual border-radius (tl, tr, bl, br)
+// Individual border-radius (tl, tr, bl, br)
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_WithBorderRadius_Individual)
 {
@@ -131,7 +131,7 @@ TEST_F(StylesTest, LoadFromXML_WithBorderRadius_Individual)
 }
 
 // -----------------------------------------------------------
-// 6. Shadow
+// Shadow
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_WithShadow)
 {
@@ -154,7 +154,7 @@ TEST_F(StylesTest, LoadFromXML_WithShadow)
 }
 
 // -----------------------------------------------------------
-// 7. Transform — Translation, Rotation, Scaling, Shearing
+// Transform — Translation, Rotation, Scaling, Shearing
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_WithTransform)
 {
@@ -184,7 +184,7 @@ TEST_F(StylesTest, LoadFromXML_WithTransform)
 }
 
 // -----------------------------------------------------------
-// 8. Flex and direction
+// Flex and direction
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_WithFlexAndDirection)
 {
@@ -204,7 +204,7 @@ TEST_F(StylesTest, LoadFromXML_WithFlexAndDirection)
 }
 
 // -----------------------------------------------------------
-// 9. Reload — loading XML twice, second overwrites first
+// Reload — loading XML twice, second overwrites first
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_ReloadOverwrites)
 {
@@ -238,7 +238,7 @@ TEST_F(StylesTest, LoadFromXML_ReloadOverwrites)
 }
 
 // -----------------------------------------------------------
-// 10. Empty <Styles> node — no crash, Compute returns default
+// Empty <Styles> node — no crash, Compute returns default
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_NoStyles)
 {
@@ -256,7 +256,7 @@ TEST_F(StylesTest, LoadFromXML_NoStyles)
 }
 
 // -----------------------------------------------------------
-// 11. Style with no class attribute — skipped
+// Style with no class attribute — skipped
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_EmptyStyleClass)
 {
@@ -281,7 +281,7 @@ TEST_F(StylesTest, LoadFromXML_EmptyStyleClass)
 }
 
 // -----------------------------------------------------------
-// 12. Inherit — child inherits parent dimension
+// Inherit — child inherits parent dimension
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_ChildInheritsParentDimension)
 {
@@ -305,7 +305,7 @@ TEST_F(StylesTest, LoadFromXML_ChildInheritsParentDimension)
 }
 
 // -----------------------------------------------------------
-// 13. Inherit — child overrides parent's width, inherits height
+// Inherit — child overrides parent's width, inherits height
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_ChildOverridesParentProperty)
 {
@@ -330,7 +330,7 @@ TEST_F(StylesTest, LoadFromXML_ChildOverridesParentProperty)
 }
 
 // -----------------------------------------------------------
-// 14. Inherit — chain: Leaf -> Middle -> Base
+// Inherit — chain: Leaf -> Middle -> Base
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_MultiLevelInheritance)
 {
@@ -358,7 +358,7 @@ TEST_F(StylesTest, LoadFromXML_MultiLevelInheritance)
 }
 
 // -----------------------------------------------------------
-// 15. Inherit — non-existent parent, uses own values
+// Inherit — non-existent parent, uses own values
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_InheritFromNonExistent)
 {
@@ -380,7 +380,7 @@ TEST_F(StylesTest, LoadFromXML_InheritFromNonExistent)
 }
 
 // -----------------------------------------------------------
-// 16. Inherit — child inherits parent's colors, overrides opacity
+// Inherit — child inherits parent's colors, overrides opacity
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_InheritWithColors)
 {
@@ -403,7 +403,7 @@ TEST_F(StylesTest, LoadFromXML_InheritWithColors)
 }
 
 // -----------------------------------------------------------
-// 17. Inherit — child inherits parent's border-radius
+// Inherit — child inherits parent's border-radius
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_InheritBorderRadius)
 {
@@ -427,7 +427,7 @@ TEST_F(StylesTest, LoadFromXML_InheritBorderRadius)
 }
 
 // -----------------------------------------------------------
-// 18. Inherit — child inherits parent's shadow
+// Inherit — child inherits parent's shadow
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_InheritShadow)
 {
@@ -452,7 +452,7 @@ TEST_F(StylesTest, LoadFromXML_InheritShadow)
 }
 
 // -----------------------------------------------------------
-// 19. Inherit — child inherits parent's transform
+// Inherit — child inherits parent's transform
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_InheritTransform)
 {
@@ -479,7 +479,114 @@ TEST_F(StylesTest, LoadFromXML_InheritTransform)
 }
 
 // -----------------------------------------------------------
-// 20. Unknown style class returns default ComputedStyle
+// Inherit — child DONOT inherits parent's gap, gap.
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_InheritGaps)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="BaseGap">
+				<Gaps gap ="2" />
+			</Style>
+			<Style class="DerivedGap" inherit="BaseGap">
+			</Style>
+		</Styles>
+	)");
+
+	auto pcs = styles_->Compute(u8"BaseGap");
+	ASSERT_NE(pcs, nullptr);
+	EXPECT_EQ(pcs->layoutProps.style.gap(facebook::yoga::Gutter::Row).value().unwrap(), 2.0f);
+	EXPECT_EQ(pcs->layoutProps.style.gap(facebook::yoga::Gutter::Column).value().unwrap(), 2.0f);
+
+	auto cs = styles_->Compute(u8"DerivedGap");
+	ASSERT_NE(cs, nullptr);
+	EXPECT_TRUE(cs->layoutProps.style.gap(facebook::yoga::Gutter::Row).isUndefined());
+	EXPECT_TRUE(cs->layoutProps.style.gap(facebook::yoga::Gutter::Column).isUndefined());
+}
+
+// -----------------------------------------------------------
+// Inherit — child DONOT inherits parent's gap, row and column.
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_InheritGapsRowAndColumn)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="BaseGap">
+				<Gaps row="1" column="3" />
+			</Style>
+			<Style class="DerivedGap" inherit="BaseGap">
+				<Gaps row="2" />
+			</Style>
+		</Styles>
+	)");
+
+	auto pcs = styles_->Compute(u8"BaseGap");
+	ASSERT_NE(pcs, nullptr);
+	EXPECT_EQ(pcs->layoutProps.style.gap(facebook::yoga::Gutter::Row).value().unwrap(), 1.0f);
+	EXPECT_EQ(pcs->layoutProps.style.gap(facebook::yoga::Gutter::Column).value().unwrap(), 3.0f);
+
+	auto cs = styles_->Compute(u8"DerivedGap");
+	ASSERT_NE(cs, nullptr);
+	EXPECT_EQ(cs->layoutProps.style.gap(facebook::yoga::Gutter::Row).value().unwrap(), 2.0f);
+	EXPECT_TRUE(cs->layoutProps.style.gap(facebook::yoga::Gutter::Column).isUndefined());
+}
+
+
+// -----------------------------------------------------------
+// Inherit — child DONOT inherits parent's Edges.
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_InheritEdges)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="BaseEdges">
+				<Margins value="1" />
+				<Paddings l="2" t="3" r="4" b="5"/>
+				<Borders l="6" r="7"/>
+			</Style>
+			<Style class="DerivedEdges" inherit="BaseEdges">
+				<Borders t="8" b="9"/>
+			</Style>
+		</Styles>
+	)");
+
+	auto pcs = styles_->Compute(u8"BaseEdges");
+	ASSERT_NE(pcs, nullptr);
+	EXPECT_EQ(pcs->layoutProps.style.margin(facebook::yoga::Edge::Left).value().unwrap(), 1.0f);
+	EXPECT_EQ(pcs->layoutProps.style.margin(facebook::yoga::Edge::Top).value().unwrap(), 1.0f);
+	EXPECT_EQ(pcs->layoutProps.style.margin(facebook::yoga::Edge::Right).value().unwrap(), 1.0f);
+	EXPECT_EQ(pcs->layoutProps.style.margin(facebook::yoga::Edge::Bottom).value().unwrap(), 1.0f);
+
+	EXPECT_EQ(pcs->layoutProps.style.padding(facebook::yoga::Edge::Left).value().unwrap(), 2.0f);
+	EXPECT_EQ(pcs->layoutProps.style.padding(facebook::yoga::Edge::Top).value().unwrap(), 3.0f);
+	EXPECT_EQ(pcs->layoutProps.style.padding(facebook::yoga::Edge::Right).value().unwrap(), 4.0f);
+	EXPECT_EQ(pcs->layoutProps.style.padding(facebook::yoga::Edge::Bottom).value().unwrap(), 5.0f);
+
+	EXPECT_EQ(pcs->layoutProps.style.border(facebook::yoga::Edge::Left).value().unwrap(), 6.0f);
+	EXPECT_TRUE(pcs->layoutProps.style.border(facebook::yoga::Edge::Top).isUndefined());
+	EXPECT_EQ(pcs->layoutProps.style.border(facebook::yoga::Edge::Right).value().unwrap(), 7.0f);
+	EXPECT_TRUE(pcs->layoutProps.style.border(facebook::yoga::Edge::Bottom).isUndefined());
+
+	auto cs = styles_->Compute(u8"DerivedEdges");
+	ASSERT_NE(cs, nullptr);
+	EXPECT_TRUE(cs->layoutProps.style.margin(facebook::yoga::Edge::Left).isUndefined());
+	EXPECT_TRUE(cs->layoutProps.style.margin(facebook::yoga::Edge::Top).isUndefined());
+	EXPECT_TRUE(cs->layoutProps.style.margin(facebook::yoga::Edge::Right).isUndefined());
+	EXPECT_TRUE(cs->layoutProps.style.margin(facebook::yoga::Edge::Bottom).isUndefined());
+
+	EXPECT_TRUE(cs->layoutProps.style.padding(facebook::yoga::Edge::Left).isUndefined());
+	EXPECT_TRUE(cs->layoutProps.style.padding(facebook::yoga::Edge::Top).isUndefined());
+	EXPECT_TRUE(cs->layoutProps.style.padding(facebook::yoga::Edge::Right).isUndefined());
+	EXPECT_TRUE(cs->layoutProps.style.padding(facebook::yoga::Edge::Bottom).isUndefined());
+
+	EXPECT_TRUE(cs->layoutProps.style.border(facebook::yoga::Edge::Left).isUndefined());
+	EXPECT_EQ(cs->layoutProps.style.border(facebook::yoga::Edge::Top).value().unwrap(), 8.0f);
+	EXPECT_TRUE(cs->layoutProps.style.border(facebook::yoga::Edge::Right).isUndefined());
+	EXPECT_EQ(cs->layoutProps.style.border(facebook::yoga::Edge::Bottom).value().unwrap(), 9.0f);
+}
+
+// -----------------------------------------------------------
+// Unknown style class returns default ComputedStyle
 // -----------------------------------------------------------
 TEST_F(StylesTest, Compute_UnknownClassReturnsDefault)
 {
@@ -491,7 +598,7 @@ TEST_F(StylesTest, Compute_UnknownClassReturnsDefault)
 }
 
 // -----------------------------------------------------------
-// 21. Hot reload — previously-loaded inheritor picks up
+// Hot reload — previously-loaded inheritor picks up
 //     updated base when base is reloaded alone.
 // -----------------------------------------------------------
 TEST_F(StylesTest, HotReload_BaseUpdated_OldInheritorSeesNewValues)
@@ -528,7 +635,7 @@ TEST_F(StylesTest, HotReload_BaseUpdated_OldInheritorSeesNewValues)
 }
 
 // -----------------------------------------------------------
-// 22. Hot reload — reverse XML order: inheritor defined
+// Hot reload — reverse XML order: inheritor defined
 //     before base, still picks up base after reload.
 // -----------------------------------------------------------
 TEST_F(StylesTest, HotReload_ReverseOrder)
@@ -571,7 +678,7 @@ class ComputedStyleTest : public ::testing::Test
 };
 
 // -----------------------------------------------------------
-// 21. Default values
+// Default values
 // -----------------------------------------------------------
 TEST_F(ComputedStyleTest, DefaultValues)
 {
@@ -591,7 +698,7 @@ TEST_F(ComputedStyleTest, DefaultValues)
 }
 
 // -----------------------------------------------------------
-// 22. Diff — identical styles
+// Diff — identical styles
 // -----------------------------------------------------------
 TEST_F(ComputedStyleTest, Diff_NoChange)
 {
@@ -604,7 +711,7 @@ TEST_F(ComputedStyleTest, Diff_NoChange)
 }
 
 // -----------------------------------------------------------
-// 23. Diff — detects changes
+// Diff — detects changes
 // -----------------------------------------------------------
 TEST_F(ComputedStyleTest, Diff_DetectsChanges)
 {
@@ -619,7 +726,7 @@ TEST_F(ComputedStyleTest, Diff_DetectsChanges)
 }
 
 // -----------------------------------------------------------
-// 24. Diff against nullptr
+// Diff against nullptr
 // -----------------------------------------------------------
 TEST_F(ComputedStyleTest, Diff_NullOther)
 {

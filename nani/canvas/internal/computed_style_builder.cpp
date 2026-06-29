@@ -91,94 +91,17 @@ namespace
 		return color;
 	}
 
-	std::optional<TransformF> AsTransform(const pugi::xml_node& node)
+	using SetEdgesMemberFuncType = decltype(&Style::setMargin);
+	void SetYogaStyleEdges(Style& style, const ComputedStyleBuilder::Edges& edges, SetEdgesMemberFuncType setEdgeFunc)
 	{
-		if (node.empty())
-			return std::optional<TransformF>();
-
-		TransformF transform;
-		auto children = node.children();
-		for (const auto& child : children)
-		{
-			std::string name = child.name();
-			if (name == "Translation")
-			{
-				auto x = AsScalar(GetNodeValue(child, "x"));
-				auto y = AsScalar(GetNodeValue(child, "y"));
-				transform.Apply(TransformF::Translation(x.value_or(0.0f), y.value_or(0.0f)));
-			}
-			else if (name == "Rotation")
-			{
-				auto a = AsScalar(GetNodeValue(child, "a"));
-				transform.Apply(TransformF::Rotation(Radian2Degree(a.value_or(0.0f))));
-			}
-			else if (name == "Scaling")
-			{
-				auto x = AsScalar(GetNodeValue(child, "x"));
-				auto y = AsScalar(GetNodeValue(child, "y"));
-				transform.Apply(TransformF::Scaling(x.value_or(0.0f), y.value_or(0.0f)));
-			}
-			else if (name == "Shearing")
-			{
-				auto x = AsScalar(GetNodeValue(child, "x"));
-				auto y = AsScalar(GetNodeValue(child, "y"));
-				transform.Apply(TransformF::Shearing(x.value_or(0.0f), y.value_or(0.0f)));
-			}
-		}
-		return transform;
-	}
-
-	std::optional<ComputedStyle::VisualProperties::BorderRadius> AsBorderRadius(const pugi::xml_node& node)
-	{
-		using BorderRadius = ComputedStyle::VisualProperties::BorderRadius;
-		if (node.empty())
-			return std::optional<BorderRadius>();
-
-		// radius
-		std::optional<scalar> radius = AsScalar(GetNodeValue(node, "radius"));
-		if (radius.has_value())
-		{
-			scalar fRadius = radius.value();
-			return BorderRadius {
-				.topLeft = fRadius,
-				.topRight = fRadius,
-				.bottomLeft = fRadius,
-				.bottomRight = fRadius
-			};
-		}
-		// tl, tr, bl, br
-		std::optional<scalar> tl = AsScalar(GetNodeValue(node, "tl"));
-		std::optional<scalar> tr = AsScalar(GetNodeValue(node, "tr"));
-		std::optional<scalar> bl = AsScalar(GetNodeValue(node, "bl"));
-		std::optional<scalar> br = AsScalar(GetNodeValue(node, "br"));
-
-		return BorderRadius {
-			.topLeft = tl.value_or(0.0f),
-			.topRight = tr.value_or(0.0f),
-			.bottomLeft = bl.value_or(0.0f),
-			.bottomRight = br.value_or(0.0f)
-		};
-	}
-
-	std::optional<ComputedStyle::VisualProperties::Shadow> AsShadow(const pugi::xml_node& node)
-	{
-		using Shadow = ComputedStyle::VisualProperties::Shadow;
-		if (node.empty())
-			return std::optional<Shadow>();
-
-		auto color = AsColor(GetNodeValue(node, "color"));
-		auto x = AsScalar(GetNodeValue(node, "x"));
-		auto y = AsScalar(GetNodeValue(node, "y"));
-		auto b = AsScalar(GetNodeValue(node, "b"));
-		auto s = AsScalar(GetNodeValue(node, "s"));
-
-		return Shadow{
-			.color = color.value_or(Color()),
-			.offsetX = x.value_or(0.0f),
-			.offsetY = y.value_or(0.0f),
-			.blur = b.value_or(0.0f),
-			.spread = s.value_or(0.0f)
-		};
+		if (auto v = edges.Left; v.has_value())
+			(style.*setEdgeFunc)(Edge::Left, v.value());
+		if (auto v = edges.Top; v.has_value())
+			(style.*setEdgeFunc)(Edge::Top, v.value());
+		if (auto v = edges.Right; v.has_value())
+			(style.*setEdgeFunc)(Edge::Right, v.value());
+		if (auto v = edges.Bottom; v.has_value())
+			(style.*setEdgeFunc)(Edge::Bottom, v.value());
 	}
 }
 
@@ -186,32 +109,7 @@ namespace nani::canvas::internal
 {
 	void ComputedStyleBuilder::Load(const pugi::xml_node& styleNode)
 	{
-		FlexDirection = AsYogaFlexDirection(GetNodeValue(styleNode, "flex"));
-		Direction = AsYogaDirection(GetNodeValue(styleNode, "direction"));
-
-		pugi::xml_node dimensionNode = styleNode.child("Dimension");
-		if (!dimensionNode.empty())
-		{
-			Width = AsYogaStyleLength(GetNodeValue(dimensionNode, "width"));
-			Height = AsYogaStyleLength(GetNodeValue(dimensionNode, "height"));
-			MinWidth = AsYogaStyleLength(GetNodeValue(dimensionNode, "minWidth"));
-			MinHeight = AsYogaStyleLength(GetNodeValue(dimensionNode, "minHeight"));
-			MaxWidth = AsYogaStyleLength(GetNodeValue(dimensionNode, "maxWidth"));
-			MaxHeight = AsYogaStyleLength(GetNodeValue(dimensionNode, "maxHeight"));
-		}
-
-		pugi::xml_node colorsNode = styleNode.child("Colors");
-		if (!colorsNode.empty())
-		{
-			Color = AsColor(GetNodeValue(colorsNode, "color"));
-			BackgroundColor = AsColor(GetNodeValue(colorsNode, "background"));
-			BorderColor = AsColor(GetNodeValue(colorsNode, "border"));
-			Opacity = AsScalar(GetNodeValue(colorsNode, "opacity"));
-		}
-
-		Radius = AsBorderRadius(styleNode.child("Radius"));
-		Shadow = AsShadow(styleNode.child("Shadow"));
-		Transform = AsTransform(styleNode.child("Transform"));
+		LoadImpl(styleNode);
 	}
 
 	void ComputedStyleBuilder::Inherit(const ComputedStyleBuilder * inheritBuilder)
@@ -249,6 +147,21 @@ namespace nani::canvas::internal
 		if (auto v = ComputeMaxHeight(); v.has_value())
 			layoutPropsRef.style.setMaxDimension(Dimension::Height, v.value());
 
+		if (auto v = RowGap; v.has_value())
+			layoutPropsRef.style.setGap(Gutter::Row, v.value());
+
+		if (auto v = ColumnGap; v.has_value())
+			layoutPropsRef.style.setGap(Gutter::Column, v.value());
+
+		if (auto v = Margins; v.has_value())
+			SetYogaStyleEdges(layoutPropsRef.style, v.value(), &Style::setMargin);
+
+		if (auto v = Paddings; v.has_value())
+			SetYogaStyleEdges(layoutPropsRef.style, v.value(), &Style::setPadding);
+
+		if (auto v = Borders; v.has_value())
+			SetYogaStyleEdges(layoutPropsRef.style, v.value(), &Style::setBorder);
+
 		if (auto v = ComputeColor(); v.has_value())
 			visualPropsRef.color = v.value();
 
@@ -271,5 +184,243 @@ namespace nani::canvas::internal
 			visualPropsRef.shadow = v.value();
 
 		return computedStyle;
+	}
+
+	void ComputedStyleBuilder::LoadImpl(const pugi::xml_node& styleNode)
+	{
+		if (styleNode.empty())
+			return;
+
+		LoadStyleNode(styleNode);
+
+		auto children = styleNode.children();
+		for (const auto& child : children)
+		{
+			std::string name = child.name();
+			if (name == "Dimension")
+				LoadDimensionNode(child);
+			else if (name == "Colors")
+				LoadColorsNode(child);
+			else if (name == "Radius")
+				LoadRadiusNode(child);
+			else if (name == "Transform")
+				LoadTransformNode(child);
+			else if (name == "Shadow")
+				LoadShadowNode(child);
+			else if (name == "Gaps")
+				LoadGapsNode(child);
+			else if (name == "Margins")
+				LoadEdgesNode(child, Margins);
+			else if (name == "Paddings")
+				LoadEdgesNode(child, Paddings);
+			else if (name == "Borders")
+				LoadEdgesNode(child, Borders);
+		}
+	}
+
+	void ComputedStyleBuilder::LoadStyleNode(const pugi::xml_node& node)
+	{
+		if (node.empty())
+			return;
+		auto attributes = node.attributes();
+		for (const auto& attribute : attributes)
+		{
+			std::string name = attribute.name();
+			if (name == "flex")
+				FlexDirection = AsYogaFlexDirection(attribute.value());
+			else if (name == "direction")
+				Direction = AsYogaDirection(attribute.value());
+		}
+	}
+
+	void ComputedStyleBuilder::LoadDimensionNode(const pugi::xml_node& node)
+	{
+		if (node.empty())
+			return;
+		auto attributes = node.attributes();
+		for (const auto& attribute : attributes)
+		{
+			std::string name = attribute.name();
+			if (name == "width")
+				Width = AsYogaStyleLength(attribute.value());
+			else if (name == "height")
+				Height = AsYogaStyleLength(attribute.value());
+			else if (name == "minWidth")
+				MinWidth = AsYogaStyleLength(attribute.value());
+			else if (name == "minHeight")
+				MinHeight = AsYogaStyleLength(attribute.value());
+			else if (name == "maxWidth")
+				MaxWidth = AsYogaStyleLength(attribute.value());
+			else if (name == "maxHeight")
+				MaxHeight = AsYogaStyleLength(attribute.value());
+		}
+	}
+
+	void ComputedStyleBuilder::LoadColorsNode(const pugi::xml_node& node)
+	{
+		if (node.empty())
+			return;
+		auto attributes = node.attributes();
+		for (const auto& attribute : attributes)
+		{
+			std::string name = attribute.name();
+			if (name == "color")
+				Color = AsColor(attribute.value());
+			else if (name == "background")
+				BackgroundColor = AsColor(attribute.value());
+			else if (name == "border")
+				BorderColor = AsColor(attribute.value());
+			else if (name == "opacity")
+				Opacity = AsScalar(attribute.value());
+		}
+	}
+
+	void ComputedStyleBuilder::LoadRadiusNode(const pugi::xml_node& node)
+	{
+		if (node.empty())
+			return;
+		using BorderRadius = ComputedStyle::VisualProperties::BorderRadius;
+		BorderRadius radius;
+		auto attributes = node.attributes();
+		for (const auto& attribute : attributes)
+		{
+			std::string name = attribute.name();
+			if (name == "radius")
+			{
+				scalar fRadius = AsScalar(attribute.value()).value_or(0.0f);
+				radius.topLeft = fRadius;
+				radius.topRight = fRadius;
+				radius.bottomLeft = fRadius;
+				radius.bottomRight = fRadius;
+				break;
+			}
+			else if (name == "tl")
+				radius.topLeft = AsScalar(attribute.value()).value_or(0.0f);
+			else if (name == "tr")
+				radius.topRight = AsScalar(attribute.value()).value_or(0.0f);
+			else if (name == "bl")
+				radius.bottomLeft = AsScalar(attribute.value()).value_or(0.0f);
+			else if (name == "br")
+				radius.bottomRight = AsScalar(attribute.value()).value_or(0.0f);
+		}
+
+		Radius = radius;
+	}
+
+	void ComputedStyleBuilder::LoadTransformNode(const pugi::xml_node& node)
+	{
+		if (node.empty())
+			return;
+
+		TransformF transform;
+		auto children = node.children();
+		for (const auto& child : children)
+		{
+			std::string name = child.name();
+			if (name == "Translation")
+			{
+				auto x = AsScalar(GetNodeValue(child, "x"));
+				auto y = AsScalar(GetNodeValue(child, "y"));
+				transform.Apply(TransformF::Translation(x.value_or(0.0f), y.value_or(0.0f)));
+			}
+			else if (name == "Rotation")
+			{
+				auto a = AsScalar(GetNodeValue(child, "a"));
+				transform.Apply(TransformF::Rotation(Radian2Degree(a.value_or(0.0f))));
+			}
+			else if (name == "Scaling")
+			{
+				auto x = AsScalar(GetNodeValue(child, "x"));
+				auto y = AsScalar(GetNodeValue(child, "y"));
+				transform.Apply(TransformF::Scaling(x.value_or(0.0f), y.value_or(0.0f)));
+			}
+			else if (name == "Shearing")
+			{
+				auto x = AsScalar(GetNodeValue(child, "x"));
+				auto y = AsScalar(GetNodeValue(child, "y"));
+				transform.Apply(TransformF::Shearing(x.value_or(0.0f), y.value_or(0.0f)));
+			}
+		}
+		 Transform = transform;
+	}
+
+	void ComputedStyleBuilder::LoadShadowNode(const pugi::xml_node& node)
+	{
+		if (node.empty())
+			return;
+
+		ComputedStyle::VisualProperties::Shadow shadow;
+		auto attributes = node.attributes();
+		for (const auto& attribute : attributes)
+		{
+			std::string name = attribute.name();
+			if (name == "color")
+				shadow.color = AsColor(attribute.value()).value_or(basic::Color());
+			else if (name == "x")
+				shadow.offsetX = AsScalar(attribute.value()).value_or(0.0f);
+			else if (name == "y")
+				shadow.offsetY = AsScalar(attribute.value()).value_or(0.0f);
+			else if (name == "b")
+				shadow.blur = AsScalar(attribute.value()).value_or(0.0f);
+			else if (name == "s")
+				shadow.spread = AsScalar(attribute.value()).value_or(0.0f);
+		}
+
+		Shadow = shadow;
+	}
+
+	void ComputedStyleBuilder::LoadGapsNode(const pugi::xml_node& node)
+	{
+		if (node.empty())
+			return;
+
+		auto attributes = node.attributes();
+		for (const auto& attribute : attributes)
+		{
+			std::string name = attribute.name();
+			if (name == "gap")
+			{
+				auto gap = AsYogaStyleLength(attribute.value());
+				RowGap = gap;
+				ColumnGap = gap;
+				break;
+			}
+			else if (name == "row")
+				RowGap = AsYogaStyleLength(attribute.value());
+			else if (name == "column")
+				ColumnGap = AsYogaStyleLength(attribute.value());
+		}
+	}
+
+	void ComputedStyleBuilder::LoadEdgesNode(const pugi::xml_node& node, std::optional<Edges>& OptionalEdges)
+	{
+		if (node.empty())
+			return;
+
+		Edges edges;
+		auto attributes = node.attributes();
+		for (const auto& attribute : attributes)
+		{
+			std::string name = attribute.name();
+			if (name == "value")
+			{
+				auto length = AsYogaStyleLength(attribute.value());
+				edges.Left = length;
+				edges.Top = length;
+				edges.Right = length;
+				edges.Bottom = length;
+				break;
+			}
+			else if (name == "l")
+				edges.Left = AsYogaStyleLength(attribute.value());
+			else if (name == "t")
+				edges.Top = AsYogaStyleLength(attribute.value());
+			else if (name == "r")
+				edges.Right = AsYogaStyleLength(attribute.value());
+			else if (name == "b")
+				edges.Bottom = AsYogaStyleLength(attribute.value());
+		}
+
+		OptionalEdges = edges;
 	}
 }
