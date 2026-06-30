@@ -1,25 +1,117 @@
 <Styles>
-    <Style class="NaniWindow" flex="row" direction="ltr">
-        <Gaps gap="1.0" row="2.0" column="4.0"/>
+    <!-- ============================================================
+		 NaniWindow — Root window defaults.
+		 Uses FlexBox row layout, LTR direction, with row/column gaps.
+		 ============================================================ -->
+    <Style class="NaniWindow">
+        <FlexBox flexDirection="row" direction="ltr" />
+        <Gaps gap="1.0" row="2.0" column="4.0" />
     </Style>
+
+    <!-- ============================================================
+		 Rectangle — Base style showcasing all non-position layout props.
+		 FlexBox: flex, grow, shrink (no basis — auto).
+		 Dimension: fixed width/height.
+		 Colors: full RGBA.
+		 Radius: uniform.
+		 Edges: Margins (uniform), Paddings / Borders (individual).
+		 Transform: Translation, Rotation, Scaling, Shearing chain.
+		 ============================================================ -->
     <Style class="Rectangle">
+        <FlexBox flex="1.0" grow="1.0" shrink="0.5" />
         <Dimension width="200" height="100" />
         <Colors opacity="1.0" background="#FFFFFFFF" border="#FF00FFFF" color="#00FFFFFF" />
-        <Radius radius="2"/>
-        <Margins value = "2" />
-        <Paddings l="1" t="2" r="3" b="4"/>
-        <Borders l="1" t="2" r="3" b="4"/>
+        <Radius radius="2" />
+        <Margins value="2" />
+        <Paddings l="1" t="2" r="3" b="4" />
+        <Borders l="1" t="2" r="3" b="4" />
         <Transform>
             <Translation x="20" y="10" />
             <Rotation a="90" />
-            <Scaling x="1.5" y ="1.5" />
-            <Shearing x="1.5" y ="1.5" />
+            <Scaling x="1.5" y="1.5" />
+            <Shearing x="1.5" y="1.5" />
         </Transform>
     </Style>
+
+    <!-- ============================================================
+		 Square — Inherits Rectangle, overrides select properties.
+		 FlexBox: overrides flex, basis; inherits grow/shrink.
+		 Dimension: overrides width/height.
+		 Radius: individual corners (tl, tr, bl, br).
+		 Shadow: offset, blur, spread, color.
+		 ============================================================ -->
     <Style class="Square" inherit="Rectangle">
+        <FlexBox flex="2.0" basis="100" />
         <Dimension width="100" height="100" />
-        <Radius tl="2" tr="2" bl="2" br="2"/>
+        <Radius tl="2" tr="2" bl="2" br="2" />
         <Colors opacity="0.5" background="#FFFF00FF" border="#FF000FFF" color="#00FFFFFF" />
         <Shadow color="#808080FF" x="2" y="2" b="1.0" s="1.0" />
+    </Style>
+
+    <!-- ============================================================
+		 FlexContainer — Demonstrates the full FlexBox node with all
+		 new layout attributes:
+		   wrap          : nowrap | wrap | wrap-reverse
+		   justify       : start | center | end | space-between | space-around | space-evenly
+		   alignContent  : auto | start | center | end | stretch | baseline | space-between | space-around | space-evenly
+		   alignItems    : auto | start | center | end | stretch | baseline | space-between | space-around | space-evenly
+		   alignSelf     : auto | start | center | end | stretch | baseline | space-between | space-around | space-evenly
+		   overflow      : visible | hidden | scroll
+		   aspectRatio   : float
+		 Also shows the existing flex/grow/shrink/basis/direction for
+		 completeness as a declaration paradigm.
+		 ============================================================ -->
+    <Style class="FlexContainer">
+        <FlexBox
+            flex="0.0"
+            flexDirection="column"
+            direction="ltr"
+            grow="0.0" shrink="1.0" basis="auto"
+            wrap="nowrap"
+            justify="start"
+            alignContent="start"
+            alignItems="stretch"
+            alignSelf="auto"
+            overflow="visible"
+            aspectRatio="0.0" />
+    </Style>
+
+    <!-- ============================================================
+		 AbsoluteOverlay — Demonstrates the Positions node:
+		   type  : static | relative | absolute
+		   value : uniform offset for all four edges
+		   l,t,r,b : individual edge offsets
+		 ============================================================ -->
+    <Style class="AbsoluteOverlay">
+        <FlexBox flex="1.0" />
+        <Positions type="absolute" l="0" t="0" r="0" b="0" />
+    </Style>
+
+    <!-- ============================================================
+		 ScrollableColumn — A column flex container with overflow
+		 scroll and wrap-reverse.
+		 ============================================================ -->
+    <Style class="ScrollableColumn">
+        <FlexBox
+            flexDirection="column"
+            wrap="wrap-reverse"
+            justify="start"
+            alignContent="stretch"
+            overflow="scroll"
+            aspectRatio="0.0" />
+    </Style>
+
+    <!-- ============================================================
+		 CenteredRow — Row layout with centered content, space-between
+		 justification, items stretched, gap between items.
+		 ============================================================ -->
+    <Style class="CenteredRow">
+        <FlexBox
+            flexDirection="row"
+            justify="space-between"
+            alignContent="center"
+            alignItems="stretch"
+            wrap="wrap" />
+        <Gaps gap="8.0" />
     </Style>
 </Styles>

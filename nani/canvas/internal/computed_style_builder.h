@@ -25,6 +25,17 @@ namespace nani::canvas::internal
 		//Layout
 		ComputeStyleBuilderInheritProperty(facebook::yoga::Direction, Direction);
 		ComputeStyleBuilderInheritProperty(facebook::yoga::FlexDirection, FlexDirection);
+		ComputeStyleBuilderInheritProperty(facebook::yoga::FloatOptional, Flex);
+		ComputeStyleBuilderInheritProperty(facebook::yoga::FloatOptional, FlexGrow);
+		ComputeStyleBuilderInheritProperty(facebook::yoga::FloatOptional, FlexShrink);
+		ComputeStyleBuilderInheritProperty(facebook::yoga::FloatOptional, AspectRatio);
+		ComputeStyleBuilderInheritProperty(facebook::yoga::StyleLength, FlexBasis);
+		ComputeStyleBuilderInheritProperty(facebook::yoga::Wrap, FlexWrap);
+		ComputeStyleBuilderInheritProperty(facebook::yoga::Justify, Justify);
+		ComputeStyleBuilderInheritProperty(facebook::yoga::Align, AlignContent);
+		ComputeStyleBuilderInheritProperty(facebook::yoga::Align, AlignItems);
+		ComputeStyleBuilderInheritProperty(facebook::yoga::Align, AlignSelf);
+		ComputeStyleBuilderInheritProperty(facebook::yoga::Overflow, Overflow);
 
 		ComputeStyleBuilderInheritProperty(facebook::yoga::StyleLength, Width);
 		ComputeStyleBuilderInheritProperty(facebook::yoga::StyleLength, Height);
@@ -45,6 +56,9 @@ namespace nani::canvas::internal
 		ComputeStyleBuilderInheritProperty(Edges, Margins);
 		ComputeStyleBuilderInheritProperty(Edges, Paddings);
 		ComputeStyleBuilderInheritProperty(Edges, Borders);
+
+		ComputeStyleBuilderInheritProperty(facebook::yoga::PositionType, PositionType);
+		ComputeStyleBuilderInheritProperty(Edges, Positions);
 		//Visual
 		ComputeStyleBuilderInheritProperty(basic::Color, Color);
 		ComputeStyleBuilderInheritProperty(basic::Color, BackgroundColor);
@@ -56,7 +70,7 @@ namespace nani::canvas::internal
 
 	private:
 		void LoadImpl(const pugi::xml_node& styleNode);
-		void LoadStyleNode(const pugi::xml_node& node);
+		void LoadFlexBoxNode(const pugi::xml_node& node);
 		void LoadDimensionNode(const pugi::xml_node& node);
 		void LoadColorsNode(const pugi::xml_node& node);
 		void LoadRadiusNode(const pugi::xml_node& node);
@@ -64,6 +78,7 @@ namespace nani::canvas::internal
 		void LoadShadowNode(const pugi::xml_node& node);
 		void LoadGapsNode(const pugi::xml_node& node);
 		void LoadEdgesNode(const pugi::xml_node& node, std::optional<Edges>& OptionalEdges);
+		void LoadPositionsNode(const pugi::xml_node& node);
 
 	private:
 		const ComputedStyleBuilder* m_inheritBuilder = nullptr;

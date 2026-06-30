@@ -82,6 +82,14 @@ namespace
 		return std::optional<scalar>();
 	}
 
+	std::optional<FloatOptional> AsYogaFloatOptional(const std::string_view& str)
+	{
+		auto scalar = AsScalar(str);
+		if (!scalar.has_value())
+			return std::optional<FloatOptional>();
+		return FloatOptional(scalar.value());
+	}
+
 	std::optional<Color> AsColor(const std::string_view& str)
 	{
 		if (str.empty())
@@ -102,6 +110,99 @@ namespace
 			(style.*setEdgeFunc)(Edge::Right, v.value());
 		if (auto v = edges.Bottom; v.has_value())
 			(style.*setEdgeFunc)(Edge::Bottom, v.value());
+	}
+
+	std::optional<PositionType> AsYogaPositionType(const std::string_view& str)
+	{
+		if (str.empty())
+			return std::optional<PositionType>();
+
+		if (str == "absolute")
+			return PositionType::Absolute;
+		else if (str == "static")
+			return PositionType::Static;
+		else if (str == "relative")
+			return PositionType::Relative;
+
+		return std::optional<PositionType>();
+	}
+
+	std::optional<Justify> AsYogaJustify(const std::string_view& str)
+	{
+		if (str.empty())
+			return std::optional<Justify>();
+
+		if (str == "start")
+			return Justify::FlexStart;
+		else if (str == "center")
+			return Justify::Center;
+		else if (str == "end")
+			return Justify::FlexEnd;
+		else if (str == "space-between")
+			return Justify::SpaceBetween;
+		else if (str == "space-around")
+			return Justify::SpaceAround;
+		else if (str == "space-evenly")
+			return Justify::SpaceEvenly;
+
+		return std::optional<Justify>();
+	}
+
+	std::optional<Align> AsYogaAlign(const std::string_view& str)
+	{
+		if (str.empty())
+			return std::optional<Align>();
+
+		if (str == "auto")
+			return Align::Auto;
+		else if (str == "start")
+			return Align::FlexStart;
+		else if (str == "center")
+			return Align::Center;
+		else if (str == "end")
+			return Align::FlexEnd;
+		else if (str == "stretch")
+			return Align::Stretch;
+		else if (str == "baseline")
+			return Align::Baseline;
+		else if (str == "space-between")
+			return Align::SpaceBetween;
+		else if (str == "space-around")
+			return Align::SpaceAround;
+		else if (str == "space-evenly")
+			return Align::SpaceEvenly;
+
+		return std::optional<Align>();
+	}
+
+	std::optional<Wrap> AsYogaWrap(const std::string_view& str)
+	{
+		if (str.empty())
+			return std::optional<Wrap>();
+
+		if (str == "nowrap")
+			return Wrap::NoWrap;
+		else if (str == "wrap")
+			return Wrap::Wrap;
+		else if (str == "wrap-reverse")
+			return Wrap::WrapReverse;
+
+		return std::optional<Wrap>();
+	}
+
+	std::optional<Overflow> AsYogaOverflow(const std::string_view& str)
+	{
+		if (str.empty())
+			return std::optional<Overflow>();
+
+		if (str == "visible")
+			return Overflow::Visible;
+		else if (str == "hidden")
+			return Overflow::Hidden;
+		else if (str == "scroll")
+			return Overflow::Scroll;
+
+		return std::optional<Overflow>();
 	}
 }
 
@@ -128,6 +229,39 @@ namespace nani::canvas::internal
 
 		if (auto v = ComputeFlexDirection(); v.has_value())
 			layoutPropsRef.style.setFlexDirection(v.value());
+
+		if (auto v = ComputeJustify(); v.has_value())
+			layoutPropsRef.style.setJustifyContent(v.value());
+
+		if (auto v = ComputeAlignContent(); v.has_value())
+			layoutPropsRef.style.setAlignContent(v.value());
+
+		if (auto v = ComputeAlignItems(); v.has_value())
+			layoutPropsRef.style.setAlignItems(v.value());
+
+		if (auto v = ComputeAlignSelf(); v.has_value())
+			layoutPropsRef.style.setAlignSelf(v.value());
+
+		if (auto v = ComputeFlexWrap(); v.has_value())
+			layoutPropsRef.style.setFlexWrap(v.value());
+
+		if (auto v = ComputeOverflow(); v.has_value())
+			layoutPropsRef.style.setOverflow(v.value());
+
+		if (auto v = ComputeFlex(); v.has_value())
+			layoutPropsRef.style.setFlex(v.value());
+
+		if (auto v = ComputeFlexGrow(); v.has_value())
+			layoutPropsRef.style.setFlexGrow(v.value());
+
+		if (auto v = ComputeFlexShrink(); v.has_value())
+			layoutPropsRef.style.setFlexShrink(v.value());
+
+		if (auto v = ComputeFlexBasis(); v.has_value())
+			layoutPropsRef.style.setFlexBasis(v.value());
+
+		if (auto v = ComputeAspectRatio(); v.has_value())
+			layoutPropsRef.style.setAspectRatio(v.value());
 
 		if (auto v = ComputeWidth(); v.has_value())
 			layoutPropsRef.style.setDimension(Dimension::Width, v.value());
@@ -162,6 +296,12 @@ namespace nani::canvas::internal
 		if (auto v = ComputeBorders(); v.has_value())
 			SetYogaStyleEdges(layoutPropsRef.style, v.value(), &Style::setBorder);
 
+		if (auto v = ComputePositionType(); v.has_value())
+			layoutPropsRef.style.setPositionType(v.value());
+
+		if (auto v = ComputePositions(); v.has_value())
+			SetYogaStyleEdges(layoutPropsRef.style, v.value(), &Style::setPosition);
+
 		if (auto v = ComputeColor(); v.has_value())
 			visualPropsRef.color = v.value();
 
@@ -191,13 +331,13 @@ namespace nani::canvas::internal
 		if (styleNode.empty())
 			return;
 
-		LoadStyleNode(styleNode);
-
 		auto children = styleNode.children();
 		for (const auto& child : children)
 		{
 			std::string name = child.name();
-			if (name == "Dimension")
+			if (name == "FlexBox")
+				LoadFlexBoxNode(child);
+			else if (name == "Dimension")
 				LoadDimensionNode(child);
 			else if (name == "Colors")
 				LoadColorsNode(child);
@@ -215,10 +355,12 @@ namespace nani::canvas::internal
 				LoadEdgesNode(child, Paddings);
 			else if (name == "Borders")
 				LoadEdgesNode(child, Borders);
+			else if (name == "Positions")
+				LoadPositionsNode(child);
 		}
 	}
 
-	void ComputedStyleBuilder::LoadStyleNode(const pugi::xml_node& node)
+	void ComputedStyleBuilder::LoadFlexBoxNode(const pugi::xml_node& node)
 	{
 		if (node.empty())
 			return;
@@ -227,9 +369,31 @@ namespace nani::canvas::internal
 		{
 			std::string name = attribute.name();
 			if (name == "flex")
+				Flex = AsYogaFloatOptional(attribute.value());
+			else if (name == "flexDirection")
 				FlexDirection = AsYogaFlexDirection(attribute.value());
 			else if (name == "direction")
 				Direction = AsYogaDirection(attribute.value());
+			else if (name == "grow")
+				FlexGrow = AsYogaFloatOptional(attribute.value());
+			else if (name == "shrink")
+				FlexShrink = AsYogaFloatOptional(attribute.value());
+			else if (name == "basis")
+				FlexBasis = AsYogaStyleLength(attribute.value());
+			else if (name == "wrap")
+				FlexWrap = AsYogaWrap(attribute.value());
+			else if (name == "justify")
+				Justify = AsYogaJustify(attribute.value());
+			else if (name == "alignContent")
+				AlignContent = AsYogaAlign(attribute.value());
+			else if (name == "alignItems")
+				AlignItems = AsYogaAlign(attribute.value());
+			else if (name == "alignSelf")
+				AlignSelf = AsYogaAlign(attribute.value());
+			else if (name == "overflow")
+				Overflow = AsYogaOverflow(attribute.value());
+			else if (name == "aspectRatio")
+				AspectRatio = AsYogaFloatOptional(attribute.value());
 		}
 	}
 
@@ -422,5 +586,13 @@ namespace nani::canvas::internal
 		}
 
 		OptionalEdges = edges;
+	}
+
+	void ComputedStyleBuilder::LoadPositionsNode(const pugi::xml_node& node)
+	{
+		if (node.empty())
+			return;
+		PositionType = AsYogaPositionType(GetNodeValue(node, "type"));
+		LoadEdgesNode(node, Positions);
 	}
 }

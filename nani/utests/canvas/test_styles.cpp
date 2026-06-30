@@ -184,13 +184,15 @@ TEST_F(StylesTest, LoadFromXML_WithTransform)
 }
 
 // -----------------------------------------------------------
-// Flex and direction
+// FlexBox node: flexDirection and direction
 // -----------------------------------------------------------
-TEST_F(StylesTest, LoadFromXML_WithFlexAndDirection)
+TEST_F(StylesTest, LoadFromXML_WithFlexBoxDirection)
 {
 	styles_->LoadFromXML(R"(
 		<Styles>
-			<Style class="ColumnBox" flex="column" direction="rtl" />
+			<Style class="ColumnBox">
+				<FlexBox flexDirection="column" direction="rtl" />
+			</Style>
 		</Styles>
 	)");
 
@@ -201,6 +203,57 @@ TEST_F(StylesTest, LoadFromXML_WithFlexAndDirection)
 		facebook::yoga::FlexDirection::Column);
 	EXPECT_EQ(cs->layoutProps.style.direction(),
 		facebook::yoga::Direction::RTL);
+}
+
+// -----------------------------------------------------------
+// FlexBox node: flex (grow)
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_WithFlexBoxFlex)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="FlexGrowBox">
+				<FlexBox flex="2.5" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"FlexGrowBox");
+	ASSERT_NE(cs, nullptr);
+
+	EXPECT_FLOAT_EQ(cs->layoutProps.style.flex().unwrap(), 2.5f);
+}
+
+// -----------------------------------------------------------
+// Inherit — child inherits parent's FlexBox flexDirection, overrides flex, basis
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_InheritFlexBox)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="BaseFlex">
+				<FlexBox flex="1.0" flexDirection="column" direction="rtl" grow="1.0" shrink="0.5" basis="20" />
+			</Style>
+			<Style class="DerivedFlex" inherit="BaseFlex">
+				<FlexBox flex="2.0" basis="30%" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"DerivedFlex");
+	ASSERT_NE(cs, nullptr);
+
+	EXPECT_FLOAT_EQ(cs->layoutProps.style.flex().unwrap(), 2.0f);
+	EXPECT_EQ(cs->layoutProps.style.flexDirection(),
+		facebook::yoga::FlexDirection::Column);
+	EXPECT_EQ(cs->layoutProps.style.direction(),
+		facebook::yoga::Direction::RTL);
+	EXPECT_EQ(cs->layoutProps.style.flexGrow().unwrap(),
+		1.0f);
+	EXPECT_EQ(cs->layoutProps.style.flexShrink().unwrap(),
+		0.5f);
+	EXPECT_EQ(cs->layoutProps.style.flexBasis().value().unwrap(),
+		30.0f);
 }
 
 // -----------------------------------------------------------
@@ -669,6 +722,348 @@ TEST_F(StylesTest, HotReload_ReverseOrder)
 	auto h2 = cs2->layoutProps.style.dimension(facebook::yoga::Dimension::Height);
 	EXPECT_FLOAT_EQ(w2.value().unwrap(), 400.0f);
 	EXPECT_FLOAT_EQ(h2.value().unwrap(), 200.0f);
+}
+
+// -----------------------------------------------------------
+// FlexBox node: wrap
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_WithFlexBoxWrap)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="WrapBox">
+				<FlexBox wrap="wrap" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"WrapBox");
+	ASSERT_NE(cs, nullptr);
+
+	EXPECT_EQ(cs->layoutProps.style.flexWrap(),
+		facebook::yoga::Wrap::Wrap);
+}
+
+// -----------------------------------------------------------
+// FlexBox node: wrap-reverse
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_WithFlexBoxWrapReverse)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="WrapRevBox">
+				<FlexBox wrap="wrap-reverse" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"WrapRevBox");
+	ASSERT_NE(cs, nullptr);
+
+	EXPECT_EQ(cs->layoutProps.style.flexWrap(),
+		facebook::yoga::Wrap::WrapReverse);
+}
+
+// -----------------------------------------------------------
+// FlexBox node: justify
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_WithFlexBoxJustify)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="JustifyBox">
+				<FlexBox justify="space-between" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"JustifyBox");
+	ASSERT_NE(cs, nullptr);
+
+	EXPECT_EQ(cs->layoutProps.style.justifyContent(),
+		facebook::yoga::Justify::SpaceBetween);
+}
+
+// -----------------------------------------------------------
+// FlexBox node: alignContent / alignItems / alignSelf
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_WithFlexBoxAlign)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="AlignBox">
+				<FlexBox alignContent="center" alignItems="stretch" alignSelf="baseline" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"AlignBox");
+	ASSERT_NE(cs, nullptr);
+
+	EXPECT_EQ(cs->layoutProps.style.alignContent(),
+		facebook::yoga::Align::Center);
+	EXPECT_EQ(cs->layoutProps.style.alignItems(),
+		facebook::yoga::Align::Stretch);
+	EXPECT_EQ(cs->layoutProps.style.alignSelf(),
+		facebook::yoga::Align::Baseline);
+}
+
+// -----------------------------------------------------------
+// FlexBox node: overflow
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_WithFlexBoxOverflow)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="OverflowBox">
+				<FlexBox overflow="scroll" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"OverflowBox");
+	ASSERT_NE(cs, nullptr);
+
+	EXPECT_EQ(cs->layoutProps.style.overflow(),
+		facebook::yoga::Overflow::Scroll);
+}
+
+// -----------------------------------------------------------
+// FlexBox node: aspectRatio
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_WithFlexBoxAspectRatio)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="AspectBox">
+				<FlexBox aspectRatio="1.7777" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"AspectBox");
+	ASSERT_NE(cs, nullptr);
+
+	EXPECT_FLOAT_EQ(cs->layoutProps.style.aspectRatio().unwrap(), 1.7777f);
+}
+
+// -----------------------------------------------------------
+// FlexBox node: all new properties combined
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_WithFlexBoxAllNewProps)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="FullFlexBox">
+				<FlexBox flex="1.5" flexDirection="row" direction="ltr"
+					grow="2.0" shrink="0.5" basis="50%"
+					wrap="wrap" justify="center"
+					alignContent="start" alignItems="end" alignSelf="auto"
+					overflow="hidden" aspectRatio="2.0" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"FullFlexBox");
+	ASSERT_NE(cs, nullptr);
+
+	EXPECT_FLOAT_EQ(cs->layoutProps.style.flex().unwrap(), 1.5f);
+	EXPECT_EQ(cs->layoutProps.style.flexDirection(),
+		facebook::yoga::FlexDirection::Row);
+	EXPECT_EQ(cs->layoutProps.style.direction(),
+		facebook::yoga::Direction::LTR);
+	EXPECT_FLOAT_EQ(cs->layoutProps.style.flexGrow().unwrap(), 2.0f);
+	EXPECT_FLOAT_EQ(cs->layoutProps.style.flexShrink().unwrap(), 0.5f);
+	EXPECT_EQ(cs->layoutProps.style.flexBasis().value().unwrap(), 50.0f);
+	EXPECT_EQ(cs->layoutProps.style.flexWrap(),
+		facebook::yoga::Wrap::Wrap);
+	EXPECT_EQ(cs->layoutProps.style.justifyContent(),
+		facebook::yoga::Justify::Center);
+	EXPECT_EQ(cs->layoutProps.style.alignContent(),
+		facebook::yoga::Align::FlexStart);
+	EXPECT_EQ(cs->layoutProps.style.alignItems(),
+		facebook::yoga::Align::FlexEnd);
+	EXPECT_EQ(cs->layoutProps.style.alignSelf(),
+		facebook::yoga::Align::Auto);
+	EXPECT_EQ(cs->layoutProps.style.overflow(),
+		facebook::yoga::Overflow::Hidden);
+	EXPECT_FLOAT_EQ(cs->layoutProps.style.aspectRatio().unwrap(), 2.0f);
+}
+
+// -----------------------------------------------------------
+// Positions node: position type
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_WithPositionsType)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="AbsoluteBox">
+				<Positions type="absolute" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"AbsoluteBox");
+	ASSERT_NE(cs, nullptr);
+
+	EXPECT_EQ(cs->layoutProps.style.positionType(),
+		facebook::yoga::PositionType::Absolute);
+}
+
+// -----------------------------------------------------------
+// Positions node: position type static
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_WithPositionsTypeStatic)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="StaticBox">
+				<Positions type="static" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"StaticBox");
+	ASSERT_NE(cs, nullptr);
+
+	EXPECT_EQ(cs->layoutProps.style.positionType(),
+		facebook::yoga::PositionType::Static);
+}
+
+// -----------------------------------------------------------
+// Positions node: edge values via value attribute
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_WithPositionsEdgesUniform)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="PosUniformBox">
+				<Positions value="10" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"PosUniformBox");
+	ASSERT_NE(cs, nullptr);
+
+	EXPECT_EQ(cs->layoutProps.style.position(facebook::yoga::Edge::Left).value().unwrap(), 10.0f);
+	EXPECT_EQ(cs->layoutProps.style.position(facebook::yoga::Edge::Top).value().unwrap(), 10.0f);
+	EXPECT_EQ(cs->layoutProps.style.position(facebook::yoga::Edge::Right).value().unwrap(), 10.0f);
+	EXPECT_EQ(cs->layoutProps.style.position(facebook::yoga::Edge::Bottom).value().unwrap(), 10.0f);
+}
+
+// -----------------------------------------------------------
+// Positions node: individual edge values
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_WithPositionsEdgesIndividual)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="PosEdgesBox">
+				<Positions l="1" t="2" r="3" b="4" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"PosEdgesBox");
+	ASSERT_NE(cs, nullptr);
+
+	EXPECT_EQ(cs->layoutProps.style.position(facebook::yoga::Edge::Left).value().unwrap(), 1.0f);
+	EXPECT_EQ(cs->layoutProps.style.position(facebook::yoga::Edge::Top).value().unwrap(), 2.0f);
+	EXPECT_EQ(cs->layoutProps.style.position(facebook::yoga::Edge::Right).value().unwrap(), 3.0f);
+	EXPECT_EQ(cs->layoutProps.style.position(facebook::yoga::Edge::Bottom).value().unwrap(), 4.0f);
+}
+
+// -----------------------------------------------------------
+// Positions node: type + edges combined
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_WithPositionsTypeAndEdges)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="PosCombinedBox">
+				<Positions type="absolute" l="5" t="10" r="15" b="20" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"PosCombinedBox");
+	ASSERT_NE(cs, nullptr);
+
+	EXPECT_EQ(cs->layoutProps.style.positionType(),
+		facebook::yoga::PositionType::Absolute);
+	EXPECT_EQ(cs->layoutProps.style.position(facebook::yoga::Edge::Left).value().unwrap(), 5.0f);
+	EXPECT_EQ(cs->layoutProps.style.position(facebook::yoga::Edge::Top).value().unwrap(), 10.0f);
+	EXPECT_EQ(cs->layoutProps.style.position(facebook::yoga::Edge::Right).value().unwrap(), 15.0f);
+	EXPECT_EQ(cs->layoutProps.style.position(facebook::yoga::Edge::Bottom).value().unwrap(), 20.0f);
+}
+
+// -----------------------------------------------------------
+// Inherit — child inherits parent's FlexBox new props
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_InheritFlexBoxNewProps)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="BaseFlexNew">
+				<FlexBox wrap="wrap" justify="center"
+					alignContent="start" alignItems="end" alignSelf="auto"
+					overflow="hidden" aspectRatio="1.5" />
+			</Style>
+			<Style class="DerivedFlexNew" inherit="BaseFlexNew">
+				<FlexBox justify="space-around" overflow="scroll" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"DerivedFlexNew");
+	ASSERT_NE(cs, nullptr);
+
+	// Overridden by child
+	EXPECT_EQ(cs->layoutProps.style.justifyContent(),
+		facebook::yoga::Justify::SpaceAround);
+	EXPECT_EQ(cs->layoutProps.style.overflow(),
+		facebook::yoga::Overflow::Scroll);
+	// Inherited from parent
+	EXPECT_EQ(cs->layoutProps.style.flexWrap(),
+		facebook::yoga::Wrap::Wrap);
+	EXPECT_EQ(cs->layoutProps.style.alignContent(),
+		facebook::yoga::Align::FlexStart);
+	EXPECT_EQ(cs->layoutProps.style.alignItems(),
+		facebook::yoga::Align::FlexEnd);
+	EXPECT_EQ(cs->layoutProps.style.alignSelf(),
+		facebook::yoga::Align::Auto);
+	EXPECT_FLOAT_EQ(cs->layoutProps.style.aspectRatio().unwrap(), 1.5f);
+}
+
+// -----------------------------------------------------------
+// Inherit — child inherits parent's Positions
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_InheritPositions)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="BasePos">
+				<Positions type="absolute" l="1" t="2" r="3" b="4" />
+			</Style>
+			<Style class="DerivedPos" inherit="BasePos">
+				<Positions l="10" t="20" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"DerivedPos");
+	ASSERT_NE(cs, nullptr);
+
+	// Inherited type from parent
+	EXPECT_EQ(cs->layoutProps.style.positionType(),
+		facebook::yoga::PositionType::Absolute);
+	// Overridden by child
+	EXPECT_EQ(cs->layoutProps.style.position(facebook::yoga::Edge::Left).value().unwrap(), 10.0f);
+	EXPECT_EQ(cs->layoutProps.style.position(facebook::yoga::Edge::Top).value().unwrap(), 20.0f);
+	// Edges are replaced wholesale, not merged — Right and Bottom should be undefined
+	EXPECT_TRUE(cs->layoutProps.style.position(facebook::yoga::Edge::Right).isUndefined());
+	EXPECT_TRUE(cs->layoutProps.style.position(facebook::yoga::Edge::Bottom).isUndefined());
 }
 
 // ============================================================
