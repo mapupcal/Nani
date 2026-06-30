@@ -148,7 +148,7 @@ namespace nani::canvas::visuals
 		return m_spComputedStyle->visualProps.transform;;
 	}
 
-	bool Visual::HitTest(const basic::PointF& localPos, Visual** ppHitVisual)
+	bool Visual::HitTest(const basic::PointF& localPos, Visual** ppHitVisual, basic::PointF& hitLocalPos)
 	{
 		if (!m_yogaNode)
 			return false;
@@ -167,7 +167,7 @@ namespace nani::canvas::visuals
 			{
 				PointF childLocalPos = localPos - child->LayoutRect().TopLeft();
 				childLocalPos = child->Transform().Reversed().ApplyTo(childLocalPos);
-				if (child->HitTest(childLocalPos, ppHitVisual))
+				if (child->HitTest(childLocalPos, ppHitVisual, hitLocalPos))
 					return true;
 			}
 			return false;
@@ -194,7 +194,10 @@ namespace nani::canvas::visuals
 			return true;
 
 		if (bSelfHit)
+		{
 			*ppHitVisual = this;
+			hitLocalPos = localPos;
+		}
 
 		return bSelfHit;
 	}

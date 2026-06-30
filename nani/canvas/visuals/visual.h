@@ -23,7 +23,7 @@ namespace nani::canvas::visuals
 		const basic::RectF LayoutRect() const;
 		const basic::TransformF Transform() const;
 
-		bool HitTest(const basic::PointF& localPos, Visual** ppHitVisual);
+		bool HitTest(const basic::PointF& localPos, Visual** ppHitVisual, basic::PointF& hitLocalPos);
 		virtual bool HitTestOverride(const basic::PointF& localPos);
 		virtual void Paint(SkCanvas* canvas, const basic::RectF& dirtyRect);
 

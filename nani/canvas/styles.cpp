@@ -158,7 +158,11 @@ namespace nani::canvas
 
 		auto iterBuilder = m_mapComputedStyleBuilders.find(computeStyleId);
 		if (iterBuilder != m_mapComputedStyleBuilders.cend())
-			return std::make_shared<ComputedStyle>(iterBuilder->second->Compute());
+		{
+			std::shared_ptr<ComputedStyle> computedStyle = std::make_shared<ComputedStyle>(iterBuilder->second->Compute());
+			m_mapComputedStyles.emplace(computeStyleId, computedStyle);
+			return computedStyle;
+		}
 
 		// fallback to style without states.
 		iter = m_mapComputedStyles.find(std::u8string(styleClass));
@@ -167,7 +171,11 @@ namespace nani::canvas
 
 		iterBuilder = m_mapComputedStyleBuilders.find(std::u8string(styleClass));
 		if (iterBuilder != m_mapComputedStyleBuilders.cend())
-			return std::make_shared<ComputedStyle>(iterBuilder->second->Compute());
+		{
+			std::shared_ptr<ComputedStyle> computedStyle = std::make_shared<ComputedStyle>(iterBuilder->second->Compute());
+			m_mapComputedStyles.emplace(computeStyleId, computedStyle);
+			return computedStyle;
+		}
 
 		std::shared_ptr<ComputedStyle> computedStyle = std::make_shared<ComputedStyle>();
 		m_mapComputedStyles.emplace(computeStyleId, computedStyle);

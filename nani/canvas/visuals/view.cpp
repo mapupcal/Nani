@@ -110,29 +110,29 @@ namespace nani::canvas::visuals
 
 	void View::OnMouseMove(events::MouseMoveEvent* e)
 	{
-		if (!m_spVisual)
-			return;
-
-		PointF pos = e->pos;
-		RectF clientRect = Window()->ClientRect();
-		pos -= clientRect.TopLeft();
-		pos = m_spVisual->Transform().Reversed().ApplyTo(pos);
-
-		visuals::Visual* hitVisual = nullptr;
-		m_spVisual->HitTest(pos, &hitVisual);
-		elements::Element* hitElement = HoverElement(hitVisual ? hitVisual->Element() : nullptr);
-		if (hitElement)
-			hitElement->FireEvent(e);
+		if (PointF hitLocalPos; elements::Element* hitElement = HitTest(e, hitLocalPos))
+		{
+			MouseMoveEvent me(hitLocalPos, e->globalPos);
+			hitElement->FireEvent(&me);
+		}
 	}
 
 	void View::OnMousePress(events::MousePressEvent* e)
 	{
-
+		if (PointF hitLocalPos; elements::Element* hitElement = HitTest(e, hitLocalPos))
+		{
+			MousePressEvent me(e->button, hitLocalPos, e->globalPos, e->modifier);
+			hitElement->FireEvent(&me);
+		}
 	}
 
 	void View::OnMouseRelease(events::MouseReleaseEvent* e)
 	{
-
+		if (PointF hitLocalPos; elements::Element* hitElement = HitTest(e, hitLocalPos))
+		{
+			MouseReleaseEvent me(e->button, hitLocalPos, e->globalPos, e->modifier);
+			hitElement->FireEvent(&me);
+		}
 	}
 
 	void View::OnWheel(events::WheelEvent* e)
@@ -150,6 +150,21 @@ namespace nani::canvas::visuals
 
 	}
 
+	elements::Element* View::HitTest(events::MouseEvent* e, PointF& hitLocalPos)
+	{
+		if (!m_spVisual)
+			return nullptr;
+
+		PointF pos = e->pos;
+		RectF clientRect = Window()->ClientRect();
+		pos -= clientRect.TopLeft();
+		pos = m_spVisual->Transform().Reversed().ApplyTo(pos);
+
+		visuals::Visual* hitVisual = nullptr;
+		m_spVisual->HitTest(pos, &hitVisual, hitLocalPos);
+		return HoverElement(hitVisual ? hitVisual->Element() : nullptr);
+	}
+
 	elements::Element* View::HoverElement(elements::Element* candidate)
 	{
 		if (m_spHoverElement == candidate)
@@ -159,7 +174,6 @@ namespace nani::canvas::visuals
 		{
 			Event le(Type::Leave);
 			m_spHoverElement->FireEvent(&le);
-			m_spHoverElement->States()->SetHovered(false);
 		}
 
 		m_spHoverElement = candidate;
@@ -168,7 +182,6 @@ namespace nani::canvas::visuals
 		{
 			Event ee(Type::Enter);
 			m_spHoverElement->FireEvent(&ee);
-			m_spHoverElement->States()->SetHovered(true);
 		}
 
 		return m_spHoverElement;
