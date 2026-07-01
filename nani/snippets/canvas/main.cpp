@@ -70,7 +70,7 @@ int main(int argc, char** argv)
 
 			<Style class="CloseButton" inherit="Button">
 				<Colors background="#FF0000FF" border="#FFFFFFFF"/>
-				<Borders value="4" />
+				<Borders value="2" />
 			</Style>
 
 			<Style class="TitlePanel">
@@ -78,7 +78,6 @@ int main(int argc, char** argv)
 				<Gaps gap="5" />
 				<Borders value="5" />
 				<Dimension width="100%" height="60" />
-				<Colors background="#FFFFFF80"/>
 			</Style>
 
 			<Style class="Title">

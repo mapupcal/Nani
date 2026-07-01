@@ -45,9 +45,9 @@ namespace nani::canvas::internal
 				basic::scalar spread = 0.0f;
 			};
 
-			basic::Color color;
-			basic::Color backgroundColor;
-			basic::Color borderColor;
+			basic::Color color = basic::Colors::Transparent;
+			basic::Color backgroundColor = basic::Colors::Transparent;
+			basic::Color borderColor = basic::Colors::Transparent;
 			basic::TransformF transform;
 			basic::scalar opacity = 1.0f;
 			BorderRadius radius;
