@@ -45,7 +45,7 @@ private:
 int main(int argc, char** argv)
 {
 	Env env(argc, argv);
-	float borderWidth = 2.0f;
+	float borderWidth = 5.0f;
 	std::shared_ptr<Window> window = std::make_shared<Window>(PointF(0, 0), SizeF(600 + borderWidth, 400 + borderWidth));
 	window->SetTitle("Nani Canvas");
 	window->SetBackgroundColor(Colors::White);
@@ -59,16 +59,18 @@ int main(int argc, char** argv)
 		<Styles>
 			<Style class="NaniWindow">
 				<FlexBox direction="ltr" flexDirection="row" />
+				<Colors background="#0000FFFF"/>
 			</Style>
 
 			<Style class="Button">
 				<Dimension width="50" height="50" minWidth="50" minHeight="50" maxWidth="50" maxHeight="50" />
 				<Radius radius="4" />
-				<Colors background="#00000080" border="#FF000080"/>
+				<Colors background="#00FFFF80" border="#FF000080"/>
 			</Style>
 
 			<Style class="CloseButton" inherit="Button">
-				<Colors background="#00000080" border="#80808080"/>
+				<Colors background="#FF0000FF" border="#FFFFFFFF"/>
+				<Borders value="4" />
 			</Style>
 
 			<Style class="TitlePanel">
@@ -76,11 +78,13 @@ int main(int argc, char** argv)
 				<Gaps gap="5" />
 				<Borders value="5" />
 				<Dimension width="100%" height="60" />
+				<Colors background="#FFFFFF80"/>
 			</Style>
 
 			<Style class="Title">
 				<FlexBox flex="1.0" />
 				<Dimension height="50"/>
+				<Colors background="#00FF00FF" />
 			</Style>
 		</Styles>
 	)");

@@ -12,9 +12,7 @@
 #include <include/gpu/ganesh/GrBackendSurface.h>
 #include <core/SkCanvas.h>
 #include <core/SkColorSpace.h>
-#include <include/core/SkRRect.h>
-#include <include/core/SkRect.h>
-#include <ranges>
+#include "skia_utils.h"
 
 using namespace nani::canvas::events;
 using namespace nani::canvas::basic;
@@ -396,7 +394,7 @@ namespace nani::canvas::internal
 		SkPaint fillPaint;
 		fillPaint.setAntiAlias(true);
 		fillPaint.setStyle(SkPaint::kStrokeAndFill_Style);
-		fillPaint.setColor(SkColorSetARGB(backgroundColor.a, backgroundColor.r, backgroundColor.g, backgroundColor.b));
+		fillPaint.setColor(skia_utils::ToSkColor(backgroundColor));
 		canvas->drawRRect(SkRRect::MakeRectXY(fillRect, radius, radius), fillPaint);
 
 		if (borderWidth > 0)
@@ -407,7 +405,7 @@ namespace nani::canvas::internal
 			strokePaint.setAntiAlias(true);
 			strokePaint.setStyle(SkPaint::kStroke_Style);
 			strokePaint.setStrokeWidth(borderWidth);
-			strokePaint.setColor(SkColorSetARGB(borderColor.a, borderColor.r, borderColor.g, borderColor.b));
+			strokePaint.setColor(skia_utils::ToSkColor(borderColor));
 			canvas->drawRRect(SkRRect::MakeRectXY(strokeRect, radius, radius), strokePaint);
 		}
 

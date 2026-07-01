@@ -74,6 +74,8 @@ nani_add_library(canvas SHARED
 	internal/computed_style.h
 	internal/computed_style_builder.cpp
 	internal/computed_style_builder.h
+	internal/skia_utils.cpp
+	internal/skia_utils.h
 )
 target_include_directories(canvas PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}

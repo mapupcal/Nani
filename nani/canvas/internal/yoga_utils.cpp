@@ -1,5 +1,4 @@
-﻿#include "env_p.h"
-#include "yoga_utils.h"
+﻿#include "yoga_utils.h"
 #include <yoga/node/Node.h>
 
 using namespace nani::canvas::basic;

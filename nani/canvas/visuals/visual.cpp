@@ -3,8 +3,10 @@
 #include "../elements/element.h"
 #include "../elements/element_visibility.h"
 #include "../styles.h"
-#include "../internal/yoga_utils.h"
 #include "../internal/computed_style.h"
+#include "../internal/yoga_utils.h"
+#include "../internal/skia_utils.h"
+#include <core/SkCanvas.h>
 
 using namespace nani::canvas::elements;
 using namespace nani::canvas::events;
@@ -209,8 +211,53 @@ namespace nani::canvas::visuals
 
 	void Visual::Paint(SkCanvas* canvas, const basic::RectF& dirtyRect)
 	{
-		//TODO: paint background, border, content, shadow, etc.
-		//TODO: paint child visuals.
+		if (Element()->Visibility()->IsHidden())
+			return;
+
+		canvas->save();
+		bool bCollapsed = Element()->Visibility()->IsCollapsed();
+		if (!bCollapsed)
+		{
+			canvas->concat(internal::skia_utils::ToSkMatrix(Transform()));
+			PaintOverride(canvas, dirtyRect);
+		}
+
+		for (auto visual : std::views::reverse(m_visuals))
+		{
+			canvas->save();
+			canvas->translate(visual->LayoutRect().X(), visual->LayoutRect().Y());
+			visual->Paint(canvas, dirtyRect);
+			canvas->restore();
+		}
+
+		canvas->restore();
+	}
+
+	void Visual::PaintOverride(SkCanvas* canvas, const basic::RectF& dirtyRect)
+	{
+		if (!m_spComputedStyle)
+			return;
+
+		RectF rect = LayoutRect();
+		rect.MoveTo(PointF(0.0f, 0.0f));
+
+		SkRRect borderRect = internal::skia_utils::ToSkRRect(rect, m_spComputedStyle->visualProps.radius);
+		SkColor borderColor = internal::skia_utils::ToSkColor(m_spComputedStyle->visualProps.borderColor);
+
+		SkPaint borderPaint;
+		borderPaint.setColor(borderColor);
+		borderPaint.setAntiAlias(true);
+		borderPaint.setStyle(SkPaint::kFill_Style);
+		canvas->drawRRect(borderRect, borderPaint);
+
+		rect = rect - internal::yoga_utils::GetNodeBorders(m_yogaNode);
+		SkRRect innerRect = internal::skia_utils::ToSkRRect(rect, m_spComputedStyle->visualProps.radius);
+		SkColor bacgroudColor = internal::skia_utils::ToSkColor(m_spComputedStyle->visualProps.backgroundColor);
+		SkPaint backgroundPaint;
+		backgroundPaint.setColor(bacgroudColor);
+		backgroundPaint.setAntiAlias(true);
+		backgroundPaint.setStyle(SkPaint::kFill_Style);
+		canvas->drawRRect(innerRect, backgroundPaint);
 	}
 
 	bool Visual::Filter(events::EventTarget* target, events::Event* e)

@@ -71,7 +71,8 @@ namespace nani::canvas::visuals
 				return;
 
 			canvas->save();
-			canvas->clipRect(SkRect::MakeLTRB(m_dirtyRect.left, m_dirtyRect.top, m_dirtyRect.right, m_dirtyRect.bottom), true);
+			RectF rect = Window()->ClientRect();
+			canvas->translate(rect.X(), rect.Y());
 			m_spVisual->Paint(canvas, m_dirtyRect);
 			canvas->restore();
 

@@ -178,10 +178,14 @@ namespace nani::canvas
 	{
 		switch (e->type)
 		{
+		case events::Type::Paint:
+		{
+			m_pView->Flush();
+			break;
+		}
 		case events::Type::Resize:
 		{
 			m_pView->MarkDirty();
-			m_pView->Flush();
 			break;
 		}
 		case events::Type::Show:
