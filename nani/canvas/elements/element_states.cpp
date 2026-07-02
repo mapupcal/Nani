@@ -69,15 +69,15 @@ namespace nani::canvas::elements
 	const char8_t* ElementStates::GetStateProps() const
 	{
 		if (!IsEnabled())
-			return u8"Disabled";
+			return u8"disabled";
 		if (IsPressed())
-			return u8"Pressed";
+			return u8"pressed";
 		if (IsHovered())
-			return u8"Hovered";
+			return u8"hovered";
 		if (IsSelected())
-			return u8"Selected";
+			return u8"selected";
 		if (IsFocused())
-			return u8"Focused";
+			return u8"focused";
 		return u8"";
 	}
 
