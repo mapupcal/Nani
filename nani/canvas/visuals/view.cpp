@@ -34,13 +34,13 @@ namespace nani::canvas::visuals
 	{
 		if (m_spVisual)
 		{
-			Flush();
+			MarkDirty();
 			return;
 		}
 
 		m_spVisual = Window()->RootElement()->CreateVisual(this, nullptr);
 		m_spVisual->BuildVisuals();
-		Flush();
+		MarkDirty();
 	}
 
 	void View::MarkDirty()
@@ -79,6 +79,11 @@ namespace nani::canvas::visuals
 			m_bPaintDirty = false;
 			m_dirtyRect = RectF();
 		}
+	}
+
+	bool View::IsDirty() const
+	{
+		return m_bLayoutDirty || m_bPaintDirty;
 	}
 
 	void View::OnEvent(events::Event* e)

@@ -13,6 +13,7 @@
 #include <core/SkCanvas.h>
 #include <core/SkColorSpace.h>
 #include "skia_utils.h"
+#include "../visuals/view.h"
 
 using namespace nani::canvas::events;
 using namespace nani::canvas::basic;
@@ -291,6 +292,7 @@ namespace nani::canvas::internal
 
 		ResizeEvent event(oldSize, size);
 		window->FireEvent(&event);
+		Repaint();
 	}
 
 	void WindowPrivate::OnGLFWWindowPositionChanged(int xPos, int yPos)
@@ -372,7 +374,8 @@ namespace nani::canvas::internal
 
 	void WindowPrivate::onTick()
 	{
-		window->Update();
+		if (window->GetView()->IsDirty())
+			Repaint();
 	}
 
 	void nani::canvas::internal::WindowPrivate::Repaint()
@@ -494,8 +497,6 @@ namespace nani::canvas::internal
 			nullptr,
 			nullptr
 		);
-
-		Repaint();
 	}
 
 	SkCanvas* WindowPrivate::GetCanvas()

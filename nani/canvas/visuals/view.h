@@ -15,6 +15,7 @@ namespace nani::canvas::visuals
 		void BuildVisuals();
 		void MarkDirty();
 		void Flush();
+		bool IsDirty() const;
 
 	protected:
 		void OnEvent(events::Event* e) override;

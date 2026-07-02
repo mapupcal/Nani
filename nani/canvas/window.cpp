@@ -82,11 +82,6 @@ namespace nani::canvas
 		m_pImpl->Resize(size);
 	}
 
-	void Window::Update()
-	{
-		m_pView->Flush();
-	}
-
 	void Window::SetRadius(basic::single fRadius)
 	{
 		m_pImpl->SetRadius(fRadius);

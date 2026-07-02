@@ -93,4 +93,16 @@ namespace nani::canvas::elements
 	{
 		return std::make_shared<Visual>(view, this, visualParent);
 	}
+
+	void Element::OnEvent(events::Event* e)
+	{
+		if (e->type == events::Type::Enter)
+		{
+			States()->SetHovered(true);
+		}
+		else if (e->type == events::Type::Leave)
+		{
+			States()->SetHovered(false);
+		}
+	}
 }

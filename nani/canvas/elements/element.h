@@ -23,6 +23,9 @@ namespace nani::canvas::elements
 		ElementVisibility* Visibility();
 		virtual std::shared_ptr<visuals::Visual> CreateVisual(visuals::View* view, visuals::Visual* visualParent);
 
+	protected:
+		void OnEvent(events::Event* e) override;
+
 	private:
 		friend class ElementsLayer;
 		Element* m_pParent = nullptr;

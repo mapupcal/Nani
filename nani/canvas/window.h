@@ -36,8 +36,7 @@ namespace nani::canvas
 		void Close();
 		void Move(const basic::PointF& pos);
 		void Resize(const basic::SizeF& size);
-		void Update();
-		
+
 		void SetRadius(basic::single fRadius);
 		basic::single Radius() const;
 		void SetBorderWidth(basic::single fWidth);
