@@ -56,5 +56,22 @@ namespace nani::canvas::internal::yoga_utils
 	{
 		return GetNodeBorderRect(node) - (GetNodeBorders(node) + GetNodePaddings(node));
 	}
+
+	const basic::PointF GetPointInRect(const basic::RectF& rect, const facebook::yoga::StyleLength& x, const facebook::yoga::StyleLength& y)
+	{
+		PointF point = rect.TopLeft();
+
+		if (x.unit() == Unit::Percent)
+			point.x += rect.Width() * x.value().unwrap() * 0.01f;
+		else if (x.unit() == Unit::Point)
+			point.x += x.value().unwrap();
+
+		if (y.unit() == Unit::Percent)
+			point.y += rect.Height() * y.value().unwrap() * 0.01f;
+		else if (y.unit() == Unit::Point)
+			point.y += y.value().unwrap();
+		
+		return point;
+	}
 }
 

@@ -13,4 +13,5 @@ namespace nani::canvas::internal::yoga_utils
 	const basic::MarginsF GetNodePaddings(YGNodeRef node);
 	const basic::RectF GetNodeBorderRect(YGNodeRef node);
 	const basic::RectF GetNodeContentRect(YGNodeRef node);
+	const basic::PointF GetPointInRect(const basic::RectF& rect, const facebook::yoga::StyleLength& x, const facebook::yoga::StyleLength& y);
 }

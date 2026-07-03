@@ -45,9 +45,16 @@ namespace nani::canvas::internal
 				basic::scalar spread = 0.0f;
 			};
 
+			struct TransformOrigin
+			{
+				facebook::yoga::StyleLength x = facebook::yoga::StyleLength::percent(50.0f);
+				facebook::yoga::StyleLength y = facebook::yoga::StyleLength::percent(50.0f);
+			};
+
 			basic::Color color = basic::Colors::Transparent;
 			basic::Color backgroundColor = basic::Colors::Transparent;
 			basic::Color borderColor = basic::Colors::Transparent;
+			TransformOrigin transformOrigin;
 			basic::TransformF transform;
 			basic::scalar opacity = 1.0f;
 			BorderRadius radius;

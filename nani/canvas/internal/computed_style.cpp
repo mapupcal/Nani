@@ -48,6 +48,8 @@ namespace nani::canvas::internal
 	{
 		if (!other)
 			return { .layoutChanged = true, .visualChanged = true };
+		if(this == other)
+			return { .layoutChanged = false, .visualChanged = false };
 		return { .layoutChanged = !(layoutProps == other->layoutProps), .visualChanged = !(visualProps == other->visualProps) };
 	}
 }

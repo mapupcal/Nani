@@ -70,6 +70,10 @@ int main(int argc, char** argv)
 
 			<Style class="CloseButton" inherit="Button">
 				<Colors background="#FF0000FF" border="#FFFFFFFF"/>
+				<Transform>
+					<Scaling x="2" y="2" />
+					<Rotation a="45" />	
+				</Transform>
 				<Borders value="2" />
 			</Style>
 

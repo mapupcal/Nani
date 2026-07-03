@@ -22,6 +22,7 @@ namespace nani::canvas::visuals
 
 		const basic::RectF LayoutRect() const;
 		const basic::TransformF Transform() const;
+		const basic::PointF TransformOrigin() const;
 
 		bool HitTest(const basic::PointF& localPos, Visual** ppHitVisual, basic::PointF& hitLocalPos);
 		virtual bool HitTestOverride(const basic::PointF& localPos);

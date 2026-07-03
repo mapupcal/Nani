@@ -204,6 +204,44 @@ namespace
 
 		return std::optional<Overflow>();
 	}
+
+	std::string Trim(const std::string_view& str) {
+		auto start = str.find_first_not_of(" \t\n\r\f\v");
+		if (start == std::string_view::npos) {
+			return {};
+		}
+		auto end = str.find_last_not_of(" \t\n\r\f\v");
+		return std::string(str.substr(start, end - start + 1));
+	}
+
+	using TransformOrigin = ComputedStyle::VisualProperties::TransformOrigin;
+	TransformOrigin ParseTransformOrigin(const std::string_view& str)
+	{
+		TransformOrigin origin;
+		if (str.empty())
+			return origin;
+
+		if (str == "center")
+			return origin;
+		else if(str == "tl")
+			return { StyleLength::percent(0.0f), StyleLength::percent(0.0f) };
+		else if(str == "tr")
+			return { StyleLength::percent(100.0f), StyleLength::percent(0.0f) };
+		else if (str == "bl")
+			return { StyleLength::percent(0.0f), StyleLength::percent(100.0f) };
+		else if (str == "br")
+			return { StyleLength::percent(100.0f), StyleLength::percent(100.0f) };
+		else if (auto pos = str.find(','); pos != std::string_view::npos)
+		{
+			std::string_view xStr = str.substr(0, pos);
+			std::string_view yStr = str.substr(pos + 1);
+			if (auto x = AsYogaStyleLength(Trim(xStr)); x.has_value())
+				origin.x = x.value();
+			if (auto y = AsYogaStyleLength(Trim(yStr)); y.has_value())
+				origin.y = y.value();
+		}
+		return origin;
+	}
 }
 
 namespace nani::canvas::internal
@@ -313,6 +351,9 @@ namespace nani::canvas::internal
 
 		if (auto v = ComputeTransform(); v.has_value())
 			visualPropsRef.transform = v.value();
+
+		if (auto v = ComputeTransformOrigin(); v.has_value())
+			visualPropsRef.transformOrigin = v.value();
 
 		if (auto v = ComputeOpacity(); v.has_value())
 			visualPropsRef.opacity = v.value();
@@ -476,6 +517,8 @@ namespace nani::canvas::internal
 		if (node.empty())
 			return;
 
+		TransformOrigin = ParseTransformOrigin(GetNodeValue(node, "origin"));
+
 		TransformF transform;
 		auto children = node.children();
 		for (const auto& child : children)
@@ -505,7 +548,7 @@ namespace nani::canvas::internal
 				transform.Apply(TransformF::Shearing(x.value_or(0.0f), y.value_or(0.0f)));
 			}
 		}
-		 Transform = transform;
+		Transform = transform;
 	}
 
 	void ComputedStyleBuilder::LoadShadowNode(const pugi::xml_node& node)

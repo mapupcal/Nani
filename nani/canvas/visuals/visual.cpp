@@ -147,7 +147,21 @@ namespace nani::canvas::visuals
 	{
 		if (!m_spComputedStyle)
 			return TransformF();
-		return m_spComputedStyle->visualProps.transform;;
+		TransformF transform = m_spComputedStyle->visualProps.transform;
+		PointF origin = TransformOrigin();
+		return TransformF::Translation(-origin.x, -origin.y)
+			.Then(transform)
+			.Then(TransformF::Translation(origin.x, origin.y));
+	}
+
+	const basic::PointF Visual::TransformOrigin() const
+	{
+		if (!m_spComputedStyle)
+			return PointF();
+		auto rect = LayoutRect();
+		rect.MoveTo(PointF(0, 0));
+		auto transformOrigin = m_spComputedStyle->visualProps.transformOrigin;
+		return internal::yoga_utils::GetPointInRect(rect, transformOrigin.x, transformOrigin.y);
 	}
 
 	bool Visual::HitTest(const basic::PointF& localPos, Visual** ppHitVisual, basic::PointF& hitLocalPos)
@@ -222,7 +236,7 @@ namespace nani::canvas::visuals
 			PaintOverride(canvas, dirtyRect);
 		}
 
-		for (auto visual : std::views::reverse(m_visuals))
+		for (auto visual : m_visuals)
 		{
 			canvas->save();
 			canvas->translate(visual->LayoutRect().X(), visual->LayoutRect().Y());

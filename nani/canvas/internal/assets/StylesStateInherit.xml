@@ -1,0 +1,14 @@
+<Styles>
+    <Style class="button">
+        <Colors background="#FFFFFFF" border="#808080FF"/>
+    </Style>
+    <Style class="button" state="hovered">
+        <Colors background="#FFFFFFF" border="#FF00FFFF"/>
+    </Style>
+    <Style class="button" state="pressed">
+        <Colors background="#FFFFFFF" border="#FF00FFFF"/>
+    </Style>
+    <Style class="close-button" inherit="button">
+        <Colors background="#FF000000" border="#808080FF"/>
+    </Style>
+</Styles>

@@ -27,6 +27,11 @@ namespace nani::canvas::basic
 		scalar y;
 	};
 
+	inline PointF operator-(const PointF& p)
+	{
+		return PointF(-p.x, -p.y);
+	}
+
 	inline PointF operator+(const PointF& lhs, const PointF& rhs)
 	{
 		return PointF(lhs.x + rhs.x, lhs.y + rhs.y);

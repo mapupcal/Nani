@@ -391,7 +391,6 @@ namespace nani::canvas::internal
 		canvas->clear(SK_ColorTRANSPARENT);
 
 		SkRect rect = SkRect::MakeXYWH(0, 0, size.width, size.height);
-
 		SkRect fillRect = rect;
 		fillRect.inset(borderWidth / 2, borderWidth / 2);
 		SkPaint fillPaint;
@@ -412,8 +411,14 @@ namespace nani::canvas::internal
 			canvas->drawRRect(SkRRect::MakeRectXY(strokeRect, radius, radius), strokePaint);
 		}
 
+		canvas->save();
+		canvas->clipRRect(SkRRect::MakeRectXY(fillRect, radius, radius));
+
 		PaintEvent event(RectF(PointF(0.0f, 0.0f), size));
 		window->FireEvent(&event);
+
+		canvas->restore();
+
 		skiaGlContext->flushAndSubmit();
 		glfwSwapBuffers(glfwWindow);
 	}
