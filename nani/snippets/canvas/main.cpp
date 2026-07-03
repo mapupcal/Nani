@@ -68,11 +68,14 @@ int main(int argc, char** argv)
 				<Colors background="#00FFFF80" border="#FF000080"/>
 			</Style>
 
+			<Style class="Button" state="hovered">
+				<Radius radius="10" />
+			</Style>
+
 			<Style class="CloseButton" inherit="Button">
 				<Colors background="#FF0000FF" border="#FFFFFFFF"/>
 				<Transform>
-					<Scaling x="2" y="2" />
-					<Rotation a="45" />	
+					<Scaling x="1.2" y="1.2" />
 				</Transform>
 				<Borders value="2" />
 			</Style>

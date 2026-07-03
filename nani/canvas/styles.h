@@ -11,7 +11,7 @@ namespace nani::canvas
 	public:
 		void LoadFromFile(const std::u8string_view& filePath);
 		void LoadFromXML(const std::string& utf8XMLData);
-		std::shared_ptr<internal::ComputedStyle> Compute(const std::u8string_view& styleClass);
+		std::shared_ptr<internal::ComputedStyle> Compute(const std::u8string_view& styleClass, const std::u8string_view& state = std::u8string_view());
 
 	private:
 		friend class visuals::View;
@@ -23,6 +23,7 @@ namespace nani::canvas
 	private:
 		std::map<std::u8string, std::shared_ptr<internal::ComputedStyle>> m_mapComputedStyles;
 		std::map<std::u8string, std::shared_ptr<internal::ComputedStyleBuilder>> m_mapComputedStyleBuilders;
-		std::map<std::u8string, std::set<std::u8string>> m_mapInherits;
+		std::map<std::u8string, std::u8string> m_mapInheritStyle;
+		std::map<std::u8string, std::set<std::u8string>> m_mapStateStyles;
 	};
 }

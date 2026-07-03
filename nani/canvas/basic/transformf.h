@@ -36,4 +36,19 @@ namespace nani::canvas::basic
 		scalar m11 = 1.0f, m12 = 0.0f, dx = 0.0f;
 		scalar m21 = 0.0f, m22 = 1.0f, dy = 0.0f;
 	};
+
+	inline bool operator==(const TransformF& lhs, const TransformF& rhs)
+	{
+		return basic::IsScalarEqual(lhs.m11, rhs.m11) &&
+			basic::IsScalarEqual(lhs.m12, rhs.m12) &&
+			basic::IsScalarEqual(lhs.dx, rhs.dx) &&
+			basic::IsScalarEqual(lhs.m21, rhs.m21) &&
+			basic::IsScalarEqual(lhs.m22, rhs.m22) &&
+			basic::IsScalarEqual(lhs.dy, rhs.dy);
+	}
+
+	inline bool operator!=(const TransformF& lhs, const TransformF& rhs)
+	{
+		return !(lhs == rhs);
+	}
 }

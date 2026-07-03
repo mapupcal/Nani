@@ -1078,13 +1078,13 @@ TEST_F(StylesTest, StatePolymorphism_BasicInheritWithStates)
 	styles_->LoadFromXML(R"(
 		<Styles>
 			<Style class="button">
-				<Colors background="#FFFFFFF" border="#808080FF"/>
+				<Colors background="#FFFFFFFF" border="#808080FF"/>
 			</Style>
 			<Style class="button" state="hovered">
-				<Colors background="#FFFFFFF" border="#FF00FFFF"/>
+				<Colors border="#FF00FFFF"/>
 			</Style>
 			<Style class="button" state="pressed">
-				<Colors background="#FFFFFFF" border="#FF00FFFF"/>
+				<Colors border="#FF00FFFF"/>
 			</Style>
 			<Style class="close-button" inherit="button">
 				<Colors background="#FF000000" border="#808080FF"/>
@@ -1099,13 +1099,13 @@ TEST_F(StylesTest, StatePolymorphism_BasicInheritWithStates)
 	EXPECT_EQ(csNormal->visualProps.borderColor, Color("#808080FF"));
 
 	// close-button hovered: button-hovered's border delta + close-button's own background
-	auto csHovered = styles_->Compute(u8"close-button-hovered");
+	auto csHovered = styles_->Compute(u8"close-button", u8"hovered");
 	ASSERT_NE(csHovered, nullptr);
 	EXPECT_EQ(csHovered->visualProps.borderColor, Color("#FF00FFFF"));
 	EXPECT_EQ(csHovered->visualProps.backgroundColor, Color("#FF000000"));
 
 	// close-button pressed: button-pressed's border delta + close-button's own background
-	auto csPressed = styles_->Compute(u8"close-button-pressed");
+	auto csPressed = styles_->Compute(u8"close-button", u8"pressed");
 	ASSERT_NE(csPressed, nullptr);
 	EXPECT_EQ(csPressed->visualProps.borderColor, Color("#FF00FFFF"));
 	EXPECT_EQ(csPressed->visualProps.backgroundColor, Color("#FF000000"));
@@ -1131,7 +1131,7 @@ TEST_F(StylesTest, StatePolymorphism_ExplicitChildStateBeatsImplicit)
 		</Styles>
 	)");
 
-	auto csHovered = styles_->Compute(u8"close-button-hovered");
+	auto csHovered = styles_->Compute(u8"close-button", u8"hovered");
 	ASSERT_NE(csHovered, nullptr);
 	// Explicit child hovered beats implicit generation
 	EXPECT_EQ(csHovered->visualProps.borderColor, Color("#FFFF0000"));
@@ -1152,7 +1152,7 @@ TEST_F(StylesTest, StatePolymorphism_ParentHasNoState)
 	)");
 
 	// close-button-hovered should fall back to close-button's normal (via Compute lookup fallback)
-	auto csHovered = styles_->Compute(u8"close-button-hovered");
+	auto csHovered = styles_->Compute(u8"close-button", u8"hovered");
 	ASSERT_NE(csHovered, nullptr);
 	// No implicit builder: falls back to class-only builder
 	EXPECT_EQ(csHovered->visualProps.borderColor, Color("#0000FFFF"));
@@ -1179,13 +1179,13 @@ TEST_F(StylesTest, StatePolymorphism_MultiLevelInheritance)
 	)");
 
 	// childHovered: grandparent-hovered border delta + child's own background
-	auto csHovered = styles_->Compute(u8"child-hovered");
+	auto csHovered = styles_->Compute(u8"child", u8"hovered");
 	ASSERT_NE(csHovered, nullptr);
 	EXPECT_EQ(csHovered->visualProps.borderColor, Color("#FF00FFFF"));
 	EXPECT_EQ(csHovered->visualProps.backgroundColor, Color("#000000FF"));
 
 	// parentHovered: grandparent-hovered border delta + parent's own background
-	auto pcsHovered = styles_->Compute(u8"parent-hovered");
+	auto pcsHovered = styles_->Compute(u8"parent", u8"hovered");
 	ASSERT_NE(pcsHovered, nullptr);
 	EXPECT_EQ(pcsHovered->visualProps.borderColor, Color("#FF00FFFF"));
 	EXPECT_EQ(pcsHovered->visualProps.backgroundColor, Color("#0000FF00"));
@@ -1208,7 +1208,7 @@ TEST_F(StylesTest, StatePolymorphism_HotReload)
 		</Styles>
 	)");
 
-	auto cs1 = styles_->Compute(u8"close-button-hovered");
+	auto cs1 = styles_->Compute(u8"close-button", u8"hovered");
 	ASSERT_NE(cs1, nullptr);
 	EXPECT_EQ(cs1->visualProps.borderColor, Color("#FF00FFFF"));
 
@@ -1224,7 +1224,7 @@ TEST_F(StylesTest, StatePolymorphism_HotReload)
 		</Styles>
 	)");
 
-	auto cs2 = styles_->Compute(u8"close-button-hovered");
+	auto cs2 = styles_->Compute(u8"close-button", u8"hovered");
 	ASSERT_NE(cs2, nullptr);
 	EXPECT_EQ(cs2->visualProps.borderColor, Color("#FF0000FF"));
 }
@@ -1235,7 +1235,7 @@ TEST_F(StylesTest, StatePolymorphism_ViaStandaloneCompute)
 	styles_->LoadFromXML(R"(
 		<Styles>
 			<Style class="button">
-				<Colors background="#FFFFFFF" border="#808080FF"/>
+				<Colors background="#FFFFFFFF" border="#808080FF"/>
 			</Style>
 			<Style class="button" state="hovered">
 				<Colors border="#FF00FFFF"/>
@@ -1247,7 +1247,7 @@ TEST_F(StylesTest, StatePolymorphism_ViaStandaloneCompute)
 	)");
 
 	// Verify the implicit close-button-hovered exists and delta computation
-	auto cs = styles_->Compute(u8"close-button-hovered");
+	auto cs = styles_->Compute(u8"close-button", u8"hovered");
 	ASSERT_NE(cs, nullptr);
 	EXPECT_EQ(cs->visualProps.borderColor, Color("#FF00FFFF"));  // from button-hovered delta
 	EXPECT_EQ(cs->visualProps.backgroundColor, Color("#FF000000"));  // from close-button own

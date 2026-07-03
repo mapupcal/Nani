@@ -367,6 +367,11 @@ namespace nani::canvas::internal
 		return computedStyle;
 	}
 
+	void ComputedStyleBuilder::CopyFrom(const ComputedStyleBuilder& other)
+	{
+		*this = other;
+	}
+
 	void ComputedStyleBuilder::LoadImpl(const pugi::xml_node& styleNode)
 	{
 		if (styleNode.empty())

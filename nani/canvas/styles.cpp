@@ -10,9 +10,14 @@ using namespace nani::canvas::elements;
 
 namespace
 {
-	std::u8string to_u8string(const std::string& str)
+	std::u8string to_u8string(const std::string_view& str)
 	{
-		return std::u8string(reinterpret_cast<const char8_t*>(str.data()), str.size());
+		return std::u8string(str.cbegin(), str.cend());
+	}
+
+	std::string to_string(const std::u8string_view& str)
+	{
+		return std::string(str.cbegin(), str.cend());
 	}
 }
 
@@ -68,15 +73,6 @@ namespace nani::canvas
 		pugi::xml_document& doc = *pDoc;
 		auto lstStyleXMLNode = doc.child("Styles").children("Style");
 
-		struct SrcStyleInfo
-		{
-			std::u8string styleClass;
-			std::u8string inheritStyleClass;
-			std::shared_ptr<ComputedStyleBuilder> builder;
-		};
-
-		// Pass 1: load all builders, record inherit relationships.
-		std::vector<SrcStyleInfo> loadedInfos;
 		for (const auto& styleNode : lstStyleXMLNode)
 		{
 			std::u8string styleClass = to_u8string(styleNode.attribute("class").as_string());
@@ -86,56 +82,109 @@ namespace nani::canvas
 			std::shared_ptr<ComputedStyleBuilder> builder = std::make_shared<ComputedStyleBuilder>();
 			builder->Load(styleNode);
 
-			std::u8string inheritStyleClass = to_u8string(styleNode.attribute("inherit").as_string());
+			std::u8string state = to_u8string(styleNode.attribute("state").as_string());
+			if (!state.empty())
+			{
+				m_mapStateStyles[styleClass].insert(state);
+				m_mapComputedStyleBuilders.insert_or_assign(styleClass + u8"-" + state, builder);
+				continue;
+			}
+
+			std::u8string inherit = to_u8string(styleNode.attribute("inherit").as_string());
+			if (!inherit.empty())
+				m_mapInheritStyle.insert_or_assign(styleClass, inherit);
+
 			m_mapComputedStyleBuilders.insert_or_assign(styleClass, builder);
-			loadedInfos.push_back({ std::move(styleClass), std::move(inheritStyleClass), builder });
 		}
 
-		// Pass 2: wire up inherit and update old inheritors.
-		for (const auto& info : loadedInfos)
+		for (const auto& pair : m_mapStateStyles)
 		{
-			if (!info.inheritStyleClass.empty())
+			const std::u8string& styleClass = pair.first;
+			for (const auto& state : pair.second)
 			{
-				// Wire new builder's inherit.
-				auto iterBase = m_mapComputedStyleBuilders.find(info.inheritStyleClass);
-				if (iterBase != m_mapComputedStyleBuilders.cend())
-					info.builder->Inherit(iterBase->second.get());
-
-				// Track: styleClass -> parent's class, for later hot-reload lookup.
-				m_mapInherits[info.inheritStyleClass].insert(info.styleClass);
-			}
-
-			// Hot reload: update old inheritors of this class to point to the new builder.
-			auto inheritsIter = m_mapInherits.find(info.styleClass);
-			if (inheritsIter != m_mapInherits.cend())
-			{
-				for (const std::u8string& oldInheritorClass : inheritsIter->second)
+				auto iterBase = m_mapComputedStyleBuilders.find(styleClass);
+				if (iterBase == m_mapComputedStyleBuilders.cend())
 				{
-					auto oldInheritorIter = m_mapComputedStyleBuilders.find(oldInheritorClass);
-					if (oldInheritorIter == m_mapComputedStyleBuilders.cend())
-						continue;
-					oldInheritorIter->second->Inherit(info.builder.get());
+					NANI_MESSAGE(std::format("state style : {} not found for state : {}", to_string(styleClass), to_string(state)));
+					continue;
 				}
+				auto iterState = m_mapComputedStyleBuilders.find(styleClass + u8"-" + state);
+				iterState->second->Inherit(iterBase->second.get());
 			}
 		}
 
-		// refresh all computed styles.
+		std::map<std::u8string, std::set<std::u8string>> mapDerivedStyles;
+		for (const auto& pair : m_mapInheritStyle)
+			mapDerivedStyles[pair.second].insert(pair.first);
+
+		for (const auto& pair : mapDerivedStyles)
+		{
+			const std::u8string& inherit = pair.first;
+			for (const auto& styleClass : pair.second)
+			{
+				auto iterInherit = m_mapComputedStyleBuilders.find(inherit);
+				if (iterInherit == m_mapComputedStyleBuilders.cend())
+				{
+					NANI_MESSAGE(std::format("inherit style : {} not found for style : {}", to_string(inherit), to_string(styleClass)));
+					continue;
+				}
+				auto iterStyle = m_mapComputedStyleBuilders.find(styleClass);
+				iterStyle->second->Inherit(iterInherit->second.get());
+			}
+		}
+
 		m_mapComputedStyles.clear();
 	}
 
-	std::shared_ptr<ComputedStyle> Styles::Compute(const std::u8string_view& styleClass)
+	std::shared_ptr<ComputedStyle> Styles::Compute(const std::u8string_view& styleClass, const std::u8string_view& state)
 	{
-		auto iter = m_mapComputedStyles.find(std::u8string(styleClass));
-		if (iter != m_mapComputedStyles.cend())
+		if(state.empty())
+		{
+			if (auto iter = m_mapComputedStyles.find(std::u8string(styleClass)); iter != m_mapComputedStyles.cend())
+				return iter->second;
+
+			if (auto iter = m_mapComputedStyleBuilders.find(std::u8string(styleClass)); iter != m_mapComputedStyleBuilders.cend())
+			{
+				std::shared_ptr<ComputedStyle> computedStyle = std::make_shared<ComputedStyle>(iter->second->Compute());
+				m_mapComputedStyles.insert_or_assign(std::u8string(styleClass), computedStyle);
+				return computedStyle;
+			}
+
+			std::shared_ptr<ComputedStyle> computedStyle = std::make_shared<ComputedStyle>();
+			m_mapComputedStyles.insert_or_assign(std::u8string(styleClass), computedStyle);
+			return computedStyle;
+		}
+
+		std::u8string stateStyleClass = std::u8string(styleClass) + u8"-" + std::u8string(state);
+		if (auto iter = m_mapComputedStyles.find(stateStyleClass); iter != m_mapComputedStyles.cend())
 			return iter->second;
 
-		auto iterBuilder = m_mapComputedStyleBuilders.find(std::u8string(styleClass));
-		if (iterBuilder != m_mapComputedStyleBuilders.cend())
-			return std::make_shared<ComputedStyle>(iterBuilder->second->Compute());
+		if (auto iter = m_mapComputedStyleBuilders.find(stateStyleClass); iter != m_mapComputedStyleBuilders.cend())
+		{
+			std::shared_ptr<ComputedStyle> computedStyle = std::make_shared<ComputedStyle>(iter->second->Compute());
+			m_mapComputedStyles.insert_or_assign(stateStyleClass, computedStyle);
+			return computedStyle;
+		}
 
-		std::shared_ptr<ComputedStyle> computedStyle = std::make_shared<ComputedStyle>();
-		m_mapComputedStyles.emplace(std::u8string(styleClass), computedStyle);
-		return computedStyle;
+		auto iterInherit = m_mapInheritStyle.find(std::u8string(styleClass));
+		while (iterInherit != m_mapInheritStyle.cend())
+		{
+			std::u8string inheritStyleClass = iterInherit->second;
+			std::u8string inheritStateStyleClass = inheritStyleClass + u8"-" + std::u8string(state);
+			if (auto iter = m_mapComputedStyleBuilders.find(inheritStateStyleClass); iter != m_mapComputedStyleBuilders.cend())
+			{
+				std::shared_ptr<ComputedStyleBuilder> tempStateStyleBuilder = std::make_shared<ComputedStyleBuilder>();
+				tempStateStyleBuilder->CopyFrom(*iter->second);
+				tempStateStyleBuilder->Inherit(m_mapComputedStyleBuilders[std::u8string(styleClass)].get());
+				std::shared_ptr<ComputedStyle> computedStyle = std::make_shared<ComputedStyle>(tempStateStyleBuilder->Compute());
+				m_mapComputedStyles.insert_or_assign(inheritStateStyleClass, computedStyle);
+				return computedStyle;
+			}
+			iterInherit = m_mapInheritStyle.find(inheritStyleClass);
+		}
+
+		// If no specific state style is found, fall back to the base style class
+		return Compute(styleClass);
 	}
 
 	std::shared_ptr<ComputedStyle> Styles::Compute(Element* element)
@@ -145,41 +194,7 @@ namespace nani::canvas
 
 		const std::u8string_view styleClass = element->StyleClass();
 		const std::u8string_view stateProps = element->States()->GetStateProps();
-
-		std::u8string computeStyleId;
-		computeStyleId.reserve(styleClass.size() + stateProps.size());
-		computeStyleId.append(styleClass);
-		computeStyleId.append(stateProps);
-
-		// style with states.
-		auto iter = m_mapComputedStyles.find(computeStyleId);
-		if (iter != m_mapComputedStyles.cend())
-			return iter->second;
-
-		auto iterBuilder = m_mapComputedStyleBuilders.find(computeStyleId);
-		if (iterBuilder != m_mapComputedStyleBuilders.cend())
-		{
-			std::shared_ptr<ComputedStyle> computedStyle = std::make_shared<ComputedStyle>(iterBuilder->second->Compute());
-			m_mapComputedStyles.emplace(computeStyleId, computedStyle);
-			return computedStyle;
-		}
-
-		// fallback to style without states.
-		iter = m_mapComputedStyles.find(std::u8string(styleClass));
-		if (iter != m_mapComputedStyles.cend())
-			return iter->second;
-
-		iterBuilder = m_mapComputedStyleBuilders.find(std::u8string(styleClass));
-		if (iterBuilder != m_mapComputedStyleBuilders.cend())
-		{
-			std::shared_ptr<ComputedStyle> computedStyle = std::make_shared<ComputedStyle>(iterBuilder->second->Compute());
-			m_mapComputedStyles.emplace(computeStyleId, computedStyle);
-			return computedStyle;
-		}
-
-		std::shared_ptr<ComputedStyle> computedStyle = std::make_shared<ComputedStyle>();
-		m_mapComputedStyles.emplace(computeStyleId, computedStyle);
-		return computedStyle;
+		return Compute(styleClass, stateProps);
 	}
 
 	void Styles::Override(const std::u8string_view& id, const ComputedStyle& style)

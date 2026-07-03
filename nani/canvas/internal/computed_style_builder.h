@@ -20,6 +20,7 @@ namespace nani::canvas::internal
 		void Load(const pugi::xml_node& styleNode);
 		void Inherit(const ComputedStyleBuilder* inheritBuilder);
 		ComputedStyle Compute() const;
+		void CopyFrom(const ComputedStyleBuilder& other);
 
 	public:
 		//Layout

@@ -18,7 +18,7 @@
 #if defined _DEBUG
 #	include<cassert>
 #	define NANI_ASSERT(expr) assert(expr)
-#	define NANI_MESSAGE(c_msg) printf("[WARNNING][%s][file:%s, line:%d]\n", c_msg, __FILE__, __LINE__)
+#	define NANI_MESSAGE(c_msg) printf("[WARNNING][%s][file:%s, line:%d]\n", std::string(c_msg).c_str(), __FILE__, __LINE__)
 #else
 #	define NANI_ASSERT(expr)
 #	define NANI_MESSAGE(c_msg)

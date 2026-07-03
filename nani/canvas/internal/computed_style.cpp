@@ -34,12 +34,19 @@ namespace nani::canvas::internal
 			basic::IsScalarEqual(lhs.spread, rhs.spread);
 	}
 
+	bool operator==(const ComputedStyle::VisualProperties::TransformOrigin& lhs, const ComputedStyle::VisualProperties::TransformOrigin& rhs)
+	{
+		return (lhs.x == rhs.x) && (lhs.y == rhs.y);
+	}
+
 	bool operator==(const ComputedStyle::VisualProperties& lhs, const ComputedStyle::VisualProperties& rhs)
 	{
 		return (lhs.color == rhs.color) && 
 			(lhs.borderColor == rhs.borderColor) &&
 			(lhs.backgroundColor == rhs.backgroundColor) &&
 			basic::IsScalarEqual(lhs.opacity, rhs.opacity) &&
+			lhs.transform == rhs.transform &&
+			lhs.transformOrigin == rhs.transformOrigin &&
 			(lhs.radius == rhs.radius) &&
 			(lhs.shadow == rhs.shadow);
 	}
