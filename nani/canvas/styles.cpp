@@ -177,7 +177,7 @@ namespace nani::canvas
 				tempStateStyleBuilder->CopyFrom(*iter->second);
 				tempStateStyleBuilder->Inherit(m_mapComputedStyleBuilders[std::u8string(styleClass)].get());
 				std::shared_ptr<ComputedStyle> computedStyle = std::make_shared<ComputedStyle>(tempStateStyleBuilder->Compute());
-				m_mapComputedStyles.insert_or_assign(inheritStateStyleClass, computedStyle);
+				m_mapComputedStyles.insert_or_assign(stateStyleClass, computedStyle);
 				return computedStyle;
 			}
 			iterInherit = m_mapInheritStyle.find(inheritStyleClass);

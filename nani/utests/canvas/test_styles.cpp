@@ -1084,7 +1084,7 @@ TEST_F(StylesTest, StatePolymorphism_BasicInheritWithStates)
 				<Colors border="#FF00FFFF"/>
 			</Style>
 			<Style class="button" state="pressed">
-				<Colors border="#FF00FFFF"/>
+				<Colors border="#FF00F0FF"/>
 			</Style>
 			<Style class="close-button" inherit="button">
 				<Colors background="#FF000000" border="#808080FF"/>
@@ -1107,8 +1107,26 @@ TEST_F(StylesTest, StatePolymorphism_BasicInheritWithStates)
 	// close-button pressed: button-pressed's border delta + close-button's own background
 	auto csPressed = styles_->Compute(u8"close-button", u8"pressed");
 	ASSERT_NE(csPressed, nullptr);
-	EXPECT_EQ(csPressed->visualProps.borderColor, Color("#FF00FFFF"));
+	EXPECT_EQ(csPressed->visualProps.borderColor, Color("#FF00F0FF"));
 	EXPECT_EQ(csPressed->visualProps.backgroundColor, Color("#FF000000"));
+
+	// button normal: own background+button's border
+	auto pcsButtonNormal = styles_->Compute(u8"button");
+	ASSERT_NE(pcsButtonNormal, nullptr);
+	EXPECT_EQ(pcsButtonNormal->visualProps.backgroundColor, Color("#FFFFFFFF"));
+	EXPECT_EQ(pcsButtonNormal->visualProps.borderColor, Color("#808080FF"));
+	// button normal hovered
+	auto pcsButtonHovered = styles_->Compute(u8"button", u8"hovered");
+	ASSERT_NE(pcsButtonHovered, nullptr);
+	EXPECT_EQ(pcsButtonHovered->visualProps.backgroundColor, Color("#FFFFFFFF"));
+	EXPECT_EQ(pcsButtonHovered->visualProps.borderColor, Color("#FF00FFFF"));
+
+	// button normal pressed
+	auto pcsButtonPressed = styles_->Compute(u8"button", u8"pressed");
+	ASSERT_NE(pcsButtonPressed, nullptr);
+	EXPECT_EQ(pcsButtonPressed->visualProps.backgroundColor, Color("#FFFFFFFF"));
+	EXPECT_EQ(pcsButtonPressed->visualProps.borderColor, Color("#FF00F0FF"));
+
 }
 
 // Explicit state-specific builder beats implicit generation.
