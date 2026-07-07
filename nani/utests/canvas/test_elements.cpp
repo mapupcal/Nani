@@ -16,7 +16,7 @@ protected:
 };
 
 
-TEST_F(ElementTest, WindowProperties)
+TEST_F(ElementTest, ElementsTreeAndLifeCycle)
 {
 	{
 		Element* root = new Element(nullptr);
@@ -120,3 +120,67 @@ TEST_F(ElementTest, StyleClassAcceptsStringView)
 	EXPECT_EQ(root.StyleClass(), u8"button");
 }
 
+TEST_F(ElementTest, ChildrenInheritParentHiddenVisibilityAndDisableState)
+{
+	{
+		Element root(nullptr);
+		Element child(&root);
+		Element child2(&root);
+		root.Visibility()->SetHidden(true);
+		EXPECT_TRUE(child.Visibility()->IsHidden());
+		EXPECT_TRUE(child2.Visibility()->IsHidden());
+
+		root.Visibility()->SetHidden(false);
+		EXPECT_FALSE(child.Visibility()->IsHidden());
+		EXPECT_FALSE(child2.Visibility()->IsHidden());
+
+		root.States()->SetEnabled(false);
+		EXPECT_FALSE(child.States()->IsEnabled());
+		EXPECT_FALSE(child2.States()->IsEnabled());
+
+		root.States()->SetEnabled(true);
+		EXPECT_TRUE(child.States()->IsEnabled());
+		EXPECT_TRUE(child2.States()->IsEnabled());
+	}
+
+	{
+		Element root(nullptr);
+		Element father(&root);
+		Element child(&father);
+		root.Visibility()->SetHidden(true);
+		EXPECT_TRUE(father.Visibility()->IsHidden());
+		EXPECT_TRUE(child.Visibility()->IsHidden());
+
+		root.Visibility()->SetHidden(false);
+		EXPECT_FALSE(father.Visibility()->IsHidden());
+		EXPECT_FALSE(child.Visibility()->IsHidden());
+
+		root.States()->SetEnabled(false);
+		EXPECT_FALSE(father.States()->IsEnabled());
+		EXPECT_FALSE(child.States()->IsEnabled());
+
+		root.States()->SetEnabled(true);
+		EXPECT_TRUE(father.States()->IsEnabled());
+		EXPECT_TRUE(child.States()->IsEnabled());
+
+		father.Visibility()->SetHidden(true);
+		EXPECT_FALSE(root.Visibility()->IsHidden());
+		EXPECT_TRUE(father.Visibility()->IsHidden());
+		EXPECT_TRUE(child.Visibility()->IsHidden());
+
+		father.Visibility()->SetHidden(false);
+		EXPECT_FALSE(root.Visibility()->IsHidden());
+		EXPECT_FALSE(father.Visibility()->IsHidden());
+		EXPECT_FALSE(child.Visibility()->IsHidden());
+
+		father.States()->SetEnabled(false);
+		EXPECT_TRUE(root.States()->IsEnabled());
+		EXPECT_FALSE(father.States()->IsEnabled());
+		EXPECT_FALSE(child.States()->IsEnabled());
+
+		father.States()->SetEnabled(true);
+		EXPECT_TRUE(root.States()->IsEnabled());
+		EXPECT_TRUE(father.States()->IsEnabled());
+		EXPECT_TRUE(child.States()->IsEnabled());
+	}
+}

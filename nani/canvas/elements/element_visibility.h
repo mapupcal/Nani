@@ -7,7 +7,7 @@ namespace nani::canvas::elements
 	public:
 		enum Flags : basic::uint32
 		{
-			Visible			= 0,
+			Default			= 0,
 			Hidden			= 1 << 0,
 			Collapsed		= 1 << 1,
 		};
@@ -30,6 +30,6 @@ namespace nani::canvas::elements
 
 	private:
 		Element* m_pOwner = nullptr;
-		Flags m_flags = Visible;
+		Flags m_flags = Default;
 	};
 }

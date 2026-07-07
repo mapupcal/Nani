@@ -23,6 +23,9 @@ namespace nani::canvas::elements
 
 	bool ElementStates::IsEnabled() const
 	{
+		if (auto p = m_pOwner->Parent(); p && !p->States()->IsEnabled())
+			return false;
+
 		return IsSetFlag(Enabled);
 	}
 

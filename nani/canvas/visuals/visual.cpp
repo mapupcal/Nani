@@ -308,7 +308,9 @@ namespace nani::canvas::visuals
 			else if (e->type == Type::ElementVisibilityChanged)
 			{
 				ElementVisibilityChangedEvent* event = static_cast<ElementVisibilityChangedEvent*>(e);
-				Update();
+				SyncLayoutProperties();
+				Reflow();
+				Repaint();
 			}
 		}
 		return false;
@@ -331,7 +333,15 @@ namespace nani::canvas::visuals
 	void Visual::SyncLayoutProperties()
 	{
 		using namespace facebook::yoga;
-		const Style& style = m_spComputedStyle->layoutProps.style;
+		Style style = m_spComputedStyle->layoutProps.style;
+
+		// Sync visibility to yoga node.
+		// Default is Display::Flex, which means the visual is visible.
+		if (Element()->Visibility()->IsCollapsed())
+			style.setDisplay(Display::Contents);
+		else if (Element()->Visibility()->IsHidden())
+			style.setDisplay(Display::None);
+
 		YGNodeRef node = m_yogaNode;
 		internal::yoga_utils::SetNodeStyle(node, style);
 	}

@@ -17,7 +17,7 @@ namespace nani::canvas::elements
 
 	bool ElementVisibility::IsVisible() const
 	{
-		return m_flags == Visible;
+		return !IsHidden() && !IsCollapsed();
 	}
 
 	void ElementVisibility::SetHidden(bool bHidden)
@@ -27,6 +27,10 @@ namespace nani::canvas::elements
 
 	bool ElementVisibility::IsHidden() const
 	{
+		// check parent hidden state
+		if (auto p = m_pOwner->Parent(); p && p->Visibility()->IsHidden())
+			return true;
+
 		return !!(m_flags & Hidden);
 	}
 
