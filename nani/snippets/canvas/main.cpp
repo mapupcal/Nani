@@ -85,6 +85,9 @@ int main(int argc, char** argv)
 				<Gaps gap="5" />
 				<Borders value="5" />
 				<Dimension width="100%" height="60" />
+				<Transform>
+					<Rotation a="180" />
+				</Transform>
 			</Style>
 
 			<Style class="Title">

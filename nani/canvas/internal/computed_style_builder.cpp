@@ -538,7 +538,7 @@ namespace nani::canvas::internal
 			else if (name == "Rotation")
 			{
 				auto a = AsScalar(GetNodeValue(child, "a"));
-				transform.Apply(TransformF::Rotation(Radian2Degree(a.value_or(0.0f))));
+				transform.Apply(TransformF::Rotation(Degree2Radian(a.value_or(0.0f))));
 			}
 			else if (name == "Scaling")
 			{
