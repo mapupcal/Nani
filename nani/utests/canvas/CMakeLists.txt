@@ -5,6 +5,10 @@ nani_add_executable(canvas_utests
 	defs.h
 	test_color.cpp
 	test_elements.cpp
+	test_elements_layer.cpp
+	test_element_states.cpp
+	test_event.cpp
+	test_event_target.cpp
 	test_geometry.cpp
 	test_polygonf.cpp
 	test_styles.cpp

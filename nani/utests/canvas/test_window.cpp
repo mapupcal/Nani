@@ -73,3 +73,61 @@ TEST_F(WindowTest, WindowProperties)
 	EXPECT_FLOAT_EQ(window->Size().height, 800.0f);
 }
 
+TEST_F(WindowTest, WindowDecorationProperties)
+{
+	std::shared_ptr<Window> window = std::make_shared<Window>(PointF(0, 0), SizeF(400, 500));
+
+	// BorderWidth
+	window->SetBorderWidth(3.0f);
+	EXPECT_FLOAT_EQ(window->BorderWidth(), 3.0f);
+
+	// Radius
+	window->SetRadius(8.0f);
+	EXPECT_FLOAT_EQ(window->Radius(), 8.0f);
+
+	// BorderColor
+	window->SetBorderColor(Color(255, 0, 0, 255));
+	EXPECT_EQ(window->BorderColor(), Color(255, 0, 0, 255));
+
+	// BackgroundColor
+	window->SetBackgroundColor(Color(0, 255, 0, 128));
+	EXPECT_EQ(window->BackgroundColor(), Color(0, 255, 0, 128));
+
+	// Title
+	window->SetTitle("Nani Test Window");
+	EXPECT_EQ(window->Title(), "Nani Test Window");
+}
+
+TEST_F(WindowTest, WindowHints)
+{
+	std::shared_ptr<Window> window = std::make_shared<Window>(PointF(0, 0), SizeF(400, 500));
+
+	EXPECT_EQ(window->Hints(), Window::None);
+
+	window->SetHints(Window::Resizable | Window::Tool);
+	EXPECT_EQ(window->Hints(), Window::Resizable | Window::Tool);
+
+	window->SetHints(Window::Top | Window::TruncatedPassThrough);
+	EXPECT_EQ(window->Hints(), Window::Top | Window::TruncatedPassThrough);
+}
+
+TEST_F(WindowTest, WindowHasRootElementAndView)
+{
+	std::shared_ptr<Window> window = std::make_shared<Window>(PointF(0, 0), SizeF(400, 500));
+
+	EXPECT_NE(window->RootElement(), nullptr);
+	EXPECT_NE(window->GetView(), nullptr);
+}
+
+TEST_F(WindowTest, WindowTruncatedColor)
+{
+	std::shared_ptr<Window> window = std::make_shared<Window>(PointF(0, 0), SizeF(400, 500));
+
+	window->SetTruncatedColor(Color(255, 128, 64, 255));
+	// SetTruncatedColor is a void, we just verify no crash
+	EXPECT_NO_FATAL_FAILURE({
+		window->SetTruncatedColor(Color(255, 128, 64, 255));
+	});
+}
+
+

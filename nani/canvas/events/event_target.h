@@ -21,6 +21,6 @@ namespace nani::canvas::events
 		bool FilterEvent(Event* e);
 
 	private:
-		std::vector<EventFilter*> eventFilters;
+		std::vector<EventFilter*> m_eventFilters;
 	};
 }

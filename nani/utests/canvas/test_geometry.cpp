@@ -42,6 +42,14 @@ TEST_F(GeometryTest, PointFCalculatesDotCrossAndDistance)
 	EXPECT_FLOAT_EQ(PointF(1.0f, 0.0f).Cross(PointF(0.0f, 1.0f)), 1.0f);
 }
 
+TEST_F(GeometryTest, PointFUnaryNegation)
+{
+	PointF p(3.0f, -4.0f);
+	PointF neg = -p;
+
+	EXPECT_EQ(neg, PointF(-3.0f, 4.0f));
+}
+
 TEST_F(GeometryTest, SizeFSupportsArithmeticAndScaling)
 {
 	SizeF defaultSize;
@@ -76,6 +84,17 @@ TEST_F(GeometryTest, SizeFTransposesDimensions)
 	EXPECT_EQ(size, SizeF(10.0f, 20.0f));
 
 	size.Transpose();
+	EXPECT_EQ(size, SizeF(20.0f, 10.0f));
+}
+
+TEST_F(GeometryTest, SizeFScaleXY)
+{
+	SizeF size(10.0f, 20.0f);
+
+	size.ScaleX(2.0f);
+	EXPECT_EQ(size, SizeF(20.0f, 20.0f));
+
+	size.ScaleY(0.5f);
 	EXPECT_EQ(size, SizeF(20.0f, 10.0f));
 }
 
@@ -129,6 +148,16 @@ TEST_F(GeometryTest, RectFMutatesSizeAndPosition)
 
 	rect.Transpose();
 	EXPECT_EQ(rect, RectF(10.0f, 20.0f, 16.0f, 25.0f));
+
+	rect.SetSize(100.0f, 200.0f);
+	EXPECT_EQ(rect, RectF(10.0f, 20.0f, 110.0f, 220.0f));
+}
+
+TEST_F(GeometryTest, RectFIsValid)
+{
+	EXPECT_TRUE(RectF().IsValid());
+	EXPECT_TRUE(RectF(0, 0, 10, 10).IsValid());
+	EXPECT_FALSE(RectF(10, 10, 0, 0).IsValid());
 }
 
 TEST_F(GeometryTest, RectFContainsBoundaryPoints)

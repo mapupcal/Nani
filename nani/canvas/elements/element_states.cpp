@@ -69,7 +69,7 @@ namespace nani::canvas::elements
 		return IsSetFlag(Selected);
 	}
 
-	const char8_t* ElementStates::GetStateProps() const
+	const std::u8string_view ElementStates::GetStateProps() const
 	{
 		if (!IsEnabled())
 			return u8"disabled";

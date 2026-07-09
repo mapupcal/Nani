@@ -19,24 +19,24 @@ namespace nani::canvas::events
 
 	void EventTarget::RegisterEventFilter(EventFilter* filter)
 	{
-		auto iter = std::find(eventFilters.cbegin(), eventFilters.cend(), filter);
-		if (iter != eventFilters.cend())
+		auto iter = std::find(m_eventFilters.cbegin(), m_eventFilters.cend(), filter);
+		if (iter != m_eventFilters.cend())
 		{
 			NANI_MESSAGE("filter already registered.");
 			return;
 		}
-		eventFilters.push_back(filter);
+		m_eventFilters.push_back(filter);
 	}
 
 	void EventTarget::UnRegisterEventFilter(EventFilter* filter)
 	{
-		auto iter = std::find(eventFilters.cbegin(), eventFilters.cend(), filter);
-		if (iter == eventFilters.cend())
+		auto iter = std::find(m_eventFilters.cbegin(), m_eventFilters.cend(), filter);
+		if (iter == m_eventFilters.cend())
 		{
 			NANI_MESSAGE("filter not registered.");
 			return;
 		}
-		eventFilters.erase(iter);
+		m_eventFilters.erase(iter);
 	}
 
 	void EventTarget::FireEvent(Event* e)
@@ -53,6 +53,7 @@ namespace nani::canvas::events
 
 	bool EventTarget::FilterEvent(Event* e)
 	{
+		auto eventFilters = m_eventFilters; // copy to avoid modification during iteration
 		for (EventFilter* filter : eventFilters | std::views::reverse)
 		{
 			if (filter->Filter(this, e))
