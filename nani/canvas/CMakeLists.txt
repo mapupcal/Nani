@@ -48,6 +48,16 @@ nani_add_library(canvas SHARED
 	events/event_target.cpp
 	events/event_target.h
 	events/target_ptr.hpp
+
+	text/text_defs.h
+	text/font.cpp
+	text/font.h
+	text/font_manager.cpp
+	text/font_manager.h
+	text/font_metrics.cpp
+	text/font_metrics.h
+	text/text_decoration.cpp
+	text/text_decoration.h
 	
 	cursor.cpp
 	cursor.h
