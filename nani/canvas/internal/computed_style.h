@@ -2,6 +2,8 @@
 #include "../basic/color.h"
 #include "../basic/transformf.h"
 #include "../basic/geometry_defs.h"
+#include "../text/font.h"
+#include "../text/text_decoration.h"
 #include <yoga/style/Style.h>
 
 namespace nani::canvas::internal
@@ -51,6 +53,8 @@ namespace nani::canvas::internal
 				facebook::yoga::StyleLength y = facebook::yoga::StyleLength::percent(50.0f);
 			};
 
+			text::Font font;
+			text::TextDecoration textDecoration;
 			basic::Color color = basic::Colors::Transparent;
 			basic::Color backgroundColor = basic::Colors::Transparent;
 			basic::Color borderColor = basic::Colors::Transparent;

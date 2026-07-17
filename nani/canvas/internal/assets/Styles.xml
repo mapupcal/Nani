@@ -114,4 +114,47 @@
             wrap="wrap" />
         <Gaps gap="8.0" />
     </Style>
+
+    <!-- ============================================================
+         DefaultText — Base text style with Font and TextDecoration.
+         Font: family, size, style (normal|italic|oblique), weight
+         TextDecoration: line (underline,overline,linethrough comma-separated),
+                         style (solid|double|dotted|dashed|wavy), color
+         ============================================================ -->
+    <Style class="DefaultText">
+        <Font family="Segoe UI" size="14" style="normal" weight="normal" />
+        <TextDecoration line="none" style="solid" color="#000000FF" />
+    </Style>
+
+    <!-- ============================================================
+         HeadingText — Bold heading with underline decoration.
+         Inherits DefaultText, overrides weight and decoration.
+         ============================================================ -->
+    <Style class="HeadingText" inherit="DefaultText">
+        <Font size="24" weight="bold" />
+        <TextDecoration line="underline" style="solid" color="#808080FF" />
+    </Style>
+
+    <!-- ============================================================
+         LinkText — Link-styled text with underline decoration.
+         ============================================================ -->
+    <Style class="LinkText">
+        <Font family="Segoe UI" size="14" style="normal" weight="normal" />
+        <TextDecoration line="underline" style="solid" color="#0000FFFF" />
+    </Style>
+
+    <!-- ============================================================
+         LinkText hovered state — decoration color changes.
+         ============================================================ -->
+    <Style class="LinkText" state="hovered">
+        <TextDecoration line="underline" style="solid" color="#FF0000FF" />
+    </Style>
+
+    <!-- ============================================================
+         DeletedText — Text with line-through and muted color.
+         ============================================================ -->
+    <Style class="DeletedText">
+        <Font family="Segoe UI" size="14" style="italic" weight="normal" />
+        <TextDecoration line="linethrough" style="solid" color="#808080FF" />
+    </Style>
 </Styles>

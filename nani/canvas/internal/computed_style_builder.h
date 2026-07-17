@@ -61,6 +61,8 @@ namespace nani::canvas::internal
 		ComputeStyleBuilderInheritProperty(facebook::yoga::PositionType, PositionType);
 		ComputeStyleBuilderInheritProperty(Edges, Positions);
 		//Visual
+		ComputeStyleBuilderInheritProperty(text::Font, Font);
+		ComputeStyleBuilderInheritProperty(text::TextDecoration, TextDecoration);
 		ComputeStyleBuilderInheritProperty(basic::Color, Color);
 		ComputeStyleBuilderInheritProperty(basic::Color, BackgroundColor);
 		ComputeStyleBuilderInheritProperty(basic::Color, BorderColor);
@@ -81,6 +83,8 @@ namespace nani::canvas::internal
 		void LoadGapsNode(const pugi::xml_node& node);
 		void LoadEdgesNode(const pugi::xml_node& node, std::optional<Edges>& OptionalEdges);
 		void LoadPositionsNode(const pugi::xml_node& node);
+		void LoadFontNode(const pugi::xml_node& node);
+		void LoadTextDecorationNode(const pugi::xml_node& node);
 
 	private:
 		const ComputedStyleBuilder* m_inheritBuilder = nullptr;

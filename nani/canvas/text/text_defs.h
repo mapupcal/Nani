@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "../defs.h"
 #include "../basic/basic_defs.h"
+#include "../basic/color.h"
 namespace nani::canvas::text
 {
 	class Font;

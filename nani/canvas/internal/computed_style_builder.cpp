@@ -5,6 +5,7 @@ namespace
 {
 	using namespace nani::canvas::basic;
 	using namespace nani::canvas::internal;
+	using namespace nani::canvas::text;
 	using namespace facebook::yoga;
 
 	std::string GetNodeValue(const pugi::xml_node& node, const std::string_view& name)
@@ -242,6 +243,87 @@ namespace
 		}
 		return origin;
 	}
+
+	std::optional<Font::FontStyle> AsFontStyle(const std::string_view& str)
+	{
+		if (str.empty())
+			return std::optional<Font::FontStyle>();
+		if (str == "normal")
+			return Font::Style::Normal;
+		else if (str == "italic")
+			return Font::Style::Italic;
+		else if (str == "oblique")
+			return Font::Style::Oblique;
+		return std::optional<Font::FontStyle>();
+	}
+
+	std::optional<Font::FontWeight> AsFontWeight(const std::string_view& str)
+	{
+		if (str.empty())
+			return std::optional<Font::FontWeight>();
+		if (str == "thin")
+			return Font::Weight::Thin;
+		else if (str == "extralight")
+			return Font::Weight::ExtraLight;
+		else if (str == "light")
+			return Font::Weight::Light;
+		else if (str == "normal")
+			return Font::Weight::Normal;
+		else if (str == "medium")
+			return Font::Weight::Medium;
+		else if (str == "semibold")
+			return Font::Weight::SemiBold;
+		else if (str == "bold")
+			return Font::Weight::Bold;
+		else if (str == "extrabold")
+			return Font::Weight::ExtraBold;
+		else if (str == "black")
+			return Font::Weight::Black;
+		return std::optional<Font::FontWeight>();
+	}
+
+	using DecorationLine = TextDecoration::DecorationLine;
+	std::optional<DecorationLine> AsDecorationLine(const std::string_view& str)
+	{
+		if (str.empty())
+			return std::optional<DecorationLine>();
+		DecorationLine lines = DecorationLine::None;
+		std::string_view remaining = str;
+		while (!remaining.empty())
+		{
+			auto pos = remaining.find(',');
+			std::string_view lineStr = (pos == std::string_view::npos) ? remaining : remaining.substr(0, pos);
+			std::string line = Trim(lineStr);
+			if (line == "underline")
+				lines = static_cast<DecorationLine>(static_cast<byte>(lines) | static_cast<byte>(DecorationLine::Underline));
+			else if (line == "overline")
+				lines = static_cast<DecorationLine>(static_cast<byte>(lines) | static_cast<byte>(DecorationLine::Overline));
+			else if (line == "linethrough")
+				lines = static_cast<DecorationLine>(static_cast<byte>(lines) | static_cast<byte>(DecorationLine::LineThrough));
+			if (pos == std::string_view::npos)
+				break;
+			remaining = remaining.substr(pos + 1);
+		}
+		return lines;
+	}
+
+	using DecorationStyle = TextDecoration::DecorationStyle;
+	std::optional<DecorationStyle> AsDecorationStyle(const std::string_view& str)
+	{
+		if (str.empty())
+			return std::optional<DecorationStyle>();
+		if (str == "solid")
+			return DecorationStyle::Solid;
+		else if (str == "double")
+			return DecorationStyle::Double;
+		else if (str == "dotted")
+			return DecorationStyle::Dotted;
+		else if (str == "dashed")
+			return DecorationStyle::Dashed;
+		else if (str == "wavy")
+			return DecorationStyle::Wavy;
+		return std::optional<DecorationStyle>();
+	}
 }
 
 namespace nani::canvas::internal
@@ -340,6 +422,12 @@ namespace nani::canvas::internal
 		if (auto v = ComputePositions(); v.has_value())
 			SetYogaStyleEdges(layoutPropsRef.style, v.value(), &Style::setPosition);
 
+		if (auto v = ComputeFont(); v.has_value())
+			visualPropsRef.font = v.value();
+
+		if (auto v = ComputeTextDecoration(); v.has_value())
+			visualPropsRef.textDecoration = v.value();
+
 		if (auto v = ComputeColor(); v.has_value())
 			visualPropsRef.color = v.value();
 
@@ -403,6 +491,10 @@ namespace nani::canvas::internal
 				LoadEdgesNode(child, Borders);
 			else if (name == "Positions")
 				LoadPositionsNode(child);
+			else if (name == "Font")
+				LoadFontNode(child);
+			else if (name == "TextDecoration")
+				LoadTextDecorationNode(child);
 		}
 	}
 
@@ -642,5 +734,75 @@ namespace nani::canvas::internal
 			return;
 		PositionType = AsYogaPositionType(GetNodeValue(node, "type"));
 		LoadEdgesNode(node, Positions);
+	}
+
+	void ComputedStyleBuilder::LoadFontNode(const pugi::xml_node& node)
+	{
+		if (node.empty())
+			return;
+
+		text::Font font;
+		auto attributes = node.attributes();
+		for (const auto& attribute : attributes)
+		{
+			std::string name = attribute.name();
+			if (name == "family")
+			{
+				std::string family = attribute.value();
+				font.SetFamily(std::u8string(family.cbegin(), family.cend()));
+			}
+			else if (name == "size")
+			{
+				auto size = AsScalar(attribute.value());
+				if (size.has_value())
+					font.SetSize(size.value());
+			}
+			else if (name == "style")
+			{
+				auto style = AsFontStyle(attribute.value());
+				if (style.has_value())
+					font.SetStyle(style.value());
+			}
+			else if (name == "weight")
+			{
+				auto weight = AsFontWeight(attribute.value());
+				if (weight.has_value())
+					font.SetWeight(weight.value());
+			}
+		}
+		Font = font;
+	}
+
+	void ComputedStyleBuilder::LoadTextDecorationNode(const pugi::xml_node& node)
+	{
+		if (node.empty())
+			return;
+
+		text::TextDecoration textDecoration;
+		auto attributes = node.attributes();
+		for (const auto& attribute : attributes)
+		{
+			std::string name = attribute.name();
+			if (name == "line")
+			{
+				auto line = AsDecorationLine(attribute.value());
+				if (line.has_value())
+					textDecoration.SetLines(line.value());
+			}
+			else if (name == "style")
+			{
+				auto style = AsDecorationStyle(attribute.value());
+				if (style.has_value())
+					textDecoration.SetStyle(style.value());
+			}
+			else if (name == "color")
+			{
+				auto color = AsColor(attribute.value());
+				if (color.has_value())
+					textDecoration.SetColor(color.value());
+			}
+		}
+
+		TextDecoration = textDecoration;
 	}
 }
