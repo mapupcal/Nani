@@ -12,6 +12,7 @@ namespace nani::canvas::internal
 	struct ScreenData;
 	class ComputedStyle;
 	class ComputedStyleBuilder;
+	class FontMetricsPrivate;
 }
 namespace nani::canvas
 {
@@ -38,6 +39,13 @@ namespace nani::canvas::events
 	class Event;
 	class EventFilter;
 	class EventTarget;
+}
+namespace nani::canvas::text
+{
+	class Font;
+	class FontMetrics;
+	class FontManager;
+	class TextDecoration;
 }
 
 class SkCanvas;

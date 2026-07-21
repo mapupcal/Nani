@@ -1,21 +1,24 @@
 ﻿#pragma once
-#include "text_defs.h"
+#include "defs.h"
 
-namespace nani::canvas::text
+namespace nani::canvas::internal
 {
-	class NANI_CANVAS_API FontManager
+	class FontManagerPrivate
 	{
 	public:
-		FontManager() = default;
-		~FontManager() = default;
+		static FontManagerPrivate* Instance();
 
 	public:
 		std::vector<std::u8string> DefaultFamilies() const;
 		std::vector<std::u8string> AvailableFamilies() const;
-
 		bool RegisterFont(const std::u8string_view& fontFilePath);
 		bool UnRegisterFont(const std::u8string_view& fontFilePath);
-
 		void ClearCache();
+
+		std::shared_ptr<const FontMetricsPrivate> GetMetrics(const text::Font& font);
+
+	private:
+		FontManagerPrivate() = default;
+		~FontManagerPrivate() = default;
 	};
 }

@@ -74,6 +74,10 @@ nani_add_library(canvas SHARED
 
 	internal/env_p.cpp
 	internal/env_p.h
+	internal/font_manager_p.cpp
+	internal/font_manager_p.h
+	internal/font_metrics_p.cpp
+	internal/font_metrics_p.h
 	internal/platform.cpp
 	internal/platform.h
 	internal/window_p.cpp
