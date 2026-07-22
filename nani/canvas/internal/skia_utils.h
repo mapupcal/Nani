@@ -9,6 +9,9 @@
 #include <core/SkMatrix.h>
 #include <core/SkRRect.h>
 #include <core/SkPath.h>
+#include <core/SkFontMgr.h>
+#include <core/SkTypeface.h>
+#include <core/SkFont.h>
 
 namespace nani::canvas::internal::skia_utils
 {
@@ -16,4 +19,6 @@ namespace nani::canvas::internal::skia_utils
 	SkMatrix ToSkMatrix(const basic::TransformF& transform);
 	using Raidus = ComputedStyle::VisualProperties::BorderRadius;
 	SkRRect ToSkRRect(const basic::RectF& rect, const Raidus& radius);
+	sk_sp<SkFontMgr> CreateDefaultFontMgr();
+	std::u8string GetFamilyName(sk_sp<SkTypeface> typeface);
 }

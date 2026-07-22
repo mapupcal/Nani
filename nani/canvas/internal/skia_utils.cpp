@@ -1,5 +1,9 @@
 ﻿#include "skia_utils.h"
 
+#ifdef NANI_OS_WIN
+#include <ports/SkTypeface_win.h>
+#endif // NANI_OS_WIN
+
 using namespace nani::canvas::basic;
 
 namespace nani::canvas::internal::skia_utils
@@ -30,6 +34,23 @@ namespace nani::canvas::internal::skia_utils
 		SkRRect rrect;
 		rrect.setRectRadii(srect, radii);
 		return rrect;
+	}
+
+	sk_sp<SkFontMgr> CreateDefaultFontMgr()
+	{
+#ifdef NANI_OS_WIN
+		return SkFontMgr_New_DirectWrite();
+#endif
+		NANI_ASSERT(false);
+		NANI_MESSAGE("not impl.");
+	}
+
+	std::u8string GetFamilyName(sk_sp<SkTypeface> typeface)
+	{
+		SkString skName;
+		typeface->getFamilyName(&skName);
+		std::u8string family(skName.begin(), skName.end());
+		return family;
 	}
 }
 

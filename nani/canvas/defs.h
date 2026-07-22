@@ -49,6 +49,9 @@ namespace nani::canvas::text
 }
 
 class SkCanvas;
+class SkFont;
+class SkTypeface;
+class SkFontMgr;
 
 struct YGNode;
 using YGNodeRef = YGNode*;
