@@ -50,6 +50,8 @@ namespace nani::canvas::text
 		FontStyle Style() const;
 		void SetStyle(FontStyle style);
 
+		size_t Hash() const;
+
 	private:
 		std::u8string m_family;
 		basic::single m_size = 12.0f;

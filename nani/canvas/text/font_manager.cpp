@@ -7,26 +7,6 @@ namespace nani::canvas::text
 		return internal::FontManagerPrivate::Instance()->DefaultFamilies();
 	}
 
-	std::vector<std::u8string> FontManager::AvailableFamilies() const
-	{
-		return internal::FontManagerPrivate::Instance()->AvailableFamilies();
-	}
-
-	std::vector<std::u8string> FontManager::RegisteredFamilies() const
-	{
-		return internal::FontManagerPrivate::Instance()->RegisteredFamilies();
-	}
-
-	bool FontManager::RegisterFont(const std::u8string_view& fontFilePath, std::u8string& outFamily)
-	{
-		return internal::FontManagerPrivate::Instance()->RegisterFont(fontFilePath, outFamily);
-	}
-
-	bool FontManager::UnRegisterFont(const std::u8string_view& fontFilePath)
-	{
-		return internal::FontManagerPrivate::Instance()->UnRegisterFont(fontFilePath);
-	}
-
 	void FontManager::ClearCache()
 	{
 		internal::FontManagerPrivate::Instance()->ClearCache();

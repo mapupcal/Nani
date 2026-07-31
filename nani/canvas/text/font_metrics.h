@@ -34,6 +34,6 @@ namespace nani::canvas::text
 		) const;
 
 	private:
-		std::shared_ptr<const internal::FontMetricsPrivate> m_private;
+		std::shared_ptr<SkFont> m_spSkFont;
 	};
 }

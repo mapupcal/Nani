@@ -12,7 +12,6 @@ namespace nani::canvas::internal
 	struct ScreenData;
 	class ComputedStyle;
 	class ComputedStyleBuilder;
-	class FontMetricsPrivate;
 }
 namespace nani::canvas
 {

@@ -11,12 +11,6 @@ namespace nani::canvas::text
 
 	public:
 		std::vector<std::u8string> DefaultFamilies() const;
-		std::vector<std::u8string> AvailableFamilies() const;
-
-		std::vector<std::u8string> RegisteredFamilies() const;
-		bool RegisterFont(const std::u8string_view& fontFilePath, std::u8string& outFamily);
-		bool UnRegisterFont(const std::u8string_view& fontFilePath);
-
 		void ClearCache();
 	};
 }

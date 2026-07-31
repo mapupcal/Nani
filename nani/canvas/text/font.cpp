@@ -45,4 +45,13 @@ namespace nani::canvas::text
 	{
 		m_style = style;
 	}
+
+	size_t Font::Hash() const
+	{
+		size_t h1 = std::hash<std::u8string>()(m_family);
+		size_t h2 = std::hash<float>()(m_size);
+		size_t h3 = std::hash<int>()(static_cast<int>(m_weight));
+		size_t h4 = std::hash<int>()(static_cast<int>(m_style));
+		return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3);
+	}
 }

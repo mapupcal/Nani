@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "defs.h"
 #include <core/SkFontMgr.h>
+#include "../text/font.h"
+#include <unordered_map>
 
 namespace nani::canvas::internal
 {
@@ -11,22 +13,25 @@ namespace nani::canvas::internal
 
 	public:
 		std::vector<std::u8string> DefaultFamilies() const;
-		std::vector<std::u8string> AvailableFamilies() const;
-		std::vector<std::u8string> RegisteredFamilies() const;
-		bool RegisterFont(const std::u8string_view& fontFilePath, std::u8string& outFamily);
-		bool UnRegisterFont(const std::u8string_view& fontFilePath);
 		void ClearCache();
 
-		std::shared_ptr<const FontMetricsPrivate> GetMetrics(const text::Font& font);
+		std::shared_ptr<SkFont> CreateSkFont(const text::Font& font);
 
 	private:
 		FontManagerPrivate();
 		~FontManagerPrivate();
 
 	private:
-		sk_sp<SkFontMgr> m_spSkFontMgr;
+		struct FontHash
+		{
+			size_t operator()(const text::Font& font) const
+			{
+				return font.Hash();
+			}
+		};
 
-		std::vector<std::u8string> m_defaultFamilies;
-		std::map<std::u8string, sk_sp<SkTypeface>> m_registeredTypefaces;
+	private:
+		sk_sp<SkFontMgr> m_spSkFontMgr;
+		std::unordered_map<text::Font, std::weak_ptr<SkFont>, FontHash> m_fontCache;
 	};
 }
