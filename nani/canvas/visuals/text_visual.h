@@ -17,6 +17,7 @@ namespace nani::canvas::visuals
 
 	public:
 		void BuildVisuals() override;
+		bool HitTestOverride(const basic::PointF& localPos) override;
 		void PaintOverride(SkCanvas* canvas, const basic::RectF& dirtyRect) override;
 		bool Filter(events::EventTarget* target, events::Event* e) override;
 	};

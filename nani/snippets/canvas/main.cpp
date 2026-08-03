@@ -2,7 +2,6 @@
 #include "canvas/window.h"
 #include "canvas/events/event.h"
 #include "canvas/events/event_filter.h"
-#include "canvas/screen.h"
 #include "canvas/elements/element.h"
 #include "canvas/elements/text_element.h"
 #include "canvas/styles.h"
@@ -47,7 +46,7 @@ int main(int argc, char** argv)
 {
 	Env env(argc, argv);
 	float borderWidth = 5.0f;
-	std::shared_ptr<Window> window = std::make_shared<Window>(PointF(0, 0), SizeF(600 + borderWidth, 400 + borderWidth));
+	std::shared_ptr<Window> window = std::make_shared<Window>(PointF(0, 0), SizeF(600 + borderWidth, 480 + borderWidth));
 	window->SetTitle("Nani Canvas");
 	window->SetBackgroundColor(Color(0xF4F6F8FF));
 	window->SetBorderWidth(borderWidth);
@@ -59,7 +58,7 @@ int main(int argc, char** argv)
 	styles->LoadFromXML(R"(
 		<Styles>
 			<Style class="NaniWindow">
-				<FlexBox direction="ltr" flexDirection="row" />
+				<FlexBox direction="ltr" flexDirection="column" />
 				<Colors background="#F4F6F8FF"/>
 			</Style>
 
@@ -88,16 +87,24 @@ int main(int argc, char** argv)
 			</Style>
 
 			<Style class="TitlePanel">
-				<FlexBox direction="ltr" flexDirection="row" alignItems="center" />
+				<FlexBox direction="ltr" flexDirection="row" alignItems="center" shrink="0" />
 				<Gaps gap="8" />
 				<Borders value="8" />
-				<Dimension width="100%" height="56" />
+				<Dimension width="100%" height="56" minHeight="56" />
 				<Colors background="#1E293BFF" />
+			</Style>
+
+			<Style class="DemoPanel">
+				<FlexBox flexDirection="column" flex="1.0" grow="1.0" shrink="1.0" />
+				<Gaps gap="12" />
+				<Paddings value="20" />
+				<Dimension width="100%" />
 			</Style>
 
 			<Style class="DefaultText">
 				<Font family="Segoe UI" size="14" style="normal" weight="normal" />
 				<Colors color="#334155FF" />
+				<TextDecoration line="none" />
 			</Style>
 
 			<Style class="TitleText" inherit="DefaultText">
@@ -107,49 +114,101 @@ int main(int argc, char** argv)
 				<Colors color="#F8FAFCFF" />
 				<TextAlignment horizontal="center" vertical="center" />
 			</Style>
+
+			<Style class="TitleText" state="hovered">
+				<Colors color="#CBD5E1FF" />
+				<TextDecoration line="linethrough" style="solid" color="#F87171FF" />
+			</Style>
+
+			<Style class="DemoText" inherit="DefaultText">
+				<Font family="Segoe UI" size="16" />
+				<Dimension height="28" width="100%" />
+				<TextAlignment horizontal="left" vertical="center" />
+			</Style>
+
+			<Style class="DemoUnderline" inherit="DemoText" />
+			<Style class="DemoUnderline" state="hovered">
+				<Colors color="#1D4ED8FF" />
+				<TextDecoration line="underline" style="solid" color="#2563EBFF" />
+			</Style>
+
+			<Style class="DemoOverline" inherit="DemoText" />
+			<Style class="DemoOverline" state="hovered">
+				<Colors color="#0F766EFF" />
+				<TextDecoration line="overline" style="dotted" color="#14B8A6FF" />
+			</Style>
+
+			<Style class="DemoLineThrough" inherit="DemoText" />
+			<Style class="DemoLineThrough" state="hovered">
+				<Colors color="#B91C1CFF" />
+				<TextDecoration line="linethrough" style="solid" color="#EF4444FF" />
+			</Style>
+
+			<Style class="DemoDashedUnderline" inherit="DemoText" />
+			<Style class="DemoDashedUnderline" state="hovered">
+				<Colors color="#7C3AEDFF" />
+				<TextDecoration line="underline" style="dashed" color="#8B5CF6FF" />
+			</Style>
+
+			<Style class="DemoDoubleUnderline" inherit="DemoText" />
+			<Style class="DemoDoubleUnderline" state="hovered">
+				<Colors color="#C2410CFF" />
+				<TextDecoration line="underline" style="double" color="#F97316FF" />
+			</Style>
+
+			<Style class="DemoWavyUnderline" inherit="DemoText" />
+			<Style class="DemoWavyUnderline" state="hovered">
+				<Colors color="#BE185DFF" />
+				<TextDecoration line="underline" style="wavy" color="#EC4899FF" />
+			</Style>
+
+			<Style class="DemoCombo" inherit="DemoText" />
+			<Style class="DemoCombo" state="hovered">
+				<Colors color="#334155FF" />
+				<TextDecoration line="underline,overline" style="solid" color="#64748BFF" />
+			</Style>
 		</Styles>
 	)");
 
-
 	Element* panel = new Element(window->RootElement());
 	panel->SetStyleClass(u8"TitlePanel");
-	EventFilterDelegate panelWatcher(panel);
-	panelWatcher.delegate = [](Event* e) -> bool {
-		if (e->type == Type::MouseMove)
-		{
-			auto me = static_cast<MouseMoveEvent*>(e);
-			printf("mouse move pos(%f, %f), globalPos(%f, %f) over panel.\n", me->pos.x, me->pos.y, me->globalPos.x, me->globalPos.y);
-		}
-		return false;
-	};
 
 	TextElement* title = new TextElement(panel, u8"Nani Canvas");
 	title->SetStyleClass(u8"TitleText");
-	EventFilterDelegate titleWatcher(title);
-	titleWatcher.delegate = [](Event* e) -> bool {
-		if (e->type == Type::MouseMove)
-		{
-			auto me = static_cast<MouseMoveEvent*>(e);
-			printf("mouse move pos(%f, %f), globalPos(%f, %f) over title.\n", me->pos.x, me->pos.y, me->globalPos.x, me->globalPos.y);
-		}
-		return false;
-	};
 
 	Element* close = new Element(panel);
 	close->SetStyleClass(u8"CloseButton");
 	EventFilterDelegate closeWatcher(close);
 	closeWatcher.delegate = [=](Event* e) -> bool {
-		if (e->type == Type::MouseMove)
-		{
-			auto me = static_cast<MouseMoveEvent*>(e);
-			printf("mouse move pos(%f, %f), globalPos(%f, %f) over close button.\n", me->pos.x, me->pos.y, me->globalPos.x, me->globalPos.y);
-		}
 		if (e->type == Type::MousePress)
 			window->Close();
 		return false;
 	};
+
+	Element* demoPanel = new Element(window->RootElement());
+	demoPanel->SetStyleClass(u8"DemoPanel");
+
+	const struct
+	{
+		const char8_t* label;
+		const char8_t* styleClass;
+	} demos[] = {
+		{ u8"Hover me - Underline (solid)", u8"DemoUnderline" },
+		{ u8"Hover me - Overline (dotted)", u8"DemoOverline" },
+		{ u8"Hover me - Line-through (solid)", u8"DemoLineThrough" },
+		{ u8"Hover me - Underline (dashed)", u8"DemoDashedUnderline" },
+		{ u8"Hover me - Underline (double)", u8"DemoDoubleUnderline" },
+		{ u8"Hover me - Underline (wavy)", u8"DemoWavyUnderline" },
+		{ u8"Hover me - Underline + Overline", u8"DemoCombo" },
+	};
+
+	for (const auto& demo : demos)
+	{
+		TextElement* text = new TextElement(demoPanel, demo.label);
+		text->SetStyleClass(demo.styleClass);
+	}
+
 	window->Show();
 	int ret = env.WaitForQuit();
 	return ret;
 }
-

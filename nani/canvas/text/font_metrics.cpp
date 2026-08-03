@@ -3,6 +3,7 @@
 #include <core/SkFont.h>
 #include <core/SkFontMetrics.h>
 #include <core/SkFontTypes.h>
+#include <algorithm>
 
 namespace nani::canvas::text
 {
@@ -38,6 +39,82 @@ namespace nani::canvas::text
 		SkFontMetrics metrics;
 		m_spSkFont->getMetrics(&metrics);
 		return -metrics.fAscent + metrics.fDescent + metrics.fLeading;
+	}
+
+	basic::single FontMetrics::XHeight() const
+	{
+		SkFontMetrics metrics;
+		m_spSkFont->getMetrics(&metrics);
+		if (metrics.fXHeight < 0.0f)
+			return -metrics.fXHeight;
+		if (metrics.fXHeight > 0.0f)
+			return metrics.fXHeight;
+		return Ascent() * 0.5f;
+	}
+
+	basic::single FontMetrics::CapHeight() const
+	{
+		SkFontMetrics metrics;
+		m_spSkFont->getMetrics(&metrics);
+		if (metrics.fCapHeight < 0.0f)
+			return -metrics.fCapHeight;
+		if (metrics.fCapHeight > 0.0f)
+			return metrics.fCapHeight;
+		return Ascent() * 0.7f;
+	}
+
+	basic::single FontMetrics::UnderlineOffset() const
+	{
+		SkFontMetrics metrics;
+		m_spSkFont->getMetrics(&metrics);
+		SkScalar position = 0.0f;
+		SkScalar thickness = 0.0f;
+		if (metrics.hasUnderlinePosition(&position))
+		{
+			if (metrics.hasUnderlineThickness(&thickness) && thickness > 0.0f)
+				return position + thickness * 0.5f;
+			return position + UnderlineThickness() * 0.5f;
+		}
+		return std::max(UnderlineThickness(), Descent() * 0.25f);
+	}
+
+	basic::single FontMetrics::UnderlineThickness() const
+	{
+		SkFontMetrics metrics;
+		m_spSkFont->getMetrics(&metrics);
+		SkScalar thickness = 0.0f;
+		if (metrics.hasUnderlineThickness(&thickness) && thickness > 0.0f)
+			return thickness;
+		return std::max(1.0f, m_spSkFont->getSize() / 14.0f);
+	}
+
+	basic::single FontMetrics::StrikeoutOffset() const
+	{
+		SkFontMetrics metrics;
+		m_spSkFont->getMetrics(&metrics);
+		SkScalar position = 0.0f;
+		SkScalar thickness = 0.0f;
+		if (metrics.hasStrikeoutPosition(&position))
+		{
+			// Skia: position is baseline -> bottom of stroke (typically negative).
+			const float thick = (metrics.hasStrikeoutThickness(&thickness) && thickness > 0.0f)
+				? thickness
+				: StrikeoutThickness();
+			return position - thick * 0.5f;
+		}
+
+		const float xHeight = XHeight();
+		return -xHeight * 0.5f;
+	}
+
+	basic::single FontMetrics::StrikeoutThickness() const
+	{
+		SkFontMetrics metrics;
+		m_spSkFont->getMetrics(&metrics);
+		SkScalar thickness = 0.0f;
+		if (metrics.hasStrikeoutThickness(&thickness) && thickness > 0.0f)
+			return thickness;
+		return std::max(1.0f, m_spSkFont->getSize() / 14.0f);
 	}
 
 	basic::single FontMetrics::HorizontalAdvance(const std::u8string_view& text) const

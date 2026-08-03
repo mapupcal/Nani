@@ -30,7 +30,11 @@ protected:
 				<Style class="FixedText">
 					<Font family="Segoe UI" size="14" style="normal" weight="normal" />
 					<Colors color="#000000FF" />
-					<Dimension width="80" height="20" />
+					<Dimension width="200" height="40" />
+					<TextAlignment horizontal="left" vertical="top" />
+				</Style>
+				<Style class="CenterText" inherit="FixedText">
+					<TextAlignment horizontal="right" vertical="bottom" />
 				</Style>
 			</Styles>
 		)");
@@ -160,6 +164,111 @@ TEST_F(TextElementTest, ViewTreeTextVisualHasLayout)
 	font.SetSize(14.0f);
 	FontMetrics metrics(font);
 	EXPECT_GT(metrics.HorizontalAdvance(u8"Hello"), 0.0f);
+
+	window_->Hide();
+}
+
+TEST_F(TextElementTest, HitTestHitsTextLineBoxOnly)
+{
+	TextElement* text = new TextElement(window_->RootElement(), u8"Hi");
+	text->SetStyleClass(u8"FixedText");
+	window_->Show();
+	window_->GetView()->Flush();
+
+	auto* rootVisual = window_->GetView()->Visual();
+	ASSERT_NE(rootVisual, nullptr);
+	auto textVisual = std::dynamic_pointer_cast<TextVisual>(rootVisual->Visuals().front());
+	ASSERT_NE(textVisual, nullptr);
+
+	Font font;
+	font.SetFamily(u8"Segoe UI");
+	font.SetSize(14.0f);
+	FontMetrics metrics(font);
+	const float textWidth = metrics.HorizontalAdvance(u8"Hi");
+	ASSERT_GT(textWidth, 0.0f);
+	ASSERT_LT(textWidth, textVisual->LayoutRect().Width());
+
+	Visual* hitVisual = nullptr;
+	PointF hitLocalPos;
+
+	EXPECT_TRUE(textVisual->HitTest(PointF(1.0f, metrics.Ascent() * 0.5f), &hitVisual, hitLocalPos));
+	EXPECT_EQ(hitVisual, textVisual.get());
+
+	EXPECT_FALSE(textVisual->HitTest(
+		PointF(textWidth + 20.0f, metrics.Ascent() * 0.5f),
+		&hitVisual,
+		hitLocalPos));
+
+	EXPECT_FALSE(textVisual->HitTest(
+		PointF(1.0f, metrics.Ascent() + metrics.Descent() + 8.0f),
+		&hitVisual,
+		hitLocalPos));
+
+	window_->Hide();
+}
+
+TEST_F(TextElementTest, HitTestEmptyTextMisses)
+{
+	TextElement* text = new TextElement(window_->RootElement(), u8"");
+	text->SetStyleClass(u8"FixedText");
+	window_->Show();
+	window_->GetView()->Flush();
+
+	auto* rootVisual = window_->GetView()->Visual();
+	auto textVisual = std::dynamic_pointer_cast<TextVisual>(rootVisual->Visuals().front());
+	ASSERT_NE(textVisual, nullptr);
+
+	Visual* hitVisual = nullptr;
+	PointF hitLocalPos;
+	EXPECT_FALSE(textVisual->HitTest(PointF(1.0f, 1.0f), &hitVisual, hitLocalPos));
+
+	window_->Hide();
+}
+
+TEST_F(TextElementTest, FontMetricsDecorationOffsetsAreSane)
+{
+	Font font;
+	font.SetFamily(u8"Segoe UI");
+	font.SetSize(16.0f);
+	FontMetrics metrics(font);
+
+	EXPECT_GT(metrics.UnderlineThickness(), 0.0f);
+	EXPECT_GT(metrics.StrikeoutThickness(), 0.0f);
+	EXPECT_GT(metrics.UnderlineOffset(), 0.0f);
+	EXPECT_LT(metrics.StrikeoutOffset(), 0.0f);
+	EXPECT_GT(metrics.XHeight(), 0.0f);
+	EXPECT_LT(std::abs(metrics.StrikeoutOffset()), metrics.Ascent());
+	EXPECT_LT(metrics.UnderlineOffset(), metrics.Descent() + metrics.UnderlineThickness());
+}
+
+TEST_F(TextElementTest, HitTestRespectsTextAlignment)
+{
+	TextElement* text = new TextElement(window_->RootElement(), u8"Hi");
+	text->SetStyleClass(u8"CenterText");
+	window_->Show();
+	window_->GetView()->Flush();
+
+	auto* rootVisual = window_->GetView()->Visual();
+	auto textVisual = std::dynamic_pointer_cast<TextVisual>(rootVisual->Visuals().front());
+	ASSERT_NE(textVisual, nullptr);
+
+	const RectF layout = textVisual->LayoutRect();
+	Font font;
+	font.SetFamily(u8"Segoe UI");
+	font.SetSize(14.0f);
+	FontMetrics metrics(font);
+	const float textWidth = metrics.HorizontalAdvance(u8"Hi");
+
+	Visual* hitVisual = nullptr;
+	PointF hitLocalPos;
+
+	// Right + bottom aligned: top-left of layout should miss.
+	EXPECT_FALSE(textVisual->HitTest(PointF(1.0f, 1.0f), &hitVisual, hitLocalPos));
+
+	const float hitX = layout.Width() - textWidth * 0.5f;
+	const float hitY = layout.Height() - metrics.Descent() * 0.5f;
+	EXPECT_TRUE(textVisual->HitTest(PointF(hitX, hitY), &hitVisual, hitLocalPos));
+	EXPECT_EQ(hitVisual, textVisual.get());
 
 	window_->Hide();
 }

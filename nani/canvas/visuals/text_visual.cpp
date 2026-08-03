@@ -10,9 +10,12 @@
 #include "../internal/yoga_utils.h"
 #include <core/SkCanvas.h>
 #include <core/SkPaint.h>
+#include <core/SkPathBuilder.h>
 #include <effects/SkDashPathEffect.h>
 #include <yoga/Yoga.h>
 #include <algorithm>
+#include <cmath>
+#include <numbers>
 
 using namespace nani::canvas::elements;
 using namespace nani::canvas::events;
@@ -24,9 +27,17 @@ namespace nani::canvas::visuals
 {
 	namespace
 	{
+		using DecorationLine = TextDecoration::DecorationLine;
+		using DecorationStyle = TextDecoration::DecorationStyle;
+
 		elements::TextElement* AsTextElement(const Visual* visual)
 		{
 			return visual ? static_cast<elements::TextElement*>(visual->Element()) : nullptr;
+		}
+
+		bool HasDecorationLine(DecorationLine lines, DecorationLine flag)
+		{
+			return (lines & flag) != DecorationLine::None;
 		}
 
 		Color ResolveTextColor(const ComputedStyle* style)
@@ -44,29 +55,65 @@ namespace nani::canvas::visuals
 			return Colors::Black;
 		}
 
-		void DrawHorizontalLine(
+		Color ResolveDecorationColor(const TextDecoration& decoration, const ComputedStyle* style)
+		{
+			if (decoration.Color().a != 0)
+				return decoration.Color();
+			return ResolveTextColor(style);
+		}
+
+		void DrawDecorationStroke(
 			SkCanvas* canvas,
 			const SkPaint& basePaint,
 			float x1,
 			float y,
 			float x2,
-			TextDecoration::DecorationStyle style)
+			float thickness,
+			DecorationStyle style)
 		{
+			if (x2 <= x1 || thickness <= 0.0f)
+				return;
+
 			SkPaint paint = basePaint;
 			paint.setStyle(SkPaint::kStroke_Style);
-			paint.setStrokeWidth(1.0f);
+			paint.setStrokeWidth(thickness);
+			paint.setStrokeCap(SkPaint::kButt_Cap);
 
-			if (style == TextDecoration::DecorationStyle::Double)
+			if (style == DecorationStyle::Double)
 			{
-				canvas->drawLine(x1, y - 1.5f, x2, y - 1.5f, paint);
-				canvas->drawLine(x1, y + 1.5f, x2, y + 1.5f, paint);
+				const float gap = std::max(thickness * 1.5f, 1.5f);
+				canvas->drawLine(x1, y - gap, x2, y - gap, paint);
+				canvas->drawLine(x1, y + gap, x2, y + gap, paint);
 				return;
 			}
 
-			if (style == TextDecoration::DecorationStyle::Dotted)
-				paint.setPathEffect(SkDashPathEffect::Make({ 1.0f, 2.0f }, 0.0f));
-			else if (style == TextDecoration::DecorationStyle::Dashed)
-				paint.setPathEffect(SkDashPathEffect::Make({ 4.0f, 2.0f }, 0.0f));
+			if (style == DecorationStyle::Wavy)
+			{
+				const float amplitude = std::max(thickness * 1.25f, 1.5f);
+				const float wavelength = std::max(thickness * 4.0f, 4.0f);
+				SkPathBuilder builder;
+				builder.moveTo(x1, y);
+				for (float x = x1 + 1.0f; x < x2; x += 1.0f)
+				{
+					const float t = (x - x1) / wavelength * (2.0f * std::numbers::pi_v<float>);
+					builder.lineTo(x, y + std::sin(t) * amplitude);
+				}
+				const float endT = (x2 - x1) / wavelength * (2.0f * std::numbers::pi_v<float>);
+				builder.lineTo(x2, y + std::sin(endT) * amplitude);
+				canvas->drawPath(builder.detach(), paint);
+				return;
+			}
+
+			if (style == DecorationStyle::Dotted)
+			{
+				const float dot = std::max(thickness, 1.0f);
+				paint.setPathEffect(SkDashPathEffect::Make({ dot, dot * 1.5f }, 0.0f));
+			}
+			else if (style == DecorationStyle::Dashed)
+			{
+				const float dash = std::max(thickness * 3.0f, 3.0f);
+				paint.setPathEffect(SkDashPathEffect::Make({ dash, dash * 0.75f }, 0.0f));
+			}
 
 			canvas->drawLine(x1, y, x2, y, paint);
 		}
@@ -74,30 +121,48 @@ namespace nani::canvas::visuals
 		void DrawTextDecorations(
 			SkCanvas* canvas,
 			const TextDecoration& decoration,
+			const ComputedStyle* style,
 			float x,
 			float baselineY,
 			float textWidth,
 			const FontMetrics& metrics)
 		{
 			const auto lines = decoration.Lines();
-			if (lines == TextDecoration::DecorationLine::None || textWidth <= 0.0f)
+			if (lines == DecorationLine::None || textWidth <= 0.0f)
 				return;
 
 			SkPaint paint;
 			paint.setAntiAlias(true);
-			paint.setColor(skia_utils::ToSkColor(decoration.Color()));
+			paint.setColor(skia_utils::ToSkColor(ResolveDecorationColor(decoration, style)));
 
-			const auto style = decoration.Style();
+			const auto decoStyle = decoration.Style();
 			const float x2 = x + textWidth;
+			const float underlineThickness = metrics.UnderlineThickness();
+			const float strikeThickness = metrics.StrikeoutThickness();
 
-			if ((lines & TextDecoration::DecorationLine::Overline) != TextDecoration::DecorationLine::None)
-				DrawHorizontalLine(canvas, paint, x, baselineY - metrics.Ascent(), x2, style);
+			if (HasDecorationLine(lines, DecorationLine::Overline))
+			{
+				DrawDecorationStroke(
+					canvas, paint, x,
+					baselineY - metrics.Ascent() + underlineThickness * 0.5f,
+					x2, underlineThickness, decoStyle);
+			}
 
-			if ((lines & TextDecoration::DecorationLine::Underline) != TextDecoration::DecorationLine::None)
-				DrawHorizontalLine(canvas, paint, x, baselineY + metrics.Descent(), x2, style);
+			if (HasDecorationLine(lines, DecorationLine::Underline))
+			{
+				DrawDecorationStroke(
+					canvas, paint, x,
+					baselineY + metrics.UnderlineOffset(),
+					x2, underlineThickness, decoStyle);
+			}
 
-			if ((lines & TextDecoration::DecorationLine::LineThrough) != TextDecoration::DecorationLine::None)
-				DrawHorizontalLine(canvas, paint, x, baselineY - metrics.Ascent() * 0.35f, x2, style);
+			if (HasDecorationLine(lines, DecorationLine::LineThrough))
+			{
+				DrawDecorationStroke(
+					canvas, paint, x,
+					baselineY + metrics.StrikeoutOffset(),
+					x2, strikeThickness, decoStyle);
+			}
 		}
 
 		YGSize MeasureTextVisual(
@@ -142,6 +207,85 @@ namespace nani::canvas::visuals
 
 			return { measuredWidth, measuredHeight };
 		}
+
+		struct TextPaintLayout
+		{
+			std::u8string displayText;
+			float baselineX = 0.0f;
+			float baselineY = 0.0f;
+			float textWidth = 0.0f;
+			RectF textRect;
+		};
+
+		bool ResolveTextPaintLayout(
+			TextElement* textElement,
+			const ComputedStyle* style,
+			YGNodeRef yogaNode,
+			const RectF& layoutRect,
+			TextPaintLayout& out)
+		{
+			if (!textElement || !style || !yogaNode)
+				return false;
+
+			const std::u8string_view text = textElement->Text();
+			if (text.empty())
+				return false;
+
+			FontMetrics metrics(style->visualProps.font);
+
+			RectF contentRect = layoutRect;
+			contentRect.MoveTo(PointF(0.0f, 0.0f));
+			contentRect = contentRect - (yoga_utils::GetNodeBorders(yogaNode) + yoga_utils::GetNodePaddings(yogaNode));
+			if (contentRect.Width() <= 0.0f || contentRect.Height() <= 0.0f)
+				return false;
+
+			if (textElement->ElideMode() == TextElideMode::None)
+				out.displayText = std::u8string(text);
+			else
+				out.displayText = metrics.ElidedText(text, contentRect.Width(), textElement->ElideMode());
+
+			if (out.displayText.empty())
+				return false;
+
+			out.textWidth = metrics.HorizontalAdvance(out.displayText);
+			const float textHeight = metrics.Ascent() + metrics.Descent();
+			const TextAlignment& textAlignment = style->visualProps.textAlignment;
+
+			switch (textAlignment.HorizontalAlign())
+			{
+			case TextAlignment::Horizontal::Center:
+				out.baselineX = contentRect.left + (contentRect.Width() - out.textWidth) * 0.5f;
+				break;
+			case TextAlignment::Horizontal::Right:
+				out.baselineX = contentRect.right - out.textWidth;
+				break;
+			case TextAlignment::Horizontal::Left:
+			default:
+				out.baselineX = contentRect.left;
+				break;
+			}
+
+			switch (textAlignment.VerticalAlign())
+			{
+			case TextAlignment::Vertical::Center:
+				out.baselineY = contentRect.top + (contentRect.Height() - textHeight) * 0.5f + metrics.Ascent();
+				break;
+			case TextAlignment::Vertical::Bottom:
+				out.baselineY = contentRect.bottom - metrics.Descent();
+				break;
+			case TextAlignment::Vertical::Top:
+			default:
+				out.baselineY = contentRect.top + metrics.Ascent();
+				break;
+			}
+
+			out.textRect = RectF(
+				out.baselineX,
+				out.baselineY - metrics.Ascent(),
+				out.baselineX + out.textWidth,
+				out.baselineY + metrics.Descent());
+			return true;
+		}
 	}
 
 	TextVisual::TextVisual(visuals::View* view, elements::TextElement* element, Visual* parent)
@@ -161,77 +305,37 @@ namespace nani::canvas::visuals
 		YGNodeMarkDirty(yogaNode);
 	}
 
+	bool TextVisual::HitTestOverride(const basic::PointF& localPos)
+	{
+		TextPaintLayout layout;
+		if (!ResolveTextPaintLayout(
+			AsTextElement(this),
+			GetComputedStyle(),
+			YogaNode(),
+			LayoutRect(),
+			layout))
+		{
+			return false;
+		}
+
+		return layout.textRect.IsContains(localPos);
+	}
+
 	void TextVisual::PaintOverride(SkCanvas* canvas, const basic::RectF& dirtyRect)
 	{
 		Visual::PaintOverride(canvas, dirtyRect);
 
 		const ComputedStyle* style = GetComputedStyle();
 		auto* textElement = AsTextElement(this);
-		if (!style || !textElement)
-			return;
 
-		const std::u8string_view text = textElement->Text();
-		if (text.empty())
+		TextPaintLayout layout;
+		if (!ResolveTextPaintLayout(textElement, style, YogaNode(), LayoutRect(), layout))
 			return;
 
 		const Font& font = style->visualProps.font;
 		auto skFont = FontManagerPrivate::Instance()->CreateSkFont(font);
 		if (!skFont)
 			return;
-
-		FontMetrics metrics(font);
-
-		// Paint coordinates are local to the border box (parent already translated by LayoutRect).
-		RectF contentRect = LayoutRect();
-		contentRect.MoveTo(PointF(0.0f, 0.0f));
-		YGNodeRef yogaNode = YogaNode();
-		contentRect = contentRect - (yoga_utils::GetNodeBorders(yogaNode) + yoga_utils::GetNodePaddings(yogaNode));
-
-		if (contentRect.Width() <= 0.0f || contentRect.Height() <= 0.0f)
-			return;
-
-		std::u8string displayText;
-		if (textElement->ElideMode() == TextElideMode::None)
-			displayText = std::u8string(text);
-		else
-			displayText = metrics.ElidedText(text, contentRect.Width(), textElement->ElideMode());
-
-		if (displayText.empty())
-			return;
-
-		const float textWidth = metrics.HorizontalAdvance(displayText);
-		const float textHeight = metrics.Ascent() + metrics.Descent();
-		const TextAlignment& textAlignment = style->visualProps.textAlignment;
-
-		float baselineX = contentRect.left;
-		switch (textAlignment.HorizontalAlign())
-		{
-		case TextAlignment::Horizontal::Center:
-			baselineX = contentRect.left + (contentRect.Width() - textWidth) * 0.5f;
-			break;
-		case TextAlignment::Horizontal::Right:
-			baselineX = contentRect.right - textWidth;
-			break;
-		case TextAlignment::Horizontal::Left:
-		default:
-			baselineX = contentRect.left;
-			break;
-		}
-
-		float baselineY = contentRect.top + metrics.Ascent();
-		switch (textAlignment.VerticalAlign())
-		{
-		case TextAlignment::Vertical::Center:
-			baselineY = contentRect.top + (contentRect.Height() - textHeight) * 0.5f + metrics.Ascent();
-			break;
-		case TextAlignment::Vertical::Bottom:
-			baselineY = contentRect.bottom - metrics.Descent();
-			break;
-		case TextAlignment::Vertical::Top:
-		default:
-			baselineY = contentRect.top + metrics.Ascent();
-			break;
-		}
 
 		SkPaint paint;
 		paint.setAntiAlias(true);
@@ -242,22 +346,24 @@ namespace nani::canvas::visuals
 		drawFont.setEdging(SkFont::Edging::kAntiAlias);
 		drawFont.setSubpixel(true);
 
-		const char* utf8Data = reinterpret_cast<const char*>(displayText.data());
+		const char* utf8Data = reinterpret_cast<const char*>(layout.displayText.data());
 		canvas->drawSimpleText(
 			utf8Data,
-			displayText.size(),
+			layout.displayText.size(),
 			SkTextEncoding::kUTF8,
-			baselineX,
-			baselineY,
+			layout.baselineX,
+			layout.baselineY,
 			drawFont,
 			paint);
 
+		FontMetrics metrics(font);
 		DrawTextDecorations(
 			canvas,
 			style->visualProps.textDecoration,
-			baselineX,
-			baselineY,
-			textWidth,
+			style,
+			layout.baselineX,
+			layout.baselineY,
+			layout.textWidth,
 			metrics);
 	}
 
