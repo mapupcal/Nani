@@ -384,6 +384,10 @@ namespace nani::canvas::internal
 			return;
 
 		glfwMakeContextCurrent(glfwWindow);
+		// Glyph/text draws bind GL textures. After making the context current (or any
+		// external GL use), resync Skia's cached GL state so atlas sampling stays valid.
+		skiaGlContext->resetContext();
+
 		SkCanvas* canvas = skiaSurface->getCanvas();
 		if (!canvas)
 			return;
@@ -487,13 +491,32 @@ namespace nani::canvas::internal
 
 		skiaSurface.reset();
 
+		// Describe the real default framebuffer. Mismatched sample/stencil counts
+		// make Skia's backend RT invalid for texture-backed ops (glyph atlases).
+		int sampleCnt = 0;
+		int stencilBits = 8;
+		if (glfwWindow)
+		{
+			sampleCnt = glfwGetWindowAttrib(glfwWindow, GLFW_SAMPLES);
+			stencilBits = glfwGetWindowAttrib(glfwWindow, GLFW_STENCIL_BITS);
+			if (sampleCnt < 0)
+				sampleCnt = 0;
+			if (stencilBits < 0)
+				stencilBits = 0;
+		}
+
 		GrGLFramebufferInfo fbi =
 		{
 			.fFBOID = 0,
 			.fFormat = GL_RGBA8
 		};
 
-		GrBackendRenderTarget target = GrBackendRenderTargets::MakeGL(size.width, size.height, 0, 8, fbi);
+		GrBackendRenderTarget target = GrBackendRenderTargets::MakeGL(
+			static_cast<int>(size.width),
+			static_cast<int>(size.height),
+			sampleCnt,
+			stencilBits,
+			fbi);
 		skiaSurface = SkSurfaces::WrapBackendRenderTarget(
 			skiaGlContext.get(),
 			target,

@@ -153,6 +153,15 @@ namespace nani::canvas::events
 		elements::Element* const element = nullptr;
 	};
 
+	class NANI_CANVAS_API ElementTextChangedEvent : public Event
+	{
+	public:
+		ElementTextChangedEvent(elements::Element* element_);
+		~ElementTextChangedEvent() = default;
+
+		elements::Element* const element = nullptr;
+	};
+
 	class NANI_CANVAS_API LayoutRequestEvent : public Event
 	{
 	public:

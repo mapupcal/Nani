@@ -33,10 +33,14 @@ nani_add_library(canvas SHARED
 	elements/element_states.h
 	elements/element_visibility.cpp
 	elements/element_visibility.h
+	elements/text_element.cpp
+	elements/text_element.h
 
 	visuals/visuals_defs.h
 	visuals/visual.cpp
 	visuals/visual.h
+	visuals/text_visual.cpp
+	visuals/text_visual.h
 	visuals/view.cpp
 	visuals/view.h
 
@@ -58,6 +62,8 @@ nani_add_library(canvas SHARED
 	text/font_metrics.h
 	text/text_decoration.cpp
 	text/text_decoration.h
+	text/text_alignment.cpp
+	text/text_alignment.h
 	
 	cursor.cpp
 	cursor.h

@@ -4,6 +4,7 @@
 #include "canvas/events/event_filter.h"
 #include "canvas/screen.h"
 #include "canvas/elements/element.h"
+#include "canvas/elements/text_element.h"
 #include "canvas/styles.h"
 #include <memory>
 #include <functional>
@@ -48,10 +49,10 @@ int main(int argc, char** argv)
 	float borderWidth = 5.0f;
 	std::shared_ptr<Window> window = std::make_shared<Window>(PointF(0, 0), SizeF(600 + borderWidth, 400 + borderWidth));
 	window->SetTitle("Nani Canvas");
-	window->SetBackgroundColor(Colors::White);
+	window->SetBackgroundColor(Color(0xF4F6F8FF));
 	window->SetBorderWidth(borderWidth);
-	window->SetRadius(8.0f);
-	window->SetBorderColor(Colors::Yellow);
+	window->SetRadius(10.0f);
+	window->SetBorderColor(Color(0x9AA3AFFF));
 	window->SetHints(Window::Tool | Window::Top | Window::TruncatedPassThrough | Window::Resizable);
 
 	auto styles = window->RootElement()->GetStyles();
@@ -59,41 +60,52 @@ int main(int argc, char** argv)
 		<Styles>
 			<Style class="NaniWindow">
 				<FlexBox direction="ltr" flexDirection="row" />
-				<Colors background="#0000FFFF"/>
+				<Colors background="#F4F6F8FF"/>
 			</Style>
 
 			<Style class="Button">
 				<Dimension width="50" height="50" minWidth="50" minHeight="50" maxWidth="50" maxHeight="50" />
-				<Radius radius="4" />
-				<Colors background="#00FFFF80" border="#FF000080"/>
+				<Radius radius="8" />
+				<Colors background="#CBD5E140" border="#94A3B880"/>
 			</Style>
 
 			<Style class="Button" state="hovered">
 				<Radius radius="10" />
+				<Colors background="#CBD5E180" border="#64748BCC"/>
 			</Style>
 
 			<Style class="CloseButton" inherit="Button">
-				<Colors background="#FF0000FF" border="#FFFFFFFF"/>
+				<Colors background="#E25555FF" border="#F8DADAFF"/>
 				<Transform>
-					<Scaling x="1.2" y="1.2" />
+					<Scaling x="1.1" y="1.1" />
 				</Transform>
-				<Borders value="2" />
+				<Borders value="1.5" />
+			</Style>
+
+			<Style class="CloseButton" state="hovered">
+				<Colors background="#F06A6AFF" border="#FFFFFFFF"/>
+				<Radius radius="12" />
 			</Style>
 
 			<Style class="TitlePanel">
-				<FlexBox direction="ltr" flexDirection="row" />
-				<Gaps gap="5" />
-				<Borders value="5" />
-				<Dimension width="100%" height="60" />
-				<Transform>
-					<Rotation a="180" />
-				</Transform>
+				<FlexBox direction="ltr" flexDirection="row" alignItems="center" />
+				<Gaps gap="8" />
+				<Borders value="8" />
+				<Dimension width="100%" height="56" />
+				<Colors background="#1E293BFF" />
 			</Style>
 
-			<Style class="Title">
+			<Style class="DefaultText">
+				<Font family="Segoe UI" size="14" style="normal" weight="normal" />
+				<Colors color="#334155FF" />
+			</Style>
+
+			<Style class="TitleText" inherit="DefaultText">
+				<Font family="Segoe UI" size="18" weight="bold" />
 				<FlexBox flex="1.0" />
-				<Dimension height="50"/>
-				<Colors background="#00FF00FF" />
+				<Dimension height="40" />
+				<Colors color="#F8FAFCFF" />
+				<TextAlignment horizontal="center" vertical="center" />
 			</Style>
 		</Styles>
 	)");
@@ -111,8 +123,8 @@ int main(int argc, char** argv)
 		return false;
 	};
 
-	Element* title = new Element(panel);
-	title->SetStyleClass(u8"Title");
+	TextElement* title = new TextElement(panel, u8"Nani Canvas");
+	title->SetStyleClass(u8"TitleText");
 	EventFilterDelegate titleWatcher(title);
 	titleWatcher.delegate = [](Event* e) -> bool {
 		if (e->type == Type::MouseMove)

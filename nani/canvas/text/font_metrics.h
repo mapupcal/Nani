@@ -3,14 +3,6 @@
 
 namespace nani::canvas::text
 {
-	enum class TextElideMode
-	{
-		None,
-		Left,
-		Middle,
-		Right
-	};
-
 	class NANI_CANVAS_API FontMetrics
 	{
 	public:

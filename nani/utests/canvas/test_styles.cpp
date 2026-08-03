@@ -3,6 +3,7 @@
 #include "canvas/internal/computed_style.h"
 #include "canvas/text/font.h"
 #include "canvas/text/text_decoration.h"
+#include "canvas/text/text_alignment.h"
 
 using namespace nani::canvas::internal;
 
@@ -1678,6 +1679,127 @@ TEST_F(StylesTest, LoadFromXML_InheritTextDecorationOverride)
 	// Child did NOT specify style or color — falls to defaults
 	EXPECT_EQ(td.Style(), text::TextDecoration::Style::Solid);
 	EXPECT_EQ(td.Color(), basic::Colors::Black);
+}
+
+// ============================================================
+// TextAlignment XML parsing
+// ============================================================
+
+TEST_F(StylesTest, LoadFromXML_WithTextAlignment)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="Aligned">
+				<TextAlignment horizontal="center" vertical="bottom" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"Aligned");
+	ASSERT_NE(cs, nullptr);
+
+	const auto& align = cs->visualProps.textAlignment;
+	EXPECT_EQ(align.HorizontalAlign(), text::TextAlignment::Horizontal::Center);
+	EXPECT_EQ(align.VerticalAlign(), text::TextAlignment::Vertical::Bottom);
+}
+
+TEST_F(StylesTest, LoadFromXML_WithTextAlignmentDefaults)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="DefaultAligned">
+				<TextAlignment />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"DefaultAligned");
+	ASSERT_NE(cs, nullptr);
+
+	const auto& align = cs->visualProps.textAlignment;
+	EXPECT_EQ(align.HorizontalAlign(), text::TextAlignment::Horizontal::Left);
+	EXPECT_EQ(align.VerticalAlign(), text::TextAlignment::Vertical::Top);
+}
+
+TEST_F(StylesTest, LoadFromXML_WithTextAlignmentAllValues)
+{
+	auto testH = [this](const char* value, text::TextAlignment::Horizontal expected) {
+		std::string xml = R"(
+			<Styles>
+				<Style class="HAlignTest">
+					<TextAlignment horizontal=")" + std::string(value) + R"(" />
+				</Style>
+			</Styles>
+		)";
+		styles_->LoadFromXML(xml);
+		auto cs = styles_->Compute(u8"HAlignTest");
+		ASSERT_NE(cs, nullptr);
+		EXPECT_EQ(cs->visualProps.textAlignment.HorizontalAlign(), expected);
+	};
+
+	auto testV = [this](const char* value, text::TextAlignment::Vertical expected) {
+		std::string xml = R"(
+			<Styles>
+				<Style class="VAlignTest">
+					<TextAlignment vertical=")" + std::string(value) + R"(" />
+				</Style>
+			</Styles>
+		)";
+		styles_->LoadFromXML(xml);
+		auto cs = styles_->Compute(u8"VAlignTest");
+		ASSERT_NE(cs, nullptr);
+		EXPECT_EQ(cs->visualProps.textAlignment.VerticalAlign(), expected);
+	};
+
+	testH("left", text::TextAlignment::Horizontal::Left);
+	testH("center", text::TextAlignment::Horizontal::Center);
+	testH("right", text::TextAlignment::Horizontal::Right);
+
+	testV("top", text::TextAlignment::Vertical::Top);
+	testV("center", text::TextAlignment::Vertical::Center);
+	testV("middle", text::TextAlignment::Vertical::Center);
+	testV("bottom", text::TextAlignment::Vertical::Bottom);
+}
+
+TEST_F(StylesTest, LoadFromXML_InheritTextAlignment)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="BaseAlign">
+				<TextAlignment horizontal="right" vertical="center" />
+			</Style>
+			<Style class="DerivedAlign" inherit="BaseAlign">
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"DerivedAlign");
+	ASSERT_NE(cs, nullptr);
+
+	const auto& align = cs->visualProps.textAlignment;
+	EXPECT_EQ(align.HorizontalAlign(), text::TextAlignment::Horizontal::Right);
+	EXPECT_EQ(align.VerticalAlign(), text::TextAlignment::Vertical::Center);
+}
+
+TEST_F(StylesTest, LoadFromXML_InheritTextAlignmentOverride)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="BaseAlign2">
+				<TextAlignment horizontal="right" vertical="bottom" />
+			</Style>
+			<Style class="DerivedAlign2" inherit="BaseAlign2">
+				<TextAlignment horizontal="center" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"DerivedAlign2");
+	ASSERT_NE(cs, nullptr);
+
+	const auto& align = cs->visualProps.textAlignment;
+	EXPECT_EQ(align.HorizontalAlign(), text::TextAlignment::Horizontal::Center);
+	EXPECT_EQ(align.VerticalAlign(), text::TextAlignment::Vertical::Top);
 }
 
 // ============================================================

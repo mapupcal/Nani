@@ -5,8 +5,17 @@
 #include "../basic/color.h"
 namespace nani::canvas::text
 {
+	enum class TextElideMode
+	{
+		None,
+		Left,
+		Middle,
+		Right
+	};
+
 	class Font;
 	class FontManager;
 	class FontMetrics;
 	class TextDecoration;
+	class TextAlignment;
 }

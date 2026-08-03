@@ -63,6 +63,7 @@ namespace nani::canvas::internal
 		//Visual
 		ComputeStyleBuilderInheritProperty(text::Font, Font);
 		ComputeStyleBuilderInheritProperty(text::TextDecoration, TextDecoration);
+		ComputeStyleBuilderInheritProperty(text::TextAlignment, TextAlignment);
 		ComputeStyleBuilderInheritProperty(basic::Color, Color);
 		ComputeStyleBuilderInheritProperty(basic::Color, BackgroundColor);
 		ComputeStyleBuilderInheritProperty(basic::Color, BorderColor);
@@ -85,6 +86,7 @@ namespace nani::canvas::internal
 		void LoadPositionsNode(const pugi::xml_node& node);
 		void LoadFontNode(const pugi::xml_node& node);
 		void LoadTextDecorationNode(const pugi::xml_node& node);
+		void LoadTextAlignmentNode(const pugi::xml_node& node);
 
 	private:
 		const ComputedStyleBuilder* m_inheritBuilder = nullptr;

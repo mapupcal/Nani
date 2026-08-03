@@ -27,11 +27,13 @@ namespace nani::canvas::elements
 	class ElementsLayer;
 	class ElementStates;
 	class ElementVisibility;
+	class TextElement;
 }
 namespace nani::canvas::visuals
 {
 	class Visual;
 	class View;
+	class TextVisual;
 }
 namespace nani::canvas::events
 {

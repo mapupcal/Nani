@@ -116,6 +116,13 @@ namespace nani::canvas::events
 
 	}
 
+	ElementTextChangedEvent::ElementTextChangedEvent(elements::Element* element_)
+		: Event(Type::ElementTextChanged)
+		, element(element_)
+	{
+
+	}
+
 	LayoutRequestEvent::LayoutRequestEvent(visuals::Visual* visual_)
 		: Event(Type::LayoutRequest)
 		, visual(visual_)

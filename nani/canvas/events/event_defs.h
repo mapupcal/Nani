@@ -35,6 +35,7 @@ namespace nani::canvas::events
 		ElementRemove,
 		ElementStatesChanged,
 		ElementVisibilityChanged,
+		ElementTextChanged,
 
 		LayoutRequest,
 		PaintRequest,

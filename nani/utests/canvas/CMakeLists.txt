@@ -14,6 +14,7 @@ nani_add_executable(canvas_utests
 	test_polygonf.cpp
 	test_styles.cpp
 	test_text_decoration.cpp
+	test_text_element.cpp
 	test_transformf.cpp
 	test_window.cpp
 	test_view.cpp

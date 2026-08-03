@@ -353,4 +353,21 @@ namespace nani::canvas::visuals
 		//TODO:: add transform.
 		return polygon;
 	}
+
+	const RectF Visual::ContentRect() const
+	{
+		if (!m_yogaNode)
+			return RectF();
+		return yoga_utils::GetNodeContentRect(m_yogaNode);
+	}
+
+	const ComputedStyle* Visual::GetComputedStyle() const
+	{
+		return m_spComputedStyle.get();
+	}
+
+	YGNodeRef Visual::YogaNode() const
+	{
+		return m_yogaNode;
+	}
 }

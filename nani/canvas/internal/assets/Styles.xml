@@ -116,14 +116,17 @@
     </Style>
 
     <!-- ============================================================
-         DefaultText — Base text style with Font and TextDecoration.
+         DefaultText — Base text style with Font, TextDecoration, TextAlignment.
          Font: family, size, style (normal|italic|oblique), weight
          TextDecoration: line (underline,overline,linethrough comma-separated),
                          style (solid|double|dotted|dashed|wavy), color
+         TextAlignment: horizontal (left|center|right),
+                        vertical (top|center|middle|bottom)
          ============================================================ -->
     <Style class="DefaultText">
         <Font family="Segoe UI" size="14" style="normal" weight="normal" />
         <TextDecoration line="none" style="solid" color="#000000FF" />
+        <TextAlignment horizontal="left" vertical="top" />
     </Style>
 
     <!-- ============================================================

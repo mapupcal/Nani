@@ -324,6 +324,32 @@ namespace
 			return DecorationStyle::Wavy;
 		return std::optional<DecorationStyle>();
 	}
+
+	std::optional<TextAlignment::Horizontal> AsTextHorizontalAlign(const std::string_view& str)
+	{
+		if (str.empty())
+			return std::optional<TextAlignment::Horizontal>();
+		if (str == "left")
+			return TextAlignment::Horizontal::Left;
+		else if (str == "center")
+			return TextAlignment::Horizontal::Center;
+		else if (str == "right")
+			return TextAlignment::Horizontal::Right;
+		return std::optional<TextAlignment::Horizontal>();
+	}
+
+	std::optional<TextAlignment::Vertical> AsTextVerticalAlign(const std::string_view& str)
+	{
+		if (str.empty())
+			return std::optional<TextAlignment::Vertical>();
+		if (str == "top")
+			return TextAlignment::Vertical::Top;
+		else if (str == "center" || str == "middle")
+			return TextAlignment::Vertical::Center;
+		else if (str == "bottom")
+			return TextAlignment::Vertical::Bottom;
+		return std::optional<TextAlignment::Vertical>();
+	}
 }
 
 namespace nani::canvas::internal
@@ -428,6 +454,9 @@ namespace nani::canvas::internal
 		if (auto v = ComputeTextDecoration(); v.has_value())
 			visualPropsRef.textDecoration = v.value();
 
+		if (auto v = ComputeTextAlignment(); v.has_value())
+			visualPropsRef.textAlignment = v.value();
+
 		if (auto v = ComputeColor(); v.has_value())
 			visualPropsRef.color = v.value();
 
@@ -495,6 +524,8 @@ namespace nani::canvas::internal
 				LoadFontNode(child);
 			else if (name == "TextDecoration")
 				LoadTextDecorationNode(child);
+			else if (name == "TextAlignment")
+				LoadTextAlignmentNode(child);
 		}
 	}
 
@@ -804,5 +835,32 @@ namespace nani::canvas::internal
 		}
 
 		TextDecoration = textDecoration;
+	}
+
+	void ComputedStyleBuilder::LoadTextAlignmentNode(const pugi::xml_node& node)
+	{
+		if (node.empty())
+			return;
+
+		text::TextAlignment textAlignment;
+		auto attributes = node.attributes();
+		for (const auto& attribute : attributes)
+		{
+			std::string name = attribute.name();
+			if (name == "horizontal")
+			{
+				auto align = AsTextHorizontalAlign(attribute.value());
+				if (align.has_value())
+					textAlignment.SetHorizontal(align.value());
+			}
+			else if (name == "vertical")
+			{
+				auto align = AsTextVerticalAlign(attribute.value());
+				if (align.has_value())
+					textAlignment.SetVertical(align.value());
+			}
+		}
+
+		TextAlignment = textAlignment;
 	}
 }

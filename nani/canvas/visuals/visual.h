@@ -14,7 +14,7 @@ namespace nani::canvas::visuals
 		std::vector<std::shared_ptr<Visual>> Visuals() const;
 		visuals::View* View() const;
 
-		void BuildVisuals();
+		virtual void BuildVisuals();
 		void Update();
 		void Reflow();
 		void Repaint();
@@ -31,6 +31,11 @@ namespace nani::canvas::visuals
 
 	public:
 		bool Filter(events::EventTarget* target, events::Event* e) override;
+
+	protected:
+		const basic::RectF ContentRect() const;
+		const internal::ComputedStyle* GetComputedStyle() const;
+		YGNodeRef YogaNode() const;
 
 	private:
 		void BuildComputedStyle();

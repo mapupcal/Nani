@@ -59,4 +59,20 @@ namespace nani::canvas::text
 	{
 		return !(lhs == rhs);
 	}
+
+	inline TextDecoration::DecorationLine operator|(
+		TextDecoration::DecorationLine lhs,
+		TextDecoration::DecorationLine rhs)
+	{
+		return static_cast<TextDecoration::DecorationLine>(
+			static_cast<basic::byte>(lhs) | static_cast<basic::byte>(rhs));
+	}
+
+	inline TextDecoration::DecorationLine operator&(
+		TextDecoration::DecorationLine lhs,
+		TextDecoration::DecorationLine rhs)
+	{
+		return static_cast<TextDecoration::DecorationLine>(
+			static_cast<basic::byte>(lhs) & static_cast<basic::byte>(rhs));
+	}
 }

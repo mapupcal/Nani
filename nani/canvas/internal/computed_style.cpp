@@ -43,6 +43,7 @@ namespace nani::canvas::internal
 	{
 		return (lhs.font == rhs.font) &&
 			(lhs.textDecoration == rhs.textDecoration) &&
+			(lhs.textAlignment == rhs.textAlignment) &&
 			(lhs.color == rhs.color) && 
 			(lhs.borderColor == rhs.borderColor) &&
 			(lhs.backgroundColor == rhs.backgroundColor) &&

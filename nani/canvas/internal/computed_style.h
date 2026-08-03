@@ -4,6 +4,7 @@
 #include "../basic/geometry_defs.h"
 #include "../text/font.h"
 #include "../text/text_decoration.h"
+#include "../text/text_alignment.h"
 #include <yoga/style/Style.h>
 
 namespace nani::canvas::internal
@@ -55,6 +56,7 @@ namespace nani::canvas::internal
 
 			text::Font font;
 			text::TextDecoration textDecoration;
+			text::TextAlignment textAlignment;
 			basic::Color color = basic::Colors::Transparent;
 			basic::Color backgroundColor = basic::Colors::Transparent;
 			basic::Color borderColor = basic::Colors::Transparent;
