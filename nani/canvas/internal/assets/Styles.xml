@@ -1,4 +1,4 @@
-<Styles>
+﻿<Styles>
     <!-- ============================================================
 		 NaniWindow — Root window defaults.
 		 Uses FlexBox row layout, LTR direction, with row/column gaps.
@@ -121,7 +121,8 @@
          TextDecoration: line (underline,overline,linethrough comma-separated),
                          style (solid|double|dotted|dashed|wavy), color
          TextAlignment: horizontal (left|center|right),
-                        vertical (top|center|middle|bottom)
+                        vertical (top|center|middle|bottom),
+                        value shorthand (h-left|h-center|h-right,v-top|v-center|v-middle|v-bottom)
          ============================================================ -->
     <Style class="DefaultText">
         <Font family="Segoe UI" size="14" style="normal" weight="normal" />

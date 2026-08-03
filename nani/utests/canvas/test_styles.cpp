@@ -1802,6 +1802,74 @@ TEST_F(StylesTest, LoadFromXML_InheritTextAlignmentOverride)
 	EXPECT_EQ(align.VerticalAlign(), text::TextAlignment::Vertical::Top);
 }
 
+TEST_F(StylesTest, LoadFromXML_WithTextAlignmentValueShorthand)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="ValueAligned">
+				<TextAlignment value="h-center,v-bottom" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"ValueAligned");
+	ASSERT_NE(cs, nullptr);
+
+	const auto& align = cs->visualProps.textAlignment;
+	EXPECT_EQ(align.HorizontalAlign(), text::TextAlignment::Horizontal::Center);
+	EXPECT_EQ(align.VerticalAlign(), text::TextAlignment::Vertical::Bottom);
+}
+
+TEST_F(StylesTest, LoadFromXML_WithTextAlignmentValueSingleAxis)
+{
+	auto testValue = [this](const char* value,
+		text::TextAlignment::Horizontal expectedH,
+		text::TextAlignment::Vertical expectedV) {
+		std::string xml = R"(
+			<Styles>
+				<Style class="ValueAxisTest">
+					<TextAlignment value=")" + std::string(value) + R"(" />
+				</Style>
+			</Styles>
+		)";
+		styles_->LoadFromXML(xml);
+		auto cs = styles_->Compute(u8"ValueAxisTest");
+		ASSERT_NE(cs, nullptr);
+		EXPECT_EQ(cs->visualProps.textAlignment.HorizontalAlign(), expectedH);
+		EXPECT_EQ(cs->visualProps.textAlignment.VerticalAlign(), expectedV);
+	};
+
+	using H = text::TextAlignment::Horizontal;
+	using V = text::TextAlignment::Vertical;
+
+	testValue("h-left", H::Left, V::Top);
+	testValue("h-center", H::Center, V::Top);
+	testValue("h-right", H::Right, V::Top);
+	testValue("v-top", H::Left, V::Top);
+	testValue("v-center", H::Left, V::Center);
+	testValue("v-middle", H::Left, V::Center);
+	testValue("v-bottom", H::Left, V::Bottom);
+	testValue("h-right,v-center", H::Right, V::Center);
+}
+
+TEST_F(StylesTest, LoadFromXML_WithTextAlignmentValueOverrideByAxis)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="ValueOverride">
+				<TextAlignment value="h-center,v-center" horizontal="right" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"ValueOverride");
+	ASSERT_NE(cs, nullptr);
+
+	const auto& align = cs->visualProps.textAlignment;
+	EXPECT_EQ(align.HorizontalAlign(), text::TextAlignment::Horizontal::Right);
+	EXPECT_EQ(align.VerticalAlign(), text::TextAlignment::Vertical::Center);
+}
+
 // ============================================================
 // Font + TextDecoration together in one style
 // ============================================================

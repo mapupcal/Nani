@@ -348,6 +348,39 @@ namespace
 			return TextAlignment::Vertical::Bottom;
 		return std::optional<TextAlignment::Vertical>();
 	}
+
+	// Shorthand tokens: h-left|h-center|h-right, v-top|v-center|v-middle|v-bottom
+	// Multiple tokens may be comma-separated, e.g. "h-center,v-center".
+	void ApplyTextAlignmentValue(TextAlignment& textAlignment, const std::string_view& str)
+	{
+		if (str.empty())
+			return;
+
+		std::string_view remaining = str;
+		while (!remaining.empty())
+		{
+			auto pos = remaining.find(',');
+			std::string_view tokenView = (pos == std::string_view::npos) ? remaining : remaining.substr(0, pos);
+			std::string token = Trim(tokenView);
+
+			if (token == "h-left")
+				textAlignment.SetHorizontal(TextAlignment::Horizontal::Left);
+			else if (token == "h-center")
+				textAlignment.SetHorizontal(TextAlignment::Horizontal::Center);
+			else if (token == "h-right")
+				textAlignment.SetHorizontal(TextAlignment::Horizontal::Right);
+			else if (token == "v-top")
+				textAlignment.SetVertical(TextAlignment::Vertical::Top);
+			else if (token == "v-center" || token == "v-middle")
+				textAlignment.SetVertical(TextAlignment::Vertical::Center);
+			else if (token == "v-bottom")
+				textAlignment.SetVertical(TextAlignment::Vertical::Bottom);
+
+			if (pos == std::string_view::npos)
+				break;
+			remaining = remaining.substr(pos + 1);
+		}
+	}
 }
 
 namespace nani::canvas::internal
@@ -841,22 +874,38 @@ namespace nani::canvas::internal
 			return;
 
 		text::TextAlignment textAlignment;
+		std::optional<std::string> valueAttr;
+		std::optional<std::string> horizontalAttr;
+		std::optional<std::string> verticalAttr;
+
 		auto attributes = node.attributes();
 		for (const auto& attribute : attributes)
 		{
 			std::string name = attribute.name();
-			if (name == "horizontal")
-			{
-				auto align = AsTextHorizontalAlign(attribute.value());
-				if (align.has_value())
-					textAlignment.SetHorizontal(align.value());
-			}
+			if (name == "value")
+				valueAttr = attribute.value();
+			else if (name == "horizontal")
+				horizontalAttr = attribute.value();
 			else if (name == "vertical")
-			{
-				auto align = AsTextVerticalAlign(attribute.value());
-				if (align.has_value())
-					textAlignment.SetVertical(align.value());
-			}
+				verticalAttr = attribute.value();
+		}
+
+		// value is a shorthand; horizontal/vertical override the corresponding axis.
+		if (valueAttr.has_value())
+			ApplyTextAlignmentValue(textAlignment, valueAttr.value());
+
+		if (horizontalAttr.has_value())
+		{
+			auto align = AsTextHorizontalAlign(horizontalAttr.value());
+			if (align.has_value())
+				textAlignment.SetHorizontal(align.value());
+		}
+
+		if (verticalAttr.has_value())
+		{
+			auto align = AsTextVerticalAlign(verticalAttr.value());
+			if (align.has_value())
+				textAlignment.SetVertical(align.value());
 		}
 
 		TextAlignment = textAlignment;
