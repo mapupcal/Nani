@@ -247,3 +247,30 @@ TEST_F(FontTest, NamespaceEnumsWork)
 	EXPECT_EQ(font.Weight(), FontWeight::Bold);
 	EXPECT_EQ(font.Style(), FontStyle::Italic);
 }
+
+TEST_F(FontTest, HashChangesWithProperties)
+{
+	Font a;
+	a.SetFamily(u8"Segoe UI");
+	a.SetSize(14.0f);
+	a.SetWeight(FontWeight::Normal);
+	a.SetStyle(FontStyle::Normal);
+
+	Font b = a;
+	EXPECT_EQ(a.Hash(), b.Hash());
+
+	b.SetSize(16.0f);
+	EXPECT_NE(a.Hash(), b.Hash());
+
+	Font c = a;
+	c.SetWeight(FontWeight::Bold);
+	EXPECT_NE(a.Hash(), c.Hash());
+
+	Font d = a;
+	d.SetStyle(FontStyle::Italic);
+	EXPECT_NE(a.Hash(), d.Hash());
+
+	Font e = a;
+	e.SetFamily(u8"Arial");
+	EXPECT_NE(a.Hash(), e.Hash());
+}

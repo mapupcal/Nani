@@ -218,6 +218,15 @@ TEST_F(EventTest, ElementVisibilityChangedEventStoresElement)
 	EXPECT_EQ(e.element, &root);
 }
 
+TEST_F(EventTest, ElementTextChangedEventStoresElement)
+{
+	Element root(nullptr);
+	ElementTextChangedEvent e(&root);
+
+	EXPECT_EQ(e.type, Type::ElementTextChanged);
+	EXPECT_EQ(e.element, &root);
+}
+
 // ============================================================
 // LayoutRequestEvent
 // ============================================================

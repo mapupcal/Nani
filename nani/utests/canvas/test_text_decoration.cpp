@@ -239,3 +239,15 @@ TEST_F(TextDecorationTest, LineEnumBitValues)
 	EXPECT_EQ(static_cast<byte>(DecorationLine::Overline), 2);
 	EXPECT_EQ(static_cast<byte>(DecorationLine::LineThrough), 4);
 }
+
+TEST_F(TextDecorationTest, DecorationLineBitwiseOperators)
+{
+	const DecorationLine combined = DecorationLine::Underline | DecorationLine::Overline;
+	EXPECT_EQ(combined & DecorationLine::Underline, DecorationLine::Underline);
+	EXPECT_EQ(combined & DecorationLine::Overline, DecorationLine::Overline);
+	EXPECT_EQ(combined & DecorationLine::LineThrough, DecorationLine::None);
+
+	const DecorationLine all =
+		DecorationLine::Underline | DecorationLine::Overline | DecorationLine::LineThrough;
+	EXPECT_NE(all & DecorationLine::LineThrough, DecorationLine::None);
+}

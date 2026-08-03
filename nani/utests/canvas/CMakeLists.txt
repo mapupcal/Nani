@@ -10,9 +10,11 @@ nani_add_executable(canvas_utests
 	test_event.cpp
 	test_event_target.cpp
 	test_font.cpp
+	test_font_metrics.cpp
 	test_geometry.cpp
 	test_polygonf.cpp
 	test_styles.cpp
+	test_text_alignment.cpp
 	test_text_decoration.cpp
 	test_text_element.cpp
 	test_transformf.cpp

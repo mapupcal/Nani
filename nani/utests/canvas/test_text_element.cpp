@@ -120,6 +120,15 @@ TEST_F(TextElementTest, ElideModeRoundTrip)
 
 	text->SetElideMode(TextElideMode::Middle);
 	EXPECT_EQ(text->ElideMode(), TextElideMode::Middle);
+
+	text->SetElideMode(TextElideMode::Left);
+	EXPECT_EQ(text->ElideMode(), TextElideMode::Left);
+
+	text->SetElideMode(TextElideMode::None);
+	EXPECT_EQ(text->ElideMode(), TextElideMode::None);
+
+	text->SetElideMode(TextElideMode::Right);
+	EXPECT_EQ(text->ElideMode(), TextElideMode::Right);
 }
 
 TEST_F(TextElementTest, LayoutUsesIntrinsicSize)

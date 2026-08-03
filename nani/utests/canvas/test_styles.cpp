@@ -1870,6 +1870,68 @@ TEST_F(StylesTest, LoadFromXML_WithTextAlignmentValueOverrideByAxis)
 	EXPECT_EQ(align.VerticalAlign(), text::TextAlignment::Vertical::Center);
 }
 
+TEST_F(StylesTest, LoadFromXML_WithTextAlignmentValueWhitespaceAndUnknown)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="ValueWhitespace">
+				<TextAlignment value=" h-right , v-bottom , unknown-token " />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"ValueWhitespace");
+	ASSERT_NE(cs, nullptr);
+
+	const auto& align = cs->visualProps.textAlignment;
+	EXPECT_EQ(align.HorizontalAlign(), text::TextAlignment::Horizontal::Right);
+	EXPECT_EQ(align.VerticalAlign(), text::TextAlignment::Vertical::Bottom);
+}
+
+TEST_F(StylesTest, LoadFromXML_TextDecorationStateHovered)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="LinkLike">
+				<Font family="Segoe UI" size="14" />
+				<TextDecoration line="none" />
+			</Style>
+			<Style class="LinkLike" state="hovered">
+				<TextDecoration line="underline" style="solid" color="#0000FFFF" />
+			</Style>
+		</Styles>
+	)");
+
+	auto normal = styles_->Compute(u8"LinkLike");
+	auto hovered = styles_->Compute(u8"LinkLike", u8"hovered");
+	ASSERT_NE(normal, nullptr);
+	ASSERT_NE(hovered, nullptr);
+
+	EXPECT_EQ(normal->visualProps.textDecoration.Lines(), text::DecorationLine::None);
+	EXPECT_EQ(hovered->visualProps.textDecoration.Lines(), text::DecorationLine::Underline);
+	EXPECT_EQ(hovered->visualProps.textDecoration.Color(), Color("#0000FFFF"));
+}
+
+TEST_F(StylesTest, LoadFromXML_FontTextAlignmentTogether)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="AlignedLabel">
+				<Font family="Segoe UI" size="18" weight="bold" />
+				<TextAlignment value="h-center,v-center" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"AlignedLabel");
+	ASSERT_NE(cs, nullptr);
+	EXPECT_EQ(cs->visualProps.font.Family(), u8"Segoe UI");
+	EXPECT_FLOAT_EQ(cs->visualProps.font.Size(), 18.0f);
+	EXPECT_EQ(cs->visualProps.font.Weight(), text::FontWeight::Bold);
+	EXPECT_EQ(cs->visualProps.textAlignment.HorizontalAlign(), text::TextAlignment::Horizontal::Center);
+	EXPECT_EQ(cs->visualProps.textAlignment.VerticalAlign(), text::TextAlignment::Vertical::Center);
+}
+
 // ============================================================
 // Font + TextDecoration together in one style
 // ============================================================
@@ -1944,6 +2006,9 @@ TEST_F(ComputedStyleTest, DefaultValues)
 	ComputedStyle cs;
 
 	EXPECT_FLOAT_EQ(cs.visualProps.opacity, 1.0f);
+	EXPECT_EQ(cs.visualProps.textAlignment.HorizontalAlign(), text::TextAlignment::Horizontal::Left);
+	EXPECT_EQ(cs.visualProps.textAlignment.VerticalAlign(), text::TextAlignment::Vertical::Top);
+	EXPECT_EQ(cs.visualProps.textDecoration.Lines(), text::DecorationLine::None);
 
 	EXPECT_FLOAT_EQ(cs.visualProps.radius.topLeft, 0.0f);
 	EXPECT_FLOAT_EQ(cs.visualProps.radius.topRight, 0.0f);
@@ -1978,6 +2043,28 @@ TEST_F(ComputedStyleTest, Diff_DetectsChanges)
 	ComputedStyle b;
 
 	b.visualProps.opacity = 0.5f;
+
+	auto result = a.Diff(&b);
+	EXPECT_FALSE(result.layoutChanged);
+	EXPECT_TRUE(result.visualChanged);
+}
+
+TEST_F(ComputedStyleTest, Diff_DetectsTextAlignmentChange)
+{
+	ComputedStyle a;
+	ComputedStyle b;
+	b.visualProps.textAlignment.SetHorizontal(text::TextAlignment::Horizontal::Center);
+
+	auto result = a.Diff(&b);
+	EXPECT_FALSE(result.layoutChanged);
+	EXPECT_TRUE(result.visualChanged);
+}
+
+TEST_F(ComputedStyleTest, Diff_DetectsTextDecorationChange)
+{
+	ComputedStyle a;
+	ComputedStyle b;
+	b.visualProps.textDecoration.SetLines(text::DecorationLine::Underline);
 
 	auto result = a.Diff(&b);
 	EXPECT_FALSE(result.layoutChanged);
