@@ -8,47 +8,42 @@
 namespace
 {
 	using namespace nani::canvas::text;
-	// Helper: Convert Font::Weight to SkFontStyle::Weight
-	SkFontStyle::Weight ConvertWeight(Font::FontWeight weight)
+	SkFontStyle::Weight ConvertWeight(FontWeight weight)
 	{
-		using Weight = Font::FontWeight;
 		switch (weight)
 		{
-		case Weight::Thin:
+		case FontWeight::Thin:
 			return SkFontStyle::kThin_Weight;
-		case Weight::ExtraLight:
+		case FontWeight::ExtraLight:
 			return SkFontStyle::kExtraLight_Weight;
-		case Weight::Light:
+		case FontWeight::Light:
 			return SkFontStyle::kLight_Weight;
-		case Weight::Normal:
+		case FontWeight::Normal:
 			return SkFontStyle::kNormal_Weight;
-		case Weight::Medium:
+		case FontWeight::Medium:
 			return SkFontStyle::kMedium_Weight;
-		case Weight::SemiBold:
+		case FontWeight::SemiBold:
 			return SkFontStyle::kSemiBold_Weight;
-		case Weight::Bold:
+		case FontWeight::Bold:
 			return SkFontStyle::kBold_Weight;
-		case Weight::ExtraBold:
+		case FontWeight::ExtraBold:
 			return SkFontStyle::kExtraBold_Weight;
-		case Weight::Black:
+		case FontWeight::Black:
 			return SkFontStyle::kBlack_Weight;
 		default:
 			return SkFontStyle::kNormal_Weight;
 		}
 	}
 
-	// Helper: Convert Font::Style to SkFontStyle::Slant
-	SkFontStyle::Slant ConvertStyle(Font::FontStyle style)
+	SkFontStyle::Slant ConvertStyle(FontStyle style)
 	{
-		using Style = Font::FontStyle;
-
 		switch (style)
 		{
-		case Style::Normal:
+		case FontStyle::Normal:
 			return SkFontStyle::kUpright_Slant;
-		case Style::Italic:
+		case FontStyle::Italic:
 			return SkFontStyle::kItalic_Slant;
-		case Style::Oblique:
+		case FontStyle::Oblique:
 			return SkFontStyle::kOblique_Slant;
 		default:
 			return SkFontStyle::kUpright_Slant;

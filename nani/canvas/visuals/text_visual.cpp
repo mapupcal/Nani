@@ -27,9 +27,6 @@ namespace nani::canvas::visuals
 {
 	namespace
 	{
-		using DecorationLine = TextDecoration::DecorationLine;
-		using DecorationStyle = TextDecoration::DecorationStyle;
-
 		elements::TextElement* AsTextElement(const Visual* visual)
 		{
 			return visual ? static_cast<elements::TextElement*>(visual->Element()) : nullptr;

@@ -6,30 +6,6 @@ namespace nani::canvas::text
 	class NANI_CANVAS_API Font
 	{
 	public:
-		enum class Weight : basic::dword
-		{
-			Thin = 100,
-			ExtraLight = 200,
-			Light = 300,
-			Normal = 400,
-			Medium = 500,
-			SemiBold = 600,
-			Bold = 700,
-			ExtraBold = 800,
-			Black = 900
-		};
-
-		enum class Style : basic::byte
-		{
-			Normal,
-			Italic,
-			Oblique
-		};
-
-		using FontWeight = Weight;
-		using FontStyle = Style;
-
-	public:
 		Font();
 		Font(const Font& other) = default;
 		~Font() = default;

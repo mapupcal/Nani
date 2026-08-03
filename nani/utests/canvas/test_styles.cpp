@@ -1295,8 +1295,8 @@ TEST_F(StylesTest, LoadFromXML_WithFont)
 	const auto& font = cs->visualProps.font;
 	EXPECT_EQ(font.Family(), u8"Arial");
 	EXPECT_FLOAT_EQ(font.Size(), 16.0f);
-	EXPECT_EQ(font.Weight(), text::Font::Weight::Bold);
-	EXPECT_EQ(font.Style(), text::Font::Style::Italic);
+	EXPECT_EQ(font.Weight(), text::FontWeight::Bold);
+	EXPECT_EQ(font.Style(), text::FontStyle::Italic);
 }
 
 // Font node: default values when attributes are missing
@@ -1316,8 +1316,8 @@ TEST_F(StylesTest, LoadFromXML_WithFontDefaults)
 	const auto& font = cs->visualProps.font;
 	EXPECT_TRUE(font.Family().empty());
 	EXPECT_FLOAT_EQ(font.Size(), 12.0f);
-	EXPECT_EQ(font.Weight(), text::Font::Weight::Normal);
-	EXPECT_EQ(font.Style(), text::Font::Style::Normal);
+	EXPECT_EQ(font.Weight(), text::FontWeight::Normal);
+	EXPECT_EQ(font.Style(), text::FontStyle::Normal);
 }
 
 // Font node: partial attributes
@@ -1337,14 +1337,14 @@ TEST_F(StylesTest, LoadFromXML_WithFontPartial)
 	const auto& font = cs->visualProps.font;
 	EXPECT_EQ(font.Family(), u8"Roboto");
 	EXPECT_FLOAT_EQ(font.Size(), 12.0f); // default
-	EXPECT_EQ(font.Weight(), text::Font::Weight::Thin);
-	EXPECT_EQ(font.Style(), text::Font::Style::Normal); // default
+	EXPECT_EQ(font.Weight(), text::FontWeight::Thin);
+	EXPECT_EQ(font.Style(), text::FontStyle::Normal); // default
 }
 
 // Font node: all weight values
 TEST_F(StylesTest, LoadFromXML_WithFontAllWeights)
 {
-	auto testWeight = [this](const char* weightStr, text::Font::FontWeight expected) {
+	auto testWeight = [this](const char* weightStr, text::FontWeight expected) {
 		std::string xml = R"(
 			<Styles>
 				<Style class="WeightTest">
@@ -1358,21 +1358,21 @@ TEST_F(StylesTest, LoadFromXML_WithFontAllWeights)
 		EXPECT_EQ(cs->visualProps.font.Weight(), expected);
 	};
 
-	testWeight("thin", text::Font::Weight::Thin);
-	testWeight("extralight", text::Font::Weight::ExtraLight);
-	testWeight("light", text::Font::Weight::Light);
-	testWeight("normal", text::Font::Weight::Normal);
-	testWeight("medium", text::Font::Weight::Medium);
-	testWeight("semibold", text::Font::Weight::SemiBold);
-	testWeight("bold", text::Font::Weight::Bold);
-	testWeight("extrabold", text::Font::Weight::ExtraBold);
-	testWeight("black", text::Font::Weight::Black);
+	testWeight("thin", text::FontWeight::Thin);
+	testWeight("extralight", text::FontWeight::ExtraLight);
+	testWeight("light", text::FontWeight::Light);
+	testWeight("normal", text::FontWeight::Normal);
+	testWeight("medium", text::FontWeight::Medium);
+	testWeight("semibold", text::FontWeight::SemiBold);
+	testWeight("bold", text::FontWeight::Bold);
+	testWeight("extrabold", text::FontWeight::ExtraBold);
+	testWeight("black", text::FontWeight::Black);
 }
 
 // Font node: all style values
 TEST_F(StylesTest, LoadFromXML_WithFontAllStyles)
 {
-	auto testStyle = [this](const char* styleStr, text::Font::FontStyle expected) {
+	auto testStyle = [this](const char* styleStr, text::FontStyle expected) {
 		std::string xml = R"(
 			<Styles>
 				<Style class="StyleTest">
@@ -1386,9 +1386,9 @@ TEST_F(StylesTest, LoadFromXML_WithFontAllStyles)
 		EXPECT_EQ(cs->visualProps.font.Style(), expected);
 	};
 
-	testStyle("normal", text::Font::Style::Normal);
-	testStyle("italic", text::Font::Style::Italic);
-	testStyle("oblique", text::Font::Style::Oblique);
+	testStyle("normal", text::FontStyle::Normal);
+	testStyle("italic", text::FontStyle::Italic);
+	testStyle("oblique", text::FontStyle::Oblique);
 }
 
 // -----------------------------------------------------------
@@ -1412,8 +1412,8 @@ TEST_F(StylesTest, LoadFromXML_InheritFont)
 	const auto& font = cs->visualProps.font;
 	EXPECT_EQ(font.Family(), u8"Times New Roman");
 	EXPECT_FLOAT_EQ(font.Size(), 18.0f);
-	EXPECT_EQ(font.Weight(), text::Font::Weight::Medium);
-	EXPECT_EQ(font.Style(), text::Font::Style::Oblique);
+	EXPECT_EQ(font.Weight(), text::FontWeight::Medium);
+	EXPECT_EQ(font.Style(), text::FontStyle::Oblique);
 }
 
 // Inherit — child overrides parent's Font partially
@@ -1436,7 +1436,7 @@ TEST_F(StylesTest, LoadFromXML_InheritFontOverride)
 	const auto& font = cs->visualProps.font;
 	// Overridden by child
 	EXPECT_FLOAT_EQ(font.Size(), 22.0f);
-	EXPECT_EQ(font.Weight(), text::Font::Weight::Bold);
+	EXPECT_EQ(font.Weight(), text::FontWeight::Bold);
 	// Inherited from parent — Font is a whole-object override, not per-field
 	// So child Font node replaces parent Font entirely
 }
@@ -1463,11 +1463,11 @@ TEST_F(StylesTest, LoadFromXML_FontIsWholeObjectOverride)
 	const auto& font = cs->visualProps.font;
 	// Child specified these, so they override
 	EXPECT_FLOAT_EQ(font.Size(), 22.0f);
-	EXPECT_EQ(font.Weight(), text::Font::Weight::Bold);
+	EXPECT_EQ(font.Weight(), text::FontWeight::Bold);
 	// Child did NOT specify these, so NOT inherited — they fall to defaults
 	// (TODO: this behavior may change if Font gets per-field inheritance)
 	EXPECT_TRUE(font.Family().empty());
-	EXPECT_EQ(font.Style(), text::Font::Style::Normal);
+	EXPECT_EQ(font.Style(), text::FontStyle::Normal);
 }
 
 // ============================================================
@@ -1489,8 +1489,8 @@ TEST_F(StylesTest, LoadFromXML_WithTextDecoration)
 	ASSERT_NE(cs, nullptr);
 
 	const auto& td = cs->visualProps.textDecoration;
-	EXPECT_EQ(td.Lines(), text::TextDecoration::Line::Underline);
-	EXPECT_EQ(td.Style(), text::TextDecoration::Style::Dotted);
+	EXPECT_EQ(td.Lines(), text::DecorationLine::Underline);
+	EXPECT_EQ(td.Style(), text::DecorationStyle::Dotted);
 	EXPECT_EQ(td.Color(), basic::Color("#FF0000FF"));
 }
 
@@ -1509,15 +1509,15 @@ TEST_F(StylesTest, LoadFromXML_WithTextDecorationDefaults)
 	ASSERT_NE(cs, nullptr);
 
 	const auto& td = cs->visualProps.textDecoration;
-	EXPECT_EQ(td.Lines(), text::TextDecoration::Line::None);
-	EXPECT_EQ(td.Style(), text::TextDecoration::Style::Solid);
+	EXPECT_EQ(td.Lines(), text::DecorationLine::None);
+	EXPECT_EQ(td.Style(), text::DecorationStyle::Solid);
 	EXPECT_EQ(td.Color(), basic::Colors::Black);
 }
 
 // TextDecoration node: all line values (single)
 TEST_F(StylesTest, LoadFromXML_WithTextDecorationAllLines)
 {
-	auto testLine = [this](const char* lineStr, text::TextDecoration::Line expected) {
+	auto testLine = [this](const char* lineStr, text::DecorationLine expected) {
 		std::string xml = R"(
 			<Styles>
 				<Style class="LineTest">
@@ -1531,15 +1531,15 @@ TEST_F(StylesTest, LoadFromXML_WithTextDecorationAllLines)
 		EXPECT_EQ(cs->visualProps.textDecoration.Lines(), expected);
 	};
 
-	testLine("underline", text::TextDecoration::Line::Underline);
-	testLine("overline", text::TextDecoration::Line::Overline);
-	testLine("linethrough", text::TextDecoration::Line::LineThrough);
+	testLine("underline", text::DecorationLine::Underline);
+	testLine("overline", text::DecorationLine::Overline);
+	testLine("linethrough", text::DecorationLine::LineThrough);
 }
 
 // TextDecoration node: combined lines (comma-separated)
 TEST_F(StylesTest, LoadFromXML_WithTextDecorationCombinedLines)
 {
-	using Line = text::TextDecoration::Line;
+	using Line = text::DecorationLine;
 	using byte = nani::canvas::basic::byte;
 
 	styles_->LoadFromXML(R"(
@@ -1561,7 +1561,7 @@ TEST_F(StylesTest, LoadFromXML_WithTextDecorationCombinedLines)
 // TextDecoration node: all three lines combined
 TEST_F(StylesTest, LoadFromXML_WithTextDecorationAllThreeLines)
 {
-	using Line = text::TextDecoration::Line;
+	using Line = text::DecorationLine;
 	using byte = nani::canvas::basic::byte;
 
 	styles_->LoadFromXML(R"(
@@ -1585,7 +1585,7 @@ TEST_F(StylesTest, LoadFromXML_WithTextDecorationAllThreeLines)
 // TextDecoration node: all style values
 TEST_F(StylesTest, LoadFromXML_WithTextDecorationAllStyles)
 {
-	auto testStyle = [this](const char* styleStr, text::TextDecoration::DecorationStyle expected) {
+	auto testStyle = [this](const char* styleStr, text::DecorationStyle expected) {
 		std::string xml = R"(
 			<Styles>
 				<Style class="DecoStyleTest">
@@ -1599,17 +1599,17 @@ TEST_F(StylesTest, LoadFromXML_WithTextDecorationAllStyles)
 		EXPECT_EQ(cs->visualProps.textDecoration.Style(), expected);
 	};
 
-	testStyle("solid", text::TextDecoration::Style::Solid);
-	testStyle("double", text::TextDecoration::Style::Double);
-	testStyle("dotted", text::TextDecoration::Style::Dotted);
-	testStyle("dashed", text::TextDecoration::Style::Dashed);
-	testStyle("wavy", text::TextDecoration::Style::Wavy);
+	testStyle("solid", text::DecorationStyle::Solid);
+	testStyle("double", text::DecorationStyle::Double);
+	testStyle("dotted", text::DecorationStyle::Dotted);
+	testStyle("dashed", text::DecorationStyle::Dashed);
+	testStyle("wavy", text::DecorationStyle::Wavy);
 }
 
 // TextDecoration node: all properties combined
 TEST_F(StylesTest, LoadFromXML_WithTextDecorationAllProps)
 {
-	using Line = text::TextDecoration::Line;
+	using Line = text::DecorationLine;
 	using byte = nani::canvas::basic::byte;
 
 	styles_->LoadFromXML(R"(
@@ -1627,7 +1627,7 @@ TEST_F(StylesTest, LoadFromXML_WithTextDecorationAllProps)
 	Line expected = static_cast<Line>(
 		static_cast<byte>(Line::Underline) | static_cast<byte>(Line::LineThrough));
 	EXPECT_EQ(td.Lines(), expected);
-	EXPECT_EQ(td.Style(), text::TextDecoration::Style::Wavy);
+	EXPECT_EQ(td.Style(), text::DecorationStyle::Wavy);
 	EXPECT_EQ(td.Color(), basic::Color("#00FF00FF"));
 }
 
@@ -1650,8 +1650,8 @@ TEST_F(StylesTest, LoadFromXML_InheritTextDecoration)
 	ASSERT_NE(cs, nullptr);
 
 	const auto& td = cs->visualProps.textDecoration;
-	EXPECT_EQ(td.Lines(), text::TextDecoration::Line::Underline);
-	EXPECT_EQ(td.Style(), text::TextDecoration::Style::Dashed);
+	EXPECT_EQ(td.Lines(), text::DecorationLine::Underline);
+	EXPECT_EQ(td.Style(), text::DecorationStyle::Dashed);
 	EXPECT_EQ(td.Color(), basic::Color("#FF0000FF"));
 }
 
@@ -1675,9 +1675,9 @@ TEST_F(StylesTest, LoadFromXML_InheritTextDecorationOverride)
 
 	const auto& td = cs->visualProps.textDecoration;
 	// Child specified line, so it overrides
-	EXPECT_EQ(td.Lines(), text::TextDecoration::Line::LineThrough);
+	EXPECT_EQ(td.Lines(), text::DecorationLine::LineThrough);
 	// Child did NOT specify style or color — falls to defaults
-	EXPECT_EQ(td.Style(), text::TextDecoration::Style::Solid);
+	EXPECT_EQ(td.Style(), text::DecorationStyle::Solid);
 	EXPECT_EQ(td.Color(), basic::Colors::Black);
 }
 
@@ -1822,12 +1822,12 @@ TEST_F(StylesTest, LoadFromXML_FontAndTextDecorationTogether)
 	const auto& font = cs->visualProps.font;
 	EXPECT_EQ(font.Family(), u8"Segoe UI");
 	EXPECT_FLOAT_EQ(font.Size(), 14.0f);
-	EXPECT_EQ(font.Weight(), text::Font::Weight::SemiBold);
-	EXPECT_EQ(font.Style(), text::Font::Style::Italic);
+	EXPECT_EQ(font.Weight(), text::FontWeight::SemiBold);
+	EXPECT_EQ(font.Style(), text::FontStyle::Italic);
 
 	const auto& td = cs->visualProps.textDecoration;
-	EXPECT_EQ(td.Lines(), text::TextDecoration::Line::Underline);
-	EXPECT_EQ(td.Style(), text::TextDecoration::Style::Solid);
+	EXPECT_EQ(td.Lines(), text::DecorationLine::Underline);
+	EXPECT_EQ(td.Style(), text::DecorationStyle::Solid);
 	EXPECT_EQ(td.Color(), basic::Color("#0000FFFF"));
 }
 
@@ -1853,12 +1853,12 @@ TEST_F(StylesTest, LoadFromXML_InheritFontAndTextDecoration)
 
 	// Font: child overrides weight, rest falls to defaults (whole-object)
 	const auto& font = cs->visualProps.font;
-	EXPECT_EQ(font.Weight(), text::Font::Weight::Bold);
+	EXPECT_EQ(font.Weight(), text::FontWeight::Bold);
 
 	// TextDecoration: inherited from parent
 	const auto& td = cs->visualProps.textDecoration;
-	EXPECT_EQ(td.Lines(), text::TextDecoration::Line::None);
-	EXPECT_EQ(td.Style(), text::TextDecoration::Style::Solid);
+	EXPECT_EQ(td.Lines(), text::DecorationLine::None);
+	EXPECT_EQ(td.Style(), text::DecorationStyle::Solid);
 }
 
 // ============================================================

@@ -6,27 +6,6 @@ namespace nani::canvas::text
 	class NANI_CANVAS_API TextDecoration
 	{
 	public:
-		enum class Line : basic::byte
-		{
-			None		= 0,
-			Underline	= 1 << 0,
-			Overline	= 1 << 1,
-			LineThrough = 1 << 2
-		};
-
-		enum class Style : basic::byte
-		{
-			Solid,
-			Double,
-			Dotted,
-			Dashed,
-			Wavy
-		};
-
-		using DecorationLine = Line;
-		using DecorationStyle = Style;
-
-	public:
 		TextDecoration() = default;
 		TextDecoration(const TextDecoration& other) = default;
 		~TextDecoration() = default;
@@ -58,21 +37,5 @@ namespace nani::canvas::text
 	inline bool operator!=(const TextDecoration& lhs, const TextDecoration& rhs)
 	{
 		return !(lhs == rhs);
-	}
-
-	inline TextDecoration::DecorationLine operator|(
-		TextDecoration::DecorationLine lhs,
-		TextDecoration::DecorationLine rhs)
-	{
-		return static_cast<TextDecoration::DecorationLine>(
-			static_cast<basic::byte>(lhs) | static_cast<basic::byte>(rhs));
-	}
-
-	inline TextDecoration::DecorationLine operator&(
-		TextDecoration::DecorationLine lhs,
-		TextDecoration::DecorationLine rhs)
-	{
-		return static_cast<TextDecoration::DecorationLine>(
-			static_cast<basic::byte>(lhs) & static_cast<basic::byte>(rhs));
 	}
 }

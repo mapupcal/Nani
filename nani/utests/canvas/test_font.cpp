@@ -20,8 +20,8 @@ TEST_F(FontTest, DefaultConstruction)
 
 	EXPECT_TRUE(font.Family().empty());
 	EXPECT_FLOAT_EQ(font.Size(), 12.0f);
-	EXPECT_EQ(font.Weight(), Font::Weight::Normal);
-	EXPECT_EQ(font.Style(), Font::Style::Normal);
+	EXPECT_EQ(font.Weight(), FontWeight::Normal);
+	EXPECT_EQ(font.Style(), FontStyle::Normal);
 }
 
 // -----------------------------------------------------------
@@ -63,32 +63,32 @@ TEST_F(FontTest, WeightRoundTrip)
 {
 	Font font;
 
-	font.SetWeight(Font::Weight::Thin);
-	EXPECT_EQ(font.Weight(), Font::Weight::Thin);
+	font.SetWeight(FontWeight::Thin);
+	EXPECT_EQ(font.Weight(), FontWeight::Thin);
 
-	font.SetWeight(Font::Weight::ExtraLight);
-	EXPECT_EQ(font.Weight(), Font::Weight::ExtraLight);
+	font.SetWeight(FontWeight::ExtraLight);
+	EXPECT_EQ(font.Weight(), FontWeight::ExtraLight);
 
-	font.SetWeight(Font::Weight::Light);
-	EXPECT_EQ(font.Weight(), Font::Weight::Light);
+	font.SetWeight(FontWeight::Light);
+	EXPECT_EQ(font.Weight(), FontWeight::Light);
 
-	font.SetWeight(Font::Weight::Normal);
-	EXPECT_EQ(font.Weight(), Font::Weight::Normal);
+	font.SetWeight(FontWeight::Normal);
+	EXPECT_EQ(font.Weight(), FontWeight::Normal);
 
-	font.SetWeight(Font::Weight::Medium);
-	EXPECT_EQ(font.Weight(), Font::Weight::Medium);
+	font.SetWeight(FontWeight::Medium);
+	EXPECT_EQ(font.Weight(), FontWeight::Medium);
 
-	font.SetWeight(Font::Weight::SemiBold);
-	EXPECT_EQ(font.Weight(), Font::Weight::SemiBold);
+	font.SetWeight(FontWeight::SemiBold);
+	EXPECT_EQ(font.Weight(), FontWeight::SemiBold);
 
-	font.SetWeight(Font::Weight::Bold);
-	EXPECT_EQ(font.Weight(), Font::Weight::Bold);
+	font.SetWeight(FontWeight::Bold);
+	EXPECT_EQ(font.Weight(), FontWeight::Bold);
 
-	font.SetWeight(Font::Weight::ExtraBold);
-	EXPECT_EQ(font.Weight(), Font::Weight::ExtraBold);
+	font.SetWeight(FontWeight::ExtraBold);
+	EXPECT_EQ(font.Weight(), FontWeight::ExtraBold);
 
-	font.SetWeight(Font::Weight::Black);
-	EXPECT_EQ(font.Weight(), Font::Weight::Black);
+	font.SetWeight(FontWeight::Black);
+	EXPECT_EQ(font.Weight(), FontWeight::Black);
 }
 
 // -----------------------------------------------------------
@@ -98,14 +98,14 @@ TEST_F(FontTest, StyleRoundTrip)
 {
 	Font font;
 
-	font.SetStyle(Font::Style::Normal);
-	EXPECT_EQ(font.Style(), Font::Style::Normal);
+	font.SetStyle(FontStyle::Normal);
+	EXPECT_EQ(font.Style(), FontStyle::Normal);
 
-	font.SetStyle(Font::Style::Italic);
-	EXPECT_EQ(font.Style(), Font::Style::Italic);
+	font.SetStyle(FontStyle::Italic);
+	EXPECT_EQ(font.Style(), FontStyle::Italic);
 
-	font.SetStyle(Font::Style::Oblique);
-	EXPECT_EQ(font.Style(), Font::Style::Oblique);
+	font.SetStyle(FontStyle::Oblique);
+	EXPECT_EQ(font.Style(), FontStyle::Oblique);
 }
 
 // -----------------------------------------------------------
@@ -118,13 +118,13 @@ TEST_F(FontTest, EqualityOperator_Identical)
 
 	a.SetFamily(u8"Consolas");
 	a.SetSize(14.0f);
-	a.SetWeight(Font::Weight::Bold);
-	a.SetStyle(Font::Style::Italic);
+	a.SetWeight(FontWeight::Bold);
+	a.SetStyle(FontStyle::Italic);
 
 	b.SetFamily(u8"Consolas");
 	b.SetSize(14.0f);
-	b.SetWeight(Font::Weight::Bold);
-	b.SetStyle(Font::Style::Italic);
+	b.SetWeight(FontWeight::Bold);
+	b.SetStyle(FontStyle::Italic);
 
 	EXPECT_TRUE(a == b);
 }
@@ -159,8 +159,8 @@ TEST_F(FontTest, EqualityOperator_DifferentSize)
 TEST_F(FontTest, EqualityOperator_DifferentWeight)
 {
 	Font a, b;
-	a.SetWeight(Font::Weight::Normal);
-	b.SetWeight(Font::Weight::Bold);
+	a.SetWeight(FontWeight::Normal);
+	b.SetWeight(FontWeight::Bold);
 	EXPECT_FALSE(a == b);
 	EXPECT_TRUE(a != b);
 }
@@ -171,8 +171,8 @@ TEST_F(FontTest, EqualityOperator_DifferentWeight)
 TEST_F(FontTest, EqualityOperator_DifferentStyle)
 {
 	Font a, b;
-	a.SetStyle(Font::Style::Normal);
-	b.SetStyle(Font::Style::Italic);
+	a.SetStyle(FontStyle::Normal);
+	b.SetStyle(FontStyle::Italic);
 	EXPECT_FALSE(a == b);
 	EXPECT_TRUE(a != b);
 }
@@ -185,14 +185,14 @@ TEST_F(FontTest, CopyConstruction)
 	Font orig;
 	orig.SetFamily(u8"Verdana");
 	orig.SetSize(20.0f);
-	orig.SetWeight(Font::Weight::SemiBold);
-	orig.SetStyle(Font::Style::Oblique);
+	orig.SetWeight(FontWeight::SemiBold);
+	orig.SetStyle(FontStyle::Oblique);
 
 	Font copy(orig);
 	EXPECT_EQ(copy.Family(), u8"Verdana");
 	EXPECT_FLOAT_EQ(copy.Size(), 20.0f);
-	EXPECT_EQ(copy.Weight(), Font::Weight::SemiBold);
-	EXPECT_EQ(copy.Style(), Font::Style::Oblique);
+	EXPECT_EQ(copy.Weight(), FontWeight::SemiBold);
+	EXPECT_EQ(copy.Style(), FontStyle::Oblique);
 	EXPECT_TRUE(copy == orig);
 }
 
@@ -204,15 +204,15 @@ TEST_F(FontTest, CopyAssignment)
 	Font orig;
 	orig.SetFamily(u8"Courier New");
 	orig.SetSize(10.0f);
-	orig.SetWeight(Font::Weight::Light);
-	orig.SetStyle(Font::Style::Italic);
+	orig.SetWeight(FontWeight::Light);
+	orig.SetStyle(FontStyle::Italic);
 
 	Font assigned;
 	assigned = orig;
 	EXPECT_EQ(assigned.Family(), u8"Courier New");
 	EXPECT_FLOAT_EQ(assigned.Size(), 10.0f);
-	EXPECT_EQ(assigned.Weight(), Font::Weight::Light);
-	EXPECT_EQ(assigned.Style(), Font::Style::Italic);
+	EXPECT_EQ(assigned.Weight(), FontWeight::Light);
+	EXPECT_EQ(assigned.Style(), FontStyle::Italic);
 	EXPECT_TRUE(assigned == orig);
 }
 
@@ -221,29 +221,29 @@ TEST_F(FontTest, CopyAssignment)
 // -----------------------------------------------------------
 TEST_F(FontTest, WeightEnumValues)
 {
-	EXPECT_EQ(static_cast<int>(Font::Weight::Thin), 100);
-	EXPECT_EQ(static_cast<int>(Font::Weight::ExtraLight), 200);
-	EXPECT_EQ(static_cast<int>(Font::Weight::Light), 300);
-	EXPECT_EQ(static_cast<int>(Font::Weight::Normal), 400);
-	EXPECT_EQ(static_cast<int>(Font::Weight::Medium), 500);
-	EXPECT_EQ(static_cast<int>(Font::Weight::SemiBold), 600);
-	EXPECT_EQ(static_cast<int>(Font::Weight::Bold), 700);
-	EXPECT_EQ(static_cast<int>(Font::Weight::ExtraBold), 800);
-	EXPECT_EQ(static_cast<int>(Font::Weight::Black), 900);
+	EXPECT_EQ(static_cast<int>(FontWeight::Thin), 100);
+	EXPECT_EQ(static_cast<int>(FontWeight::ExtraLight), 200);
+	EXPECT_EQ(static_cast<int>(FontWeight::Light), 300);
+	EXPECT_EQ(static_cast<int>(FontWeight::Normal), 400);
+	EXPECT_EQ(static_cast<int>(FontWeight::Medium), 500);
+	EXPECT_EQ(static_cast<int>(FontWeight::SemiBold), 600);
+	EXPECT_EQ(static_cast<int>(FontWeight::Bold), 700);
+	EXPECT_EQ(static_cast<int>(FontWeight::ExtraBold), 800);
+	EXPECT_EQ(static_cast<int>(FontWeight::Black), 900);
 }
 
 // -----------------------------------------------------------
-// FontWeight and FontStyle type aliases
+// FontWeight and FontStyle namespace enums
 // -----------------------------------------------------------
-TEST_F(FontTest, TypeAliasesWork)
+TEST_F(FontTest, NamespaceEnumsWork)
 {
-	Font::FontWeight w = Font::Weight::Bold;
-	Font::FontStyle s = Font::Style::Italic;
+	FontWeight w = FontWeight::Bold;
+	FontStyle s = FontStyle::Italic;
 
 	Font font;
 	font.SetWeight(w);
 	font.SetStyle(s);
 
-	EXPECT_EQ(font.Weight(), Font::Weight::Bold);
-	EXPECT_EQ(font.Style(), Font::Style::Italic);
+	EXPECT_EQ(font.Weight(), FontWeight::Bold);
+	EXPECT_EQ(font.Style(), FontStyle::Italic);
 }

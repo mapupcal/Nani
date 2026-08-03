@@ -19,8 +19,8 @@ TEST_F(TextDecorationTest, DefaultConstruction)
 	TextDecoration td;
 
 	EXPECT_EQ(td.Color(), nani::canvas::basic::Colors::Black);
-	EXPECT_EQ(td.Lines(), TextDecoration::Line::None);
-	EXPECT_EQ(td.Style(), TextDecoration::Style::Solid);
+	EXPECT_EQ(td.Lines(), DecorationLine::None);
+	EXPECT_EQ(td.Style(), DecorationStyle::Solid);
 }
 
 // -----------------------------------------------------------
@@ -48,17 +48,17 @@ TEST_F(TextDecorationTest, LinesRoundTrip_SingleLine)
 {
 	TextDecoration td;
 
-	td.SetLines(TextDecoration::Line::None);
-	EXPECT_EQ(td.Lines(), TextDecoration::Line::None);
+	td.SetLines(DecorationLine::None);
+	EXPECT_EQ(td.Lines(), DecorationLine::None);
 
-	td.SetLines(TextDecoration::Line::Underline);
-	EXPECT_EQ(td.Lines(), TextDecoration::Line::Underline);
+	td.SetLines(DecorationLine::Underline);
+	EXPECT_EQ(td.Lines(), DecorationLine::Underline);
 
-	td.SetLines(TextDecoration::Line::Overline);
-	EXPECT_EQ(td.Lines(), TextDecoration::Line::Overline);
+	td.SetLines(DecorationLine::Overline);
+	EXPECT_EQ(td.Lines(), DecorationLine::Overline);
 
-	td.SetLines(TextDecoration::Line::LineThrough);
-	EXPECT_EQ(td.Lines(), TextDecoration::Line::LineThrough);
+	td.SetLines(DecorationLine::LineThrough);
+	EXPECT_EQ(td.Lines(), DecorationLine::LineThrough);
 }
 
 // -----------------------------------------------------------
@@ -66,7 +66,7 @@ TEST_F(TextDecorationTest, LinesRoundTrip_SingleLine)
 // -----------------------------------------------------------
 TEST_F(TextDecorationTest, LinesRoundTrip_Combined)
 {
-	using Line = TextDecoration::Line;
+	using Line = DecorationLine;
 	using byte = nani::canvas::basic::byte;
 
 	TextDecoration td;
@@ -105,20 +105,20 @@ TEST_F(TextDecorationTest, StyleRoundTrip)
 {
 	TextDecoration td;
 
-	td.SetStyle(TextDecoration::Style::Solid);
-	EXPECT_EQ(td.Style(), TextDecoration::Style::Solid);
+	td.SetStyle(DecorationStyle::Solid);
+	EXPECT_EQ(td.Style(), DecorationStyle::Solid);
 
-	td.SetStyle(TextDecoration::Style::Double);
-	EXPECT_EQ(td.Style(), TextDecoration::Style::Double);
+	td.SetStyle(DecorationStyle::Double);
+	EXPECT_EQ(td.Style(), DecorationStyle::Double);
 
-	td.SetStyle(TextDecoration::Style::Dotted);
-	EXPECT_EQ(td.Style(), TextDecoration::Style::Dotted);
+	td.SetStyle(DecorationStyle::Dotted);
+	EXPECT_EQ(td.Style(), DecorationStyle::Dotted);
 
-	td.SetStyle(TextDecoration::Style::Dashed);
-	EXPECT_EQ(td.Style(), TextDecoration::Style::Dashed);
+	td.SetStyle(DecorationStyle::Dashed);
+	EXPECT_EQ(td.Style(), DecorationStyle::Dashed);
 
-	td.SetStyle(TextDecoration::Style::Wavy);
-	EXPECT_EQ(td.Style(), TextDecoration::Style::Wavy);
+	td.SetStyle(DecorationStyle::Wavy);
+	EXPECT_EQ(td.Style(), DecorationStyle::Wavy);
 }
 
 // -----------------------------------------------------------
@@ -130,12 +130,12 @@ TEST_F(TextDecorationTest, EqualityOperator_Identical)
 	EXPECT_TRUE(a == b);
 
 	a.SetColor(nani::canvas::basic::Colors::Red);
-	a.SetLines(TextDecoration::Line::Underline);
-	a.SetStyle(TextDecoration::Style::Dashed);
+	a.SetLines(DecorationLine::Underline);
+	a.SetStyle(DecorationStyle::Dashed);
 
 	b.SetColor(nani::canvas::basic::Colors::Red);
-	b.SetLines(TextDecoration::Line::Underline);
-	b.SetStyle(TextDecoration::Style::Dashed);
+	b.SetLines(DecorationLine::Underline);
+	b.SetStyle(DecorationStyle::Dashed);
 
 	EXPECT_TRUE(a == b);
 }
@@ -158,8 +158,8 @@ TEST_F(TextDecorationTest, EqualityOperator_DifferentColor)
 TEST_F(TextDecorationTest, EqualityOperator_DifferentLines)
 {
 	TextDecoration a, b;
-	a.SetLines(TextDecoration::Line::Underline);
-	b.SetLines(TextDecoration::Line::Overline);
+	a.SetLines(DecorationLine::Underline);
+	b.SetLines(DecorationLine::Overline);
 	EXPECT_FALSE(a == b);
 	EXPECT_TRUE(a != b);
 }
@@ -170,8 +170,8 @@ TEST_F(TextDecorationTest, EqualityOperator_DifferentLines)
 TEST_F(TextDecorationTest, EqualityOperator_DifferentStyle)
 {
 	TextDecoration a, b;
-	a.SetStyle(TextDecoration::Style::Solid);
-	b.SetStyle(TextDecoration::Style::Wavy);
+	a.SetStyle(DecorationStyle::Solid);
+	b.SetStyle(DecorationStyle::Wavy);
 	EXPECT_FALSE(a == b);
 	EXPECT_TRUE(a != b);
 }
@@ -183,13 +183,13 @@ TEST_F(TextDecorationTest, CopyConstruction)
 {
 	TextDecoration orig;
 	orig.SetColor(nani::canvas::basic::Colors::Green);
-	orig.SetLines(TextDecoration::Line::Underline);
-	orig.SetStyle(TextDecoration::Style::Dotted);
+	orig.SetLines(DecorationLine::Underline);
+	orig.SetStyle(DecorationStyle::Dotted);
 
 	TextDecoration copy(orig);
 	EXPECT_EQ(copy.Color(), nani::canvas::basic::Colors::Green);
-	EXPECT_EQ(copy.Lines(), TextDecoration::Line::Underline);
-	EXPECT_EQ(copy.Style(), TextDecoration::Style::Dotted);
+	EXPECT_EQ(copy.Lines(), DecorationLine::Underline);
+	EXPECT_EQ(copy.Style(), DecorationStyle::Dotted);
 	EXPECT_TRUE(copy == orig);
 }
 
@@ -200,31 +200,31 @@ TEST_F(TextDecorationTest, CopyAssignment)
 {
 	TextDecoration orig;
 	orig.SetColor(nani::canvas::basic::Colors::Magenta);
-	orig.SetLines(TextDecoration::Line::LineThrough);
-	orig.SetStyle(TextDecoration::Style::Double);
+	orig.SetLines(DecorationLine::LineThrough);
+	orig.SetStyle(DecorationStyle::Double);
 
 	TextDecoration assigned;
 	assigned = orig;
 	EXPECT_EQ(assigned.Color(), nani::canvas::basic::Colors::Magenta);
-	EXPECT_EQ(assigned.Lines(), TextDecoration::Line::LineThrough);
-	EXPECT_EQ(assigned.Style(), TextDecoration::Style::Double);
+	EXPECT_EQ(assigned.Lines(), DecorationLine::LineThrough);
+	EXPECT_EQ(assigned.Style(), DecorationStyle::Double);
 	EXPECT_TRUE(assigned == orig);
 }
 
 // -----------------------------------------------------------
-// DecorationLine and DecorationStyle type aliases
+// DecorationLine and DecorationStyle namespace enums
 // -----------------------------------------------------------
-TEST_F(TextDecorationTest, TypeAliasesWork)
+TEST_F(TextDecorationTest, NamespaceEnumsWork)
 {
-	TextDecoration::DecorationLine line = TextDecoration::Line::Underline;
-	TextDecoration::DecorationStyle style = TextDecoration::Style::Wavy;
+	DecorationLine line = DecorationLine::Underline;
+	DecorationStyle style = DecorationStyle::Wavy;
 
 	TextDecoration td;
 	td.SetLines(line);
 	td.SetStyle(style);
 
-	EXPECT_EQ(td.Lines(), TextDecoration::Line::Underline);
-	EXPECT_EQ(td.Style(), TextDecoration::Style::Wavy);
+	EXPECT_EQ(td.Lines(), DecorationLine::Underline);
+	EXPECT_EQ(td.Style(), DecorationStyle::Wavy);
 }
 
 // -----------------------------------------------------------
@@ -234,8 +234,8 @@ TEST_F(TextDecorationTest, LineEnumBitValues)
 {
 	using byte = nani::canvas::basic::byte;
 
-	EXPECT_EQ(static_cast<byte>(TextDecoration::Line::None), 0);
-	EXPECT_EQ(static_cast<byte>(TextDecoration::Line::Underline), 1);
-	EXPECT_EQ(static_cast<byte>(TextDecoration::Line::Overline), 2);
-	EXPECT_EQ(static_cast<byte>(TextDecoration::Line::LineThrough), 4);
+	EXPECT_EQ(static_cast<byte>(DecorationLine::None), 0);
+	EXPECT_EQ(static_cast<byte>(DecorationLine::Underline), 1);
+	EXPECT_EQ(static_cast<byte>(DecorationLine::Overline), 2);
+	EXPECT_EQ(static_cast<byte>(DecorationLine::LineThrough), 4);
 }

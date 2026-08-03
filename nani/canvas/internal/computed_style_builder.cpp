@@ -244,45 +244,44 @@ namespace
 		return origin;
 	}
 
-	std::optional<Font::FontStyle> AsFontStyle(const std::string_view& str)
+	std::optional<FontStyle> AsFontStyle(const std::string_view& str)
 	{
 		if (str.empty())
-			return std::optional<Font::FontStyle>();
+			return std::optional<FontStyle>();
 		if (str == "normal")
-			return Font::Style::Normal;
+			return FontStyle::Normal;
 		else if (str == "italic")
-			return Font::Style::Italic;
+			return FontStyle::Italic;
 		else if (str == "oblique")
-			return Font::Style::Oblique;
-		return std::optional<Font::FontStyle>();
+			return FontStyle::Oblique;
+		return std::optional<FontStyle>();
 	}
 
-	std::optional<Font::FontWeight> AsFontWeight(const std::string_view& str)
+	std::optional<FontWeight> AsFontWeight(const std::string_view& str)
 	{
 		if (str.empty())
-			return std::optional<Font::FontWeight>();
+			return std::optional<FontWeight>();
 		if (str == "thin")
-			return Font::Weight::Thin;
+			return FontWeight::Thin;
 		else if (str == "extralight")
-			return Font::Weight::ExtraLight;
+			return FontWeight::ExtraLight;
 		else if (str == "light")
-			return Font::Weight::Light;
+			return FontWeight::Light;
 		else if (str == "normal")
-			return Font::Weight::Normal;
+			return FontWeight::Normal;
 		else if (str == "medium")
-			return Font::Weight::Medium;
+			return FontWeight::Medium;
 		else if (str == "semibold")
-			return Font::Weight::SemiBold;
+			return FontWeight::SemiBold;
 		else if (str == "bold")
-			return Font::Weight::Bold;
+			return FontWeight::Bold;
 		else if (str == "extrabold")
-			return Font::Weight::ExtraBold;
+			return FontWeight::ExtraBold;
 		else if (str == "black")
-			return Font::Weight::Black;
-		return std::optional<Font::FontWeight>();
+			return FontWeight::Black;
+		return std::optional<FontWeight>();
 	}
 
-	using DecorationLine = TextDecoration::DecorationLine;
 	std::optional<DecorationLine> AsDecorationLine(const std::string_view& str)
 	{
 		if (str.empty())
@@ -295,11 +294,11 @@ namespace
 			std::string_view lineStr = (pos == std::string_view::npos) ? remaining : remaining.substr(0, pos);
 			std::string line = Trim(lineStr);
 			if (line == "underline")
-				lines = static_cast<DecorationLine>(static_cast<byte>(lines) | static_cast<byte>(DecorationLine::Underline));
+				lines = lines | DecorationLine::Underline;
 			else if (line == "overline")
-				lines = static_cast<DecorationLine>(static_cast<byte>(lines) | static_cast<byte>(DecorationLine::Overline));
+				lines = lines | DecorationLine::Overline;
 			else if (line == "linethrough")
-				lines = static_cast<DecorationLine>(static_cast<byte>(lines) | static_cast<byte>(DecorationLine::LineThrough));
+				lines = lines | DecorationLine::LineThrough;
 			if (pos == std::string_view::npos)
 				break;
 			remaining = remaining.substr(pos + 1);
@@ -307,7 +306,6 @@ namespace
 		return lines;
 	}
 
-	using DecorationStyle = TextDecoration::DecorationStyle;
 	std::optional<DecorationStyle> AsDecorationStyle(const std::string_view& str)
 	{
 		if (str.empty())

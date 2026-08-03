@@ -11,7 +11,7 @@ namespace nani::canvas::text
 		m_color = color;
 	}
 
-	TextDecoration::DecorationLine TextDecoration::Lines() const
+	DecorationLine TextDecoration::Lines() const
 	{
 		return m_lines;
 	}
@@ -21,7 +21,7 @@ namespace nani::canvas::text
 		m_lines = lines;
 	}
 
-	TextDecoration::DecorationStyle TextDecoration::Style() const
+	DecorationStyle TextDecoration::Style() const
 	{
 		return m_style;
 	}

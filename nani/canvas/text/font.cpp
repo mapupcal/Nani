@@ -26,7 +26,7 @@ namespace nani::canvas::text
 		m_size = size;
 	}
 
-	Font::FontWeight Font::Weight() const
+	FontWeight Font::Weight() const
 	{
 		return m_weight;
 	}
@@ -36,7 +36,7 @@ namespace nani::canvas::text
 		m_weight = weight;
 	}
 
-	Font::FontStyle Font::Style() const
+	FontStyle Font::Style() const
 	{
 		return m_style;
 	}
