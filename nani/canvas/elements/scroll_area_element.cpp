@@ -51,20 +51,11 @@ namespace nani::canvas::elements
 
 	void ScrollAreaElement::UpdateScrollMetrics(const SizeF& contentSize, const SizeF& viewportSize)
 	{
-		const bool metricsChanged =
-			m_contentSize != contentSize || m_viewportSize != viewportSize;
+		// Silent metrics sync used from paint/hit-test; do not fire events here to
+		// avoid re-entrancy through ContentScrollOffset -> UpdateScrollMetrics -> Repaint.
 		m_contentSize = contentSize;
 		m_viewportSize = viewportSize;
-		if (!metricsChanged)
-			return;
-
-		const PointF clamped = ClampedOffset(m_scrollOffset);
-		if (m_scrollOffset == clamped)
-			return;
-
-		m_scrollOffset = clamped;
-		ElementScrollChangedEvent event(this);
-		FireEvent(&event);
+		m_scrollOffset = ClampedOffset(m_scrollOffset);
 	}
 
 	const SizeF& ScrollAreaElement::ContentSize() const

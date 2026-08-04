@@ -144,6 +144,16 @@ TEST_F(EventTest, WheelEventStoresDeltas)
 	EXPECT_FLOAT_EQ(e.deltaY, -2.5);
 }
 
+TEST_F(EventTest, WheelEventIsMouseEvent)
+{
+	WheelEvent e(PointF(1.0f, 2.0f), PointF(3.0f, 4.0f), 0.5, -0.5);
+	MouseEvent* mouse = &e;
+
+	EXPECT_EQ(mouse->type, Type::Wheel);
+	EXPECT_EQ(mouse->pos, PointF(1.0f, 2.0f));
+	EXPECT_EQ(mouse->globalPos, PointF(3.0f, 4.0f));
+}
+
 // ============================================================
 // KeyPressEvent
 // ============================================================
@@ -226,6 +236,15 @@ TEST_F(EventTest, ElementTextChangedEventStoresElement)
 	ElementTextChangedEvent e(&root);
 
 	EXPECT_EQ(e.type, Type::ElementTextChanged);
+	EXPECT_EQ(e.element, &root);
+}
+
+TEST_F(EventTest, ElementScrollChangedEventStoresElement)
+{
+	Element root(nullptr);
+	ElementScrollChangedEvent e(&root);
+
+	EXPECT_EQ(e.type, Type::ElementScrollChanged);
 	EXPECT_EQ(e.element, &root);
 }
 
