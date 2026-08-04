@@ -7,6 +7,10 @@
 #include "../internal/yoga_utils.h"
 #include "../internal/skia_utils.h"
 #include <core/SkCanvas.h>
+#include <core/SkMaskFilter.h>
+#include <core/SkBlurTypes.h>
+#include <algorithm>
+#include <cmath>
 
 using namespace nani::canvas::elements;
 using namespace nani::canvas::events;
@@ -15,6 +19,89 @@ using namespace nani::canvas::internal;
 
 namespace nani::canvas::visuals
 {
+	namespace
+	{
+		constexpr scalar kBlurSigmaScale = 0.5f;
+		constexpr scalar kBlurBoundsScale = 3.0f;
+
+		bool HasVisibleShadow(const ComputedStyle::VisualProperties::Shadow& shadow)
+		{
+			if (shadow.color.a == 0)
+				return false;
+			return !IsScalarEqual(shadow.offsetX, 0.0f) ||
+				!IsScalarEqual(shadow.offsetY, 0.0f) ||
+				!IsScalarEqual(shadow.blur, 0.0f) ||
+				!IsScalarEqual(shadow.spread, 0.0f);
+		}
+
+		bool HasVisibleBorder(const MarginsF& borders, const Color& borderColor)
+		{
+			if (borderColor.a == 0)
+				return false;
+			return borders.left > 0.0f || borders.top > 0.0f ||
+				borders.right > 0.0f || borders.bottom > 0.0f;
+		}
+
+		MarginsF ShadowExpandMargins(const ComputedStyle::VisualProperties::Shadow& shadow)
+		{
+			if (!HasVisibleShadow(shadow))
+				return MarginsF();
+
+			const scalar blurExtent = shadow.blur * kBlurBoundsScale;
+			const scalar spread = std::max(0.0f, shadow.spread);
+			return MarginsF(
+				spread + blurExtent + std::max(0.0f, -shadow.offsetX),
+				spread + blurExtent + std::max(0.0f, -shadow.offsetY),
+				spread + blurExtent + std::max(0.0f, shadow.offsetX),
+				spread + blurExtent + std::max(0.0f, shadow.offsetY));
+		}
+
+		RectF LocalLayoutBounds(const RectF& layoutRect)
+		{
+			RectF local = layoutRect;
+			local.MoveTo(PointF(0.0f, 0.0f));
+			return local;
+		}
+
+		bool DirtyIntersects(const RectF& dirtyRect, const RectF& bounds)
+		{
+			if (!dirtyRect.IsValid() || !bounds.IsValid())
+				return true;
+			const RectF hit = dirtyRect.Intersected(bounds);
+			return hit.Width() > 0.0f && hit.Height() > 0.0f;
+		}
+
+		void DrawShadow(
+			SkCanvas* canvas,
+			const RectF& localRect,
+			const ComputedStyle::VisualProperties::BorderRadius& radius,
+			const ComputedStyle::VisualProperties::Shadow& shadow)
+		{
+			if (!HasVisibleShadow(shadow))
+				return;
+
+			const scalar spread = shadow.spread;
+			RectF shadowRect = localRect + MarginsF(spread, spread, spread, spread);
+			auto shadowRadius = skia_utils::OutsetBorderRadius(radius, std::max(0.0f, spread));
+			SkRRect rrect = skia_utils::ToSkRRect(shadowRect, shadowRadius);
+
+			SkPaint paint;
+			paint.setAntiAlias(true);
+			paint.setStyle(SkPaint::kFill_Style);
+			paint.setColor(skia_utils::ToSkColor(shadow.color));
+			if (shadow.blur > 0.0f)
+			{
+				const scalar sigma = std::max(shadow.blur * kBlurSigmaScale, 0.01f);
+				paint.setMaskFilter(SkMaskFilter::MakeBlur(kNormal_SkBlurStyle, sigma));
+			}
+
+			canvas->save();
+			canvas->translate(shadow.offsetX, shadow.offsetY);
+			canvas->drawRRect(rrect, paint);
+			canvas->restore();
+		}
+	}
+
 	Visual::Visual(visuals::View* view, elements::Element* element, Visual* parent)
 		: m_pView(view)
 		, m_pElement(element)
@@ -195,14 +282,18 @@ namespace nani::canvas::visuals
 			return _HitTestChildVisual();
 		}
 
-		RectF localRect = LayoutRect();
-		localRect.MoveTo(PointF(0, 0));
-		bool bSelfHit = localRect.IsContains(localPos) && HitTestOverride(localPos);
+		RectF localRect = LocalLayoutBounds(LayoutRect());
+		const bool bInsideShape = skia_utils::ContainsPoint(
+			localRect,
+			m_spComputedStyle->visualProps.radius,
+			localPos);
+		const bool bSelfHit = bInsideShape && HitTestOverride(localPos);
 
-		bool bOverFlowVisible = m_spComputedStyle->layoutProps.style.overflow() != facebook::yoga::Overflow::Hidden;
-		if (!bSelfHit && !bOverFlowVisible)
+		const bool bOverFlowVisible =
+			m_spComputedStyle->layoutProps.style.overflow() != facebook::yoga::Overflow::Hidden;
+		if (!bInsideShape && !bOverFlowVisible)
 		{
-			//overflow children visuals will be clipped, no hittesting needed.
+			// overflow children are clipped to the rounded border box.
 			return false;
 		}
 
@@ -227,22 +318,67 @@ namespace nani::canvas::visuals
 	{
 		if (Element()->Visibility()->IsHidden())
 			return;
+		if (!m_spComputedStyle)
+			return;
+
+		const scalar opacity = m_spComputedStyle->visualProps.opacity;
+		if (opacity <= 0.0f)
+			return;
+
+		const RectF localPaintBounds = LocalLayoutBounds(LayoutRect());
+		PolygonF paintPolygon(localPaintBounds);
+		paintPolygon = Transform().ApplyTo(paintPolygon);
+		RectF cullBounds = paintPolygon.BoundingBox();
+		if (HasVisibleShadow(m_spComputedStyle->visualProps.shadow))
+			cullBounds = cullBounds + ShadowExpandMargins(m_spComputedStyle->visualProps.shadow);
+
+		if (!DirtyIntersects(dirtyRect, cullBounds))
+			return;
 
 		canvas->save();
+
+		const bool useOpacityLayer = opacity < 1.0f;
+		if (useOpacityLayer)
+		{
+			SkPaint layerPaint;
+			layerPaint.setAlphaf(opacity);
+			canvas->saveLayer(nullptr, &layerPaint);
+		}
+
 		bool bCollapsed = Element()->Visibility()->IsCollapsed();
 		if (!bCollapsed)
 		{
 			canvas->concat(internal::skia_utils::ToSkMatrix(Transform()));
 			PaintOverride(canvas, dirtyRect);
+
+			const bool clipOverflow =
+				m_spComputedStyle->layoutProps.style.overflow() == facebook::yoga::Overflow::Hidden;
+			if (clipOverflow)
+			{
+				SkRRect clipRect = skia_utils::ToSkRRect(
+					localPaintBounds,
+					m_spComputedStyle->visualProps.radius);
+				canvas->clipRRect(clipRect, true);
+			}
 		}
 
 		for (auto visual : m_visuals)
 		{
+			const PointF childOrigin = visual->LayoutRect().TopLeft();
+			RectF childDirty(
+				dirtyRect.left - childOrigin.x,
+				dirtyRect.top - childOrigin.y,
+				dirtyRect.right - childOrigin.x,
+				dirtyRect.bottom - childOrigin.y);
+
 			canvas->save();
-			canvas->translate(visual->LayoutRect().X(), visual->LayoutRect().Y());
-			visual->Paint(canvas, dirtyRect);
+			canvas->translate(childOrigin.x, childOrigin.y);
+			visual->Paint(canvas, childDirty);
 			canvas->restore();
 		}
+
+		if (useOpacityLayer)
+			canvas->restore();
 
 		canvas->restore();
 	}
@@ -252,23 +388,30 @@ namespace nani::canvas::visuals
 		if (!m_spComputedStyle)
 			return;
 
-		RectF rect = LayoutRect();
-		rect.MoveTo(PointF(0.0f, 0.0f));
+		RectF rect = LocalLayoutBounds(LayoutRect());
+		const auto& visualProps = m_spComputedStyle->visualProps;
+		const MarginsF borders = yoga_utils::GetNodeBorders(m_yogaNode);
 
-		SkRRect borderRect = internal::skia_utils::ToSkRRect(rect, m_spComputedStyle->visualProps.radius);
-		SkColor borderColor = internal::skia_utils::ToSkColor(m_spComputedStyle->visualProps.borderColor);
+		DrawShadow(canvas, rect, visualProps.radius, visualProps.shadow);
 
-		SkPaint borderPaint;
-		borderPaint.setColor(borderColor);
-		borderPaint.setAntiAlias(true);
-		borderPaint.setStyle(SkPaint::kFill_Style);
-		canvas->drawRRect(borderRect, borderPaint);
+		if (HasVisibleBorder(borders, visualProps.borderColor))
+		{
+			SkRRect borderRect = skia_utils::ToSkRRect(rect, visualProps.radius);
+			SkPaint borderPaint;
+			borderPaint.setColor(skia_utils::ToSkColor(visualProps.borderColor));
+			borderPaint.setAntiAlias(true);
+			borderPaint.setStyle(SkPaint::kFill_Style);
+			canvas->drawRRect(borderRect, borderPaint);
+		}
 
-		rect = rect - internal::yoga_utils::GetNodeBorders(m_yogaNode);
-		SkRRect innerRect = internal::skia_utils::ToSkRRect(rect, m_spComputedStyle->visualProps.radius);
-		SkColor bacgroudColor = internal::skia_utils::ToSkColor(m_spComputedStyle->visualProps.backgroundColor);
+		rect = rect - borders;
+		if (rect.Width() <= 0.0f || rect.Height() <= 0.0f)
+			return;
+
+		const auto innerRadius = skia_utils::InsetBorderRadius(visualProps.radius, borders);
+		SkRRect innerRect = skia_utils::ToSkRRect(rect, innerRadius);
 		SkPaint backgroundPaint;
-		backgroundPaint.setColor(bacgroudColor);
+		backgroundPaint.setColor(skia_utils::ToSkColor(visualProps.backgroundColor));
 		backgroundPaint.setAntiAlias(true);
 		backgroundPaint.setStyle(SkPaint::kFill_Style);
 		canvas->drawRRect(innerRect, backgroundPaint);
@@ -348,10 +491,21 @@ namespace nani::canvas::visuals
 
 	const PolygonF Visual::VisualGeometry()
 	{
-		RectF lbr = LayoutRect();
-		PolygonF polygon = PolygonF(lbr);
-		//TODO:: add transform.
-		return polygon;
+		RectF local = LocalLayoutBounds(LayoutRect());
+		PolygonF polygon(local);
+		polygon = Transform().ApplyTo(polygon);
+
+		RectF bounds = polygon.BoundingBox();
+		if (m_spComputedStyle && HasVisibleShadow(m_spComputedStyle->visualProps.shadow))
+			bounds = bounds + ShadowExpandMargins(m_spComputedStyle->visualProps.shadow);
+
+		// Map from this visual's parent space into root-local coordinates.
+		PointF origin = LayoutRect().TopLeft();
+		for (Visual* ancestor = Parent(); ancestor; ancestor = ancestor->Parent())
+			origin += ancestor->LayoutRect().TopLeft();
+
+		bounds.MoveTo(PointF(bounds.left + origin.x, bounds.top + origin.y));
+		return PolygonF(bounds);
 	}
 
 	const RectF Visual::ContentRect() const

@@ -47,7 +47,8 @@ namespace nani::canvas::visuals
 	{
 		m_bLayoutDirty = true;
 		m_bPaintDirty = true;
-		m_dirtyRect = Window()->ClientRect();
+		const SizeF size = Window()->ClientRect().Size();
+		m_dirtyRect = RectF(PointF(0.0f, 0.0f), size);
 	}
 
 	void View::Flush()
@@ -71,9 +72,12 @@ namespace nani::canvas::visuals
 				return;
 
 			canvas->save();
-			RectF rect = Window()->ClientRect();
-			canvas->translate(rect.X(), rect.Y());
-			m_spVisual->Paint(canvas, m_dirtyRect);
+			const RectF clientRect = Window()->ClientRect();
+			canvas->translate(clientRect.X(), clientRect.Y());
+			// WindowPrivate::Repaint clears the entire surface each frame, so the
+			// paint pass must cover the full client area in root-local space.
+			const RectF paintRect(PointF(0.0f, 0.0f), clientRect.Size());
+			m_spVisual->Paint(canvas, paintRect);
 			canvas->restore();
 
 			m_bPaintDirty = false;

@@ -101,6 +101,38 @@ int main(int argc, char** argv)
 				<Dimension width="100%" />
 			</Style>
 
+			<Style class="EffectsRow">
+				<FlexBox flexDirection="row" alignItems="center" shrink="0" />
+				<Gaps gap="16" />
+				<Dimension width="100%" height="96" />
+			</Style>
+
+			<Style class="ShadowCard">
+				<Dimension width="72" height="72" />
+				<Radius radius="12" />
+				<Borders value="2" />
+				<Colors background="#FFFFFFEE" border="#94A3B8FF" />
+			</Style>
+
+			<Style class="ShadowCard" state="hovered">
+				<Colors background="#FFFFFFFF" border="#64748BFF" />
+				<Shadow color="#0F172A66" x="4" y="6" b="10" s="1" />
+			</Style>
+
+			<Style class="OpacityCard">
+				<Dimension width="72" height="72" />
+				<Radius radius="12" />
+				<Colors opacity="0.45" background="#38BDF8FF" border="#0EA5E9FF" />
+				<Borders value="2" />
+			</Style>
+
+			<Style class="RadiusCard">
+				<Dimension width="72" height="72" />
+				<Radius tl="4" tr="20" bl="20" br="4" />
+				<Borders value="3" />
+				<Colors background="#FDE68AFF" border="#D97706FF" />
+			</Style>
+
 			<Style class="DefaultText">
 				<Font family="Segoe UI" size="14" style="normal" weight="normal" />
 				<Colors color="#334155FF" />
@@ -187,6 +219,15 @@ int main(int argc, char** argv)
 
 	Element* demoPanel = new Element(window->RootElement());
 	demoPanel->SetStyleClass(u8"DemoPanel");
+
+	Element* effectsRow = new Element(demoPanel);
+	effectsRow->SetStyleClass(u8"EffectsRow");
+	Element* shadowCard = new Element(effectsRow);
+	shadowCard->SetStyleClass(u8"ShadowCard");
+	Element* opacityCard = new Element(effectsRow);
+	opacityCard->SetStyleClass(u8"OpacityCard");
+	Element* radiusCard = new Element(effectsRow);
+	radiusCard->SetStyleClass(u8"RadiusCard");
 
 	const struct
 	{
