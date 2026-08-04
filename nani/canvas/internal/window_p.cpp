@@ -354,7 +354,14 @@ namespace nani::canvas::internal
 
 	void WindowPrivate::OnGLFWWindowWheelScroll(double xDelta, double yDelta)
 	{
-		WheelEvent event(xDelta, yDelta);
+		double xPos = 0.0;
+		double yPos = 0.0;
+		if (glfwWindow)
+			glfwGetCursorPos(glfwWindow, &xPos, &yPos);
+
+		PointF pos_(static_cast<float>(xPos), static_cast<float>(yPos));
+		PointF globalPos = pos_ + pos;
+		WheelEvent event(pos_, globalPos, xDelta, yDelta);
 		window->FireEvent(&event);
 	}
 

@@ -20,6 +20,7 @@ nani_add_executable(canvas_utests
 	test_transformf.cpp
 	test_window.cpp
 	test_view.cpp
+	test_scroll_area.cpp
 )
 
 target_include_directories(canvas_utests PRIVATE

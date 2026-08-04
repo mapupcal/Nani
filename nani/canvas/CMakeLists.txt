@@ -35,12 +35,16 @@ nani_add_library(canvas SHARED
 	elements/element_visibility.h
 	elements/text_element.cpp
 	elements/text_element.h
+	elements/scroll_area_element.cpp
+	elements/scroll_area_element.h
 
 	visuals/visuals_defs.h
 	visuals/visual.cpp
 	visuals/visual.h
 	visuals/text_visual.cpp
 	visuals/text_visual.h
+	visuals/scroll_area_visual.cpp
+	visuals/scroll_area_visual.h
 	visuals/view.cpp
 	visuals/view.h
 

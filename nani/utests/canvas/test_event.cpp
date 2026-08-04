@@ -135,9 +135,11 @@ TEST_F(EventTest, MouseReleaseEventStoresButtonAndModifier)
 // ============================================================
 TEST_F(EventTest, WheelEventStoresDeltas)
 {
-	WheelEvent e(1.5, -2.5);
+	WheelEvent e(PointF(10.0f, 20.0f), PointF(30.0f, 40.0f), 1.5, -2.5);
 
 	EXPECT_EQ(e.type, Type::Wheel);
+	EXPECT_EQ(e.pos, PointF(10.0f, 20.0f));
+	EXPECT_EQ(e.globalPos, PointF(30.0f, 40.0f));
 	EXPECT_FLOAT_EQ(e.deltaX, 1.5);
 	EXPECT_FLOAT_EQ(e.deltaY, -2.5);
 }

@@ -90,14 +90,18 @@ namespace nani::canvas::events
 		~MouseReleaseEvent() = default;
 	};
 
-	class NANI_CANVAS_API WheelEvent : public Event
+	class NANI_CANVAS_API WheelEvent : public MouseEvent
 	{
 	public:
-		WheelEvent(double deltaX_, double deltaY_);
+		WheelEvent(
+			const basic::PointF& pos_,
+			const basic::PointF& globalPos_,
+			double deltaX_,
+			double deltaY_);
 		~WheelEvent() = default;
 
-		const double deltaX = 0.0f;
-		const double deltaY = 0.0f;
+		const double deltaX = 0.0;
+		const double deltaY = 0.0;
 	};
 
 	class NANI_CANVAS_API KeyEvent : public Event
@@ -158,6 +162,15 @@ namespace nani::canvas::events
 	public:
 		ElementTextChangedEvent(elements::Element* element_);
 		~ElementTextChangedEvent() = default;
+
+		elements::Element* const element = nullptr;
+	};
+
+	class NANI_CANVAS_API ElementScrollChangedEvent : public Event
+	{
+	public:
+		ElementScrollChangedEvent(elements::Element* element_);
+		~ElementScrollChangedEvent() = default;
 
 		elements::Element* const element = nullptr;
 	};

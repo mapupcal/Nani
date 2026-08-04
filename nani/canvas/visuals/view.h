@@ -34,6 +34,7 @@ namespace nani::canvas::visuals
 		void OnKeyRelease(events::KeyReleaseEvent* e);
 
 	private:
+		elements::Element* HitTest(const basic::PointF& windowPos, basic::PointF& hitLocalPos);
 		elements::Element* HitTest(events::MouseEvent* me, basic::PointF& hitLocalPos);
 		elements::Element* HoverElement(elements::Element* candidate);
 

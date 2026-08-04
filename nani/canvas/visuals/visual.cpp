@@ -262,11 +262,13 @@ namespace nani::canvas::visuals
 			return false;
 		}
 
+		const PointF scrollOffset = ContentScrollOffset();
 		auto _HitTestChildVisual = [&]() -> bool
 		{
 			for (auto child : std::views::reverse(m_visuals))
 			{
-				PointF childLocalPos = localPos - child->LayoutRect().TopLeft();
+				const PointF childOrigin = child->LayoutRect().TopLeft() - scrollOffset;
+				PointF childLocalPos = localPos - childOrigin;
 				childLocalPos = child->Transform().Reversed().ApplyTo(childLocalPos);
 				if (child->HitTest(childLocalPos, ppHitVisual, hitLocalPos))
 					return true;
@@ -287,8 +289,10 @@ namespace nani::canvas::visuals
 			localPos);
 		const bool bSelfHit = bInsideShape && HitTestOverride(localPos);
 
+		const auto overflow = m_spComputedStyle->layoutProps.style.overflow();
 		const bool bOverFlowVisible =
-			m_spComputedStyle->layoutProps.style.overflow() != facebook::yoga::Overflow::Hidden;
+			overflow != facebook::yoga::Overflow::Hidden &&
+			overflow != facebook::yoga::Overflow::Scroll;
 		if (!bInsideShape && !bOverFlowVisible)
 		{
 			// overflow children are clipped to the rounded border box.
@@ -349,20 +353,32 @@ namespace nani::canvas::visuals
 			canvas->concat(internal::skia_utils::ToSkMatrix(Transform()));
 			PaintOverride(canvas, dirtyRect);
 
+			const auto overflow = m_spComputedStyle->layoutProps.style.overflow();
 			const bool clipOverflow =
-				m_spComputedStyle->layoutProps.style.overflow() == facebook::yoga::Overflow::Hidden;
+				overflow == facebook::yoga::Overflow::Hidden ||
+				overflow == facebook::yoga::Overflow::Scroll;
 			if (clipOverflow)
 			{
-				SkRRect clipRect = skia_utils::ToSkRRect(
-					localPaintBounds,
-					m_spComputedStyle->visualProps.radius);
-				canvas->clipRRect(clipRect, true);
+				// Clip to the padding box so scrolled/overflow children do not
+				// paint over the border ring.
+				const MarginsF borders = yoga_utils::GetNodeBorders(m_yogaNode);
+				const RectF clipBounds = localPaintBounds - borders;
+				if (clipBounds.Width() > 0.0f && clipBounds.Height() > 0.0f)
+				{
+					const auto clipRadius = skia_utils::InsetBorderRadius(
+						m_spComputedStyle->visualProps.radius,
+						borders);
+					canvas->clipRRect(
+						skia_utils::ToSkRRect(clipBounds, clipRadius),
+						true);
+				}
 			}
 		}
 
+		const PointF scrollOffset = ContentScrollOffset();
 		for (auto visual : m_visuals)
 		{
-			const PointF childOrigin = visual->LayoutRect().TopLeft();
+			const PointF childOrigin = visual->LayoutRect().TopLeft() - scrollOffset;
 			RectF childDirty(
 				dirtyRect.left - childOrigin.x,
 				dirtyRect.top - childOrigin.y,
@@ -511,6 +527,11 @@ namespace nani::canvas::visuals
 		if (!m_yogaNode)
 			return RectF();
 		return yoga_utils::GetNodeContentRect(m_yogaNode);
+	}
+
+	PointF Visual::ContentScrollOffset() const
+	{
+		return PointF();
 	}
 
 	const ComputedStyle* Visual::GetComputedStyle() const

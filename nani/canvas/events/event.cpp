@@ -66,8 +66,12 @@ namespace nani::canvas::events
 
 	}
 
-	WheelEvent::WheelEvent(double deltaX_, double deltaY_)
-		: Event(Type::Wheel)
+	WheelEvent::WheelEvent(
+		const basic::PointF& pos_,
+		const basic::PointF& globalPos_,
+		double deltaX_,
+		double deltaY_)
+		: MouseEvent(Type::Wheel, pos_, globalPos_)
 		, deltaX(deltaX_)
 		, deltaY(deltaY_)
 	{
@@ -118,6 +122,13 @@ namespace nani::canvas::events
 
 	ElementTextChangedEvent::ElementTextChangedEvent(elements::Element* element_)
 		: Event(Type::ElementTextChanged)
+		, element(element_)
+	{
+
+	}
+
+	ElementScrollChangedEvent::ElementScrollChangedEvent(elements::Element* element_)
+		: Event(Type::ElementScrollChanged)
 		, element(element_)
 	{
 

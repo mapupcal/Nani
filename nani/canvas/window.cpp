@@ -208,6 +208,11 @@ namespace nani::canvas
 			m_pView->OnMouseRelease(static_cast<MouseReleaseEvent*>(e));
 			break;
 		}
+		case events::Type::Wheel:
+		{
+			m_pView->OnWheel(static_cast<WheelEvent*>(e));
+			break;
+		}
 		case events::Type::KeyPress:
 		{
 			m_pView->OnKeyPress(static_cast<KeyPressEvent*>(e));

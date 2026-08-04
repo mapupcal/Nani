@@ -3,6 +3,7 @@
 
 #include "elements/element.h"
 #include "elements/element_states.h"
+#include "elements/scroll_area_element.h"
 
 #include "events/event.h"
 
@@ -151,7 +152,19 @@ namespace nani::canvas::visuals
 
 	void View::OnWheel(events::WheelEvent* e)
 	{
+		// Hit-test without updating hover (unlike mouse move/press).
+		PointF hitLocalPos;
+		elements::Element* hitElement = HitTest(e->pos, hitLocalPos);
+		if (!hitElement)
+			return;
 
+		for (elements::Element* element = hitElement; element; element = element->Parent())
+		{
+			WheelEvent we(hitLocalPos, e->globalPos, e->deltaX, e->deltaY);
+			element->FireEvent(&we);
+			if (dynamic_cast<elements::ScrollAreaElement*>(element))
+				break;
+		}
 	}
 
 	void View::OnKeyPress(events::KeyPressEvent* e)
@@ -164,19 +177,25 @@ namespace nani::canvas::visuals
 
 	}
 
-	elements::Element* View::HitTest(events::MouseEvent* e, PointF& hitLocalPos)
+	elements::Element* View::HitTest(const PointF& windowPos, PointF& hitLocalPos)
 	{
 		if (!m_spVisual)
 			return nullptr;
 
-		PointF pos = e->pos;
+		PointF pos = windowPos;
 		RectF clientRect = Window()->ClientRect();
 		pos -= clientRect.TopLeft();
 		pos = m_spVisual->Transform().Reversed().ApplyTo(pos);
 
 		visuals::Visual* hitVisual = nullptr;
-		m_spVisual->HitTest(pos, &hitVisual, hitLocalPos);
-		return HoverElement(hitVisual ? hitVisual->Element() : nullptr);
+		if (!m_spVisual->HitTest(pos, &hitVisual, hitLocalPos))
+			return nullptr;
+		return hitVisual ? hitVisual->Element() : nullptr;
+	}
+
+	elements::Element* View::HitTest(events::MouseEvent* e, PointF& hitLocalPos)
+	{
+		return HoverElement(HitTest(e->pos, hitLocalPos));
 	}
 
 	elements::Element* View::HoverElement(elements::Element* candidate)

@@ -4,6 +4,7 @@
 
 #include "canvas/elements/element.h"
 #include "canvas/elements/text_element.h"
+#include "canvas/elements/scroll_area_element.h"
 
 #include "canvas/events/event.h"
 #include "canvas/events/event_filter.h"
@@ -46,7 +47,7 @@ int main(int argc, char** argv)
 {
 	Env env(argc, argv);
 	float borderWidth = 5.0f;
-	std::shared_ptr<Window> window = std::make_shared<Window>(PointF(0, 0), SizeF(600 + borderWidth, 480 + borderWidth));
+	std::shared_ptr<Window> window = std::make_shared<Window>(PointF(0, 0), SizeF(960 + borderWidth, 640 + borderWidth));
 	window->SetTitle("Nani Canvas");
 	window->SetBackgroundColor(Color(0xF4F6F8FF));
 	window->SetBorderWidth(borderWidth);
@@ -95,10 +96,22 @@ int main(int argc, char** argv)
 			</Style>
 
 			<Style class="DemoPanel">
-				<FlexBox flexDirection="column" flex="1.0" grow="1.0" shrink="1.0" />
-				<Gaps gap="12" />
+				<FlexBox flexDirection="row" flex="1.0" grow="1.0" shrink="1.0" alignItems="stretch" />
+				<Gaps gap="16" />
 				<Paddings value="20" />
 				<Dimension width="100%" />
+			</Style>
+
+			<Style class="DemoLeft">
+				<FlexBox flexDirection="column" flex="1.0" grow="1.0" shrink="1.0" />
+				<Gaps gap="12" />
+				<Dimension height="100%" />
+			</Style>
+
+			<Style class="DemoRight">
+				<FlexBox flexDirection="column" shrink="0" />
+				<Gaps gap="8" />
+				<Dimension width="280" height="100%" />
 			</Style>
 
 			<Style class="EffectsRow">
@@ -199,6 +212,53 @@ int main(int argc, char** argv)
 				<Colors color="#334155FF" />
 				<TextDecoration line="underline,overline" style="solid" color="#64748BFF" />
 			</Style>
+
+			<Style class="ScrollableColumn">
+				<FlexBox flexDirection="column" overflow="scroll" />
+			</Style>
+
+			<Style class="ScrollDemo" inherit="ScrollableColumn">
+				<Dimension width="100%" height="100%" />
+				<FlexBox flex="1.0" grow="1.0" shrink="1.0" flexDirection="column" overflow="scroll" />
+				<Paddings value="8" />
+				<Gaps gap="6" />
+				<Borders value="1" />
+				<Radius radius="8" />
+				<Colors background="#FFFFFFEE" border="#94A3B8FF" />
+			</Style>
+
+			<Style class="ScrollDemoLabel" inherit="DefaultText">
+				<Dimension width="100%" height="22" />
+				<FlexBox shrink="0" />
+				<Colors color="#64748BFF" />
+				<TextAlignment horizontal="left" vertical="center" />
+			</Style>
+
+			<Style class="ScrollDemoItem">
+				<Dimension width="100%" height="32" minHeight="32" />
+				<FlexBox shrink="0" grow="0" flexDirection="row" alignItems="center" />
+				<Colors background="#E2E8F0FF" border="#E2E8F000" />
+				<Borders value="1" />
+				<Radius radius="4" />
+				<Paddings l="8" r="8" t="0" b="0" />
+			</Style>
+
+			<Style class="ScrollDemoItem" state="hovered">
+				<Colors background="#BFDBFEFF" border="#3B82F6FF" />
+				<Radius radius="6" />
+			</Style>
+
+			<Style class="ScrollDemoItemText" inherit="DefaultText">
+				<FlexBox flex="1.0" grow="1.0" />
+				<Dimension height="100%" />
+				<TextAlignment horizontal="left" vertical="center" />
+				<Colors color="#334155FF" />
+			</Style>
+
+			<Style class="ScrollDemoItemText" state="hovered">
+				<Colors color="#1D4ED8FF" />
+				<TextDecoration line="underline" style="solid" color="#2563EBFF" />
+			</Style>
 		</Styles>
 	)");
 
@@ -220,7 +280,10 @@ int main(int argc, char** argv)
 	Element* demoPanel = new Element(window->RootElement());
 	demoPanel->SetStyleClass(u8"DemoPanel");
 
-	Element* effectsRow = new Element(demoPanel);
+	Element* demoLeft = new Element(demoPanel);
+	demoLeft->SetStyleClass(u8"DemoLeft");
+
+	Element* effectsRow = new Element(demoLeft);
 	effectsRow->SetStyleClass(u8"EffectsRow");
 	Element* shadowCard = new Element(effectsRow);
 	shadowCard->SetStyleClass(u8"ShadowCard");
@@ -245,8 +308,26 @@ int main(int argc, char** argv)
 
 	for (const auto& demo : demos)
 	{
-		TextElement* text = new TextElement(demoPanel, demo.label);
+		TextElement* text = new TextElement(demoLeft, demo.label);
 		text->SetStyleClass(demo.styleClass);
+	}
+
+	Element* demoRight = new Element(demoPanel);
+	demoRight->SetStyleClass(u8"DemoRight");
+
+	TextElement* scrollLabel = new TextElement(demoRight, u8"ScrollArea — mouse wheel");
+	scrollLabel->SetStyleClass(u8"ScrollDemoLabel");
+
+	auto* scrollArea = new ScrollAreaElement(demoRight);
+	scrollArea->SetStyleClass(u8"ScrollDemo");
+	for (int i = 1; i <= 25; ++i)
+	{
+		Element* row = new Element(scrollArea);
+		row->SetStyleClass(u8"ScrollDemoItem");
+		const std::string ascii = "Scroll item " + std::to_string(i);
+		const std::u8string label(ascii.begin(), ascii.end());
+		TextElement* item = new TextElement(row, label);
+		item->SetStyleClass(u8"ScrollDemoItemText");
 	}
 
 	window->Show();

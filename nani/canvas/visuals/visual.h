@@ -36,6 +36,7 @@ namespace nani::canvas::visuals
 		const basic::RectF ContentRect() const;
 		const internal::ComputedStyle* GetComputedStyle() const;
 		YGNodeRef YogaNode() const;
+		virtual basic::PointF ContentScrollOffset() const;
 
 	private:
 		void BuildComputedStyle();

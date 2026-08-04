@@ -28,12 +28,14 @@ namespace nani::canvas::elements
 	class ElementStates;
 	class ElementVisibility;
 	class TextElement;
+	class ScrollAreaElement;
 }
 namespace nani::canvas::visuals
 {
 	class Visual;
 	class View;
 	class TextVisual;
+	class ScrollAreaVisual;
 }
 namespace nani::canvas::events
 {
