@@ -6,16 +6,10 @@
 #include "../text/font_metrics.h"
 #include "../internal/computed_style.h"
 #include "../internal/font_manager_p.h"
+#include "../internal/skia_defs.h"
 #include "../internal/skia_utils.h"
+#include "../internal/yoga_defs.h"
 #include "../internal/yoga_utils.h"
-#include <core/SkCanvas.h>
-#include <core/SkPaint.h>
-#include <core/SkPathBuilder.h>
-#include <effects/SkDashPathEffect.h>
-#include <yoga/Yoga.h>
-#include <algorithm>
-#include <cmath>
-#include <numbers>
 
 using namespace nani::canvas::elements;
 using namespace nani::canvas::events;

@@ -1,12 +1,12 @@
 ﻿#include "canvas/env.h"
+#include "canvas/styles.h"
 #include "canvas/window.h"
-#include "canvas/events/event.h"
-#include "canvas/events/event_filter.h"
+
 #include "canvas/elements/element.h"
 #include "canvas/elements/text_element.h"
-#include "canvas/styles.h"
-#include <memory>
-#include <functional>
+
+#include "canvas/events/event.h"
+#include "canvas/events/event_filter.h"
 
 using namespace nani::canvas::basic;
 using namespace nani::canvas::events;

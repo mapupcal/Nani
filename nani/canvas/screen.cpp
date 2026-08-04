@@ -1,6 +1,6 @@
 ﻿#include "screen.h"
+
 #include <GLFW/glfw3.h>
-#include <ranges>
 
 using namespace nani::canvas::basic;
 

@@ -1,9 +1,7 @@
 ﻿#include "font_metrics.h"
+
 #include "internal/font_manager_p.h"
-#include <core/SkFont.h>
-#include <core/SkFontMetrics.h>
-#include <core/SkFontTypes.h>
-#include <algorithm>
+#include "internal/skia_defs.h"
 
 namespace nani::canvas::text
 {

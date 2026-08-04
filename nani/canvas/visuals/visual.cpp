@@ -1,16 +1,14 @@
 ﻿#include "visual.h"
 #include "view.h"
+
 #include "../elements/element.h"
 #include "../elements/element_visibility.h"
 #include "../styles.h"
+
 #include "../internal/computed_style.h"
-#include "../internal/yoga_utils.h"
+#include "../internal/skia_defs.h"
 #include "../internal/skia_utils.h"
-#include <core/SkCanvas.h>
-#include <core/SkMaskFilter.h>
-#include <core/SkBlurTypes.h>
-#include <algorithm>
-#include <cmath>
+#include "../internal/yoga_utils.h"
 
 using namespace nani::canvas::elements;
 using namespace nani::canvas::events;

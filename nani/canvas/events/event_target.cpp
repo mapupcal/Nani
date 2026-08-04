@@ -2,7 +2,6 @@
 #include "event_target.h"
 #include "event_filter.h"
 #include "event.h"
-#include <ranges>
 
 namespace nani::canvas::events
 {

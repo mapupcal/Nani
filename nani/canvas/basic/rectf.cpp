@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "rectf.h"
-#include <utility>
+
 namespace nani::canvas::basic
 {
 	RectF::RectF()

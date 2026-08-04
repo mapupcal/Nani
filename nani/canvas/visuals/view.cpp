@@ -1,9 +1,13 @@
 ﻿#include "view.h"
 #include "visual.h"
+
 #include "elements/element.h"
 #include "elements/element_states.h"
+
 #include "events/event.h"
-#include <core/SkCanvas.h>
+
+#include "internal/skia_defs.h"
+
 using namespace nani::canvas::basic;
 using namespace nani::canvas::events;
 

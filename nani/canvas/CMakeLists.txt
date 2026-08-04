@@ -86,12 +86,14 @@ nani_add_library(canvas SHARED
 	internal/platform.h
 	internal/window_p.cpp
 	internal/window_p.h
+	internal/yoga_defs.h
 	internal/yoga_utils.cpp
 	internal/yoga_utils.h
 	internal/computed_style.cpp
 	internal/computed_style.h
 	internal/computed_style_builder.cpp
 	internal/computed_style_builder.h
+	internal/skia_defs.h
 	internal/skia_utils.cpp
 	internal/skia_utils.h
 )

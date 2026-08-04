@@ -1,5 +1,4 @@
 ﻿#include "skia_utils.h"
-#include <algorithm>
 
 #ifdef NANI_OS_WIN
 #include <ports/SkTypeface_win.h>

@@ -1,7 +1,8 @@
 ﻿#pragma once
+
 #include "defs.h"
-#include <yoga/Yoga.h>
-#include <yoga/style/Style.h>
+#include "yoga_defs.h"
+
 #include "../basic/marginsf.h"
 #include "../basic/rectf.h"
 

@@ -1,7 +1,8 @@
 ﻿#pragma once
 #include "computed_style.h"
+#include "yoga_defs.h"
+
 #include <pugixml.hpp>
-#include <yoga/style/Style.h>
 
 #define ComputeStyleBuilderInheritProperty(value_class, value_name)			\
 	std::optional<value_class> value_name;									\

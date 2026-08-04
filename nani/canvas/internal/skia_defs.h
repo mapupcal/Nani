@@ -1,0 +1,20 @@
+﻿#pragma once
+
+#include <core/SkBlurTypes.h>
+#include <core/SkCanvas.h>
+#include <core/SkColor.h>
+#include <core/SkColorSpace.h>
+#include <core/SkFont.h>
+#include <core/SkFontMetrics.h>
+#include <core/SkFontMgr.h>
+#include <core/SkFontTypes.h>
+#include <core/SkMaskFilter.h>
+#include <core/SkMatrix.h>
+#include <core/SkPaint.h>
+#include <core/SkPath.h>
+#include <core/SkPathBuilder.h>
+#include <core/SkRRect.h>
+#include <core/SkSurface.h>
+#include <core/SkTypeface.h>
+#include <core/SkTypes.h>
+#include <effects/SkDashPathEffect.h>

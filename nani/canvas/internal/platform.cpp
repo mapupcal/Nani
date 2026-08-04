@@ -1,12 +1,13 @@
 ﻿#include "platform.h"
 #include "window_p.h"
+
 #if defined(NANI_OS_WIN)
 #include <Windows.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #endif
+
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
-#include <map>
 
 using namespace nani::canvas::basic;
 namespace nani::canvas::internal

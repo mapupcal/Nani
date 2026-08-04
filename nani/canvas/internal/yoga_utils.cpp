@@ -1,5 +1,4 @@
 ﻿#include "yoga_utils.h"
-#include <yoga/node/Node.h>
 
 using namespace nani::canvas::basic;
 

@@ -1,10 +1,7 @@
 ﻿#include "font_manager_p.h"
 #include "skia_utils.h"
-#include <core/SkFontMgr.h>
-#include <core/SkTypes.h>
-#include <core/SkTypeface.h>
-#include <algorithm>
 #include "text/font.h"
+
 namespace
 {
 	using namespace nani::canvas::text;

@@ -1,18 +1,21 @@
 ﻿#pragma once
 
-#include <vector>
-#include <map>
 #include <algorithm>
-#include <memory>
-#include <string>
-#include <format>
-#include <string_view>
+#include <any>
 #include <cctype>
-#include <utility>
+#include <cmath>
+#include <format>
+#include <functional>
+#include <map>
+#include <memory>
+#include <numbers>
+#include <optional>
 #include <ranges>
 #include <set>
-#include <optional>
-#include <any>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 
 #if defined _DEBUG

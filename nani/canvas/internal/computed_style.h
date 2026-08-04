@@ -1,11 +1,13 @@
 ﻿#pragma once
+
+#include "yoga_defs.h"
+
 #include "../basic/color.h"
-#include "../basic/transformf.h"
 #include "../basic/geometry_defs.h"
+#include "../basic/transformf.h"
 #include "../text/font.h"
-#include "../text/text_decoration.h"
 #include "../text/text_alignment.h"
-#include <yoga/style/Style.h>
+#include "../text/text_decoration.h"
 
 namespace nani::canvas::internal
 {

@@ -3,17 +3,17 @@
 #include "window.h"
 #include "env_p.h"
 #include "platform.h"
+#include "skia_defs.h"
+#include "skia_utils.h"
 #include "events/event.h"
+#include "../visuals/view.h"
+
 #include <include/gpu/ganesh/gl/GrGLInterface.h>
 #include <include/gpu/ganesh/GrContextOptions.h>
 #include <include/gpu/ganesh/GrDirectContext.h>
 #include <include/gpu/ganesh/gl/GrGLBackendSurface.h>
 #include <include/gpu/ganesh/SkSurfaceGanesh.h>
 #include <include/gpu/ganesh/GrBackendSurface.h>
-#include <core/SkCanvas.h>
-#include <core/SkColorSpace.h>
-#include "skia_utils.h"
-#include "../visuals/view.h"
 
 using namespace nani::canvas::events;
 using namespace nani::canvas::basic;

@@ -1,7 +1,10 @@
 ﻿#pragma once
+
 #include <GLFW/glfw3.h>
 #include <include/gpu/ganesh/gl/GrGLDirectContext.h>
-#include <core/SkSurface.h>
+
+#include "skia_defs.h"
+
 #include "basic/pointf.h"
 #include "basic/sizef.h"
 #include "basic/rectf.h"

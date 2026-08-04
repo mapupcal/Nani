@@ -1,7 +1,10 @@
 ﻿#pragma once
+
 #include "defs.h"
-#include <core/SkFontMgr.h>
+#include "skia_defs.h"
+
 #include "../text/font.h"
+
 #include <unordered_map>
 
 namespace nani::canvas::internal
