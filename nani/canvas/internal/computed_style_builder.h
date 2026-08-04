@@ -73,6 +73,7 @@ namespace nani::canvas::internal
 		ComputeStyleBuilderInheritProperty(basic::scalar, Opacity);
 		ComputeStyleBuilderInheritProperty(ComputedStyle::VisualProperties::BorderRadius, Radius);
 		ComputeStyleBuilderInheritProperty(ComputedStyle::VisualProperties::Shadow, Shadow);
+		ComputeStyleBuilderInheritProperty(bool, WindowDrag);
 
 	private:
 		void LoadImpl(const pugi::xml_node& styleNode);

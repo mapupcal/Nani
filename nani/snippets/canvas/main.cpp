@@ -47,12 +47,13 @@ int main(int argc, char** argv)
 {
 	Env env(argc, argv);
 	float borderWidth = 5.0f;
-	std::shared_ptr<Window> window = std::make_shared<Window>(PointF(0, 0), SizeF(960 + borderWidth, 640 + borderWidth));
+	const float windowRadius = 12.0f;
+	std::shared_ptr<Window> window = std::make_shared<Window>(PointF(0, 0), SizeF(960 + borderWidth * 2, 640 + borderWidth * 2));
 	window->SetTitle("Nani Canvas");
 	window->SetBackgroundColor(Color(0xF4F6F8FF));
 	window->SetBorderWidth(borderWidth);
-	window->SetRadius(10.0f);
-	window->SetBorderColor(Color(0x9AA3AFFF));
+	window->SetRadius(windowRadius);
+	window->SetBorderColor(Color(0xCBD5E1FF));
 	window->SetHints(Window::Tool | Window::Top | Window::TruncatedPassThrough | Window::Resizable);
 
 	auto styles = window->RootElement()->GetStyles();
@@ -60,6 +61,7 @@ int main(int argc, char** argv)
 		<Styles>
 			<Style class="NaniWindow">
 				<FlexBox direction="ltr" flexDirection="column" />
+				<Radius radius="12" />
 				<Colors background="#F4F6F8FF"/>
 			</Style>
 
@@ -74,7 +76,7 @@ int main(int argc, char** argv)
 				<Colors background="#CBD5E180" border="#64748BCC"/>
 			</Style>
 
-			<Style class="CloseButton" inherit="Button">
+			<Style class="TitleBarButton" inherit="Button">
 				<Colors background="#E25555FF" border="#F8DADAFF"/>
 				<Transform>
 					<Scaling x="1.1" y="1.1" />
@@ -82,16 +84,17 @@ int main(int argc, char** argv)
 				<Borders value="1.5" />
 			</Style>
 
-			<Style class="CloseButton" state="hovered">
+			<Style class="TitleBarButton" state="hovered">
 				<Colors background="#F06A6AFF" border="#FFFFFFFF"/>
 				<Radius radius="12" />
 			</Style>
 
-			<Style class="TitlePanel">
+			<Style class="TitleBar" window-drag="true">
 				<FlexBox direction="ltr" flexDirection="row" alignItems="center" shrink="0" />
 				<Gaps gap="8" />
 				<Borders value="8" />
 				<Dimension width="100%" height="56" minHeight="56" />
+				<Radius tl="12" tr="12" bl="0" br="0" />
 				<Colors background="#1E293BFF" />
 			</Style>
 
@@ -120,7 +123,7 @@ int main(int argc, char** argv)
 				<Dimension width="100%" height="96" />
 			</Style>
 
-			<Style class="ShadowCard">
+			<Style class="ShadowCard" window-drag="true">
 				<Dimension width="72" height="72" />
 				<Radius radius="12" />
 				<Borders value="2" />
@@ -132,7 +135,7 @@ int main(int argc, char** argv)
 				<Shadow color="#0F172A66" x="4" y="6" b="10" s="1" />
 			</Style>
 
-			<Style class="OpacityCard">
+			<Style class="OpacityCard" >
 				<Dimension width="72" height="72" />
 				<Radius radius="12" />
 				<Colors opacity="0.45" background="#38BDF8FF" border="#0EA5E9FF" />
@@ -152,7 +155,7 @@ int main(int argc, char** argv)
 				<TextDecoration line="none" />
 			</Style>
 
-			<Style class="TitleText" inherit="DefaultText">
+			<Style class="TitleBarText" inherit="DefaultText" window-drag="true">
 				<Font family="Segoe UI" size="18" weight="bold" />
 				<FlexBox flex="1.0" />
 				<Dimension height="40" />
@@ -160,7 +163,7 @@ int main(int argc, char** argv)
 				<TextAlignment horizontal="center" vertical="center" />
 			</Style>
 
-			<Style class="TitleText" state="hovered">
+			<Style class="TitleBarText" state="hovered">
 				<Colors color="#CBD5E1FF" />
 				<TextDecoration line="linethrough" style="solid" color="#F87171FF" />
 			</Style>
@@ -263,13 +266,13 @@ int main(int argc, char** argv)
 	)");
 
 	Element* panel = new Element(window->RootElement());
-	panel->SetStyleClass(u8"TitlePanel");
+	panel->SetStyleClass(u8"TitleBar");
 
 	TextElement* title = new TextElement(panel, u8"Nani Canvas");
-	title->SetStyleClass(u8"TitleText");
+	title->SetStyleClass(u8"TitleBarText");
 
 	Element* close = new Element(panel);
-	close->SetStyleClass(u8"CloseButton");
+	close->SetStyleClass(u8"TitleBarButton");
 	EventFilterDelegate closeWatcher(close);
 	closeWatcher.delegate = [=](Event* e) -> bool {
 		if (e->type == Type::MousePress)

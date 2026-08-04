@@ -55,6 +55,7 @@ namespace nani::canvas
 		elements::Element* RootElement();
 		visuals::View* GetView() const;
 		SkCanvas* GetCanvas();
+		void SyncWindowDrag();
 
 	private:
 		void OnEvent(events::Event* e);

@@ -17,6 +17,10 @@ namespace nani::canvas::visuals
 		void Flush();
 		bool IsDirty() const;
 
+		bool IsWindowDragAt(const basic::PointF& windowPos);
+		void UpdateHoverAt(const basic::PointF& windowPos);
+		void ClearHover();
+
 	protected:
 		void OnEvent(events::Event* e) override;
 
@@ -34,6 +38,8 @@ namespace nani::canvas::visuals
 		void OnKeyRelease(events::KeyReleaseEvent* e);
 
 	private:
+		basic::PointF ToRootLocal(const basic::PointF& windowPos) const;
+		visuals::Visual* HitTestVisual(const basic::PointF& windowPos, basic::PointF& hitLocalPos);
 		elements::Element* HitTest(const basic::PointF& windowPos, basic::PointF& hitLocalPos);
 		elements::Element* HitTest(events::MouseEvent* me, basic::PointF& hitLocalPos);
 		elements::Element* HoverElement(elements::Element* candidate);

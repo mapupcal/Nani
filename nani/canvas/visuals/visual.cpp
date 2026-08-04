@@ -522,6 +522,24 @@ namespace nani::canvas::visuals
 		return PolygonF(bounds);
 	}
 
+	bool Visual::IsWindowDrag() const
+	{
+		const ComputedStyle* style = m_spComputedStyle.get();
+		return style && style->visualProps.windowDrag;
+	}
+
+	bool Visual::HasWindowDragDescendant() const
+	{
+		if (IsWindowDrag())
+			return true;
+		for (const auto& child : m_visuals)
+		{
+			if (child && child->HasWindowDragDescendant())
+				return true;
+		}
+		return false;
+	}
+
 	const RectF Visual::ContentRect() const
 	{
 		if (!m_yogaNode)

@@ -68,6 +68,7 @@ namespace nani::canvas::visuals
 			m_spVisual->CalculateLayout(size);
 
 			m_bLayoutDirty = false;
+			Window()->SyncWindowDrag();
 		}
 
 		if (m_bPaintDirty)
@@ -125,11 +126,13 @@ namespace nani::canvas::visuals
 
 	void View::OnMouseMove(events::MouseMoveEvent* e)
 	{
-		if (PointF hitLocalPos; elements::Element* hitElement = HitTest(e, hitLocalPos))
-		{
-			MouseMoveEvent me(hitLocalPos, e->globalPos);
-			hitElement->FireEvent(&me);
-		}
+		PointF hitLocalPos;
+		elements::Element* hitElement = HitTest(e, hitLocalPos);
+		if (!hitElement)
+			return;
+
+		MouseMoveEvent me(hitLocalPos, e->globalPos);
+		hitElement->FireEvent(&me);
 	}
 
 	void View::OnMousePress(events::MousePressEvent* e)
@@ -177,20 +180,48 @@ namespace nani::canvas::visuals
 
 	}
 
-	elements::Element* View::HitTest(const PointF& windowPos, PointF& hitLocalPos)
+	PointF View::ToRootLocal(const PointF& windowPos) const
+	{
+		PointF pos = windowPos;
+		pos -= Window()->ClientRect().TopLeft();
+		if (m_spVisual)
+			pos = m_spVisual->Transform().Reversed().ApplyTo(pos);
+		return pos;
+	}
+
+	visuals::Visual* View::HitTestVisual(const PointF& windowPos, PointF& hitLocalPos)
 	{
 		if (!m_spVisual)
 			return nullptr;
 
-		PointF pos = windowPos;
-		RectF clientRect = Window()->ClientRect();
-		pos -= clientRect.TopLeft();
-		pos = m_spVisual->Transform().Reversed().ApplyTo(pos);
-
 		visuals::Visual* hitVisual = nullptr;
-		if (!m_spVisual->HitTest(pos, &hitVisual, hitLocalPos))
+		if (!m_spVisual->HitTest(ToRootLocal(windowPos), &hitVisual, hitLocalPos))
 			return nullptr;
+		return hitVisual;
+	}
+
+	elements::Element* View::HitTest(const PointF& windowPos, PointF& hitLocalPos)
+	{
+		visuals::Visual* hitVisual = HitTestVisual(windowPos, hitLocalPos);
 		return hitVisual ? hitVisual->Element() : nullptr;
+	}
+
+	bool View::IsWindowDragAt(const PointF& windowPos)
+	{
+		PointF hitLocalPos;
+		visuals::Visual* hit = HitTestVisual(windowPos, hitLocalPos);
+		return hit && hit->IsWindowDrag();
+	}
+
+	void View::UpdateHoverAt(const PointF& windowPos)
+	{
+		PointF hitLocalPos;
+		HoverElement(HitTest(windowPos, hitLocalPos));
+	}
+
+	void View::ClearHover()
+	{
+		HoverElement(nullptr);
 	}
 
 	elements::Element* View::HitTest(events::MouseEvent* e, PointF& hitLocalPos)

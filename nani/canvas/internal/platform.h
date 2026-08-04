@@ -12,5 +12,6 @@ namespace nani::canvas::internal
 		static void MakeToolWindow(GLFWwindow* window, bool bTool);
 		static void MakeResizableWindow(GLFWwindow* window, bool bResizable);
 		static void MakeTruncatedPassThroughWindow(GLFWwindow* window, bool bPassThrough);
+		static void SyncCustomWndProc(GLFWwindow* window);
 	};
 }

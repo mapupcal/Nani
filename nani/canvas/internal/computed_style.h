@@ -67,6 +67,7 @@ namespace nani::canvas::internal
 			basic::scalar opacity = 1.0f;
 			BorderRadius radius;
 			Shadow shadow;
+			bool windowDrag = false;
 		};
 	public:
 		LayoutProperties layoutProps;

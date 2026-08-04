@@ -43,6 +43,7 @@ namespace nani::canvas::internal
 		SkCanvas* GetCanvas();
 
 		void Repaint();
+		void SyncWindowDrag();
 
 	public:
 		void OnGLFWWindowSizeChanged(int width, int height);
@@ -72,5 +73,7 @@ namespace nani::canvas::internal
 		sk_sp<SkSurface> skiaSurface;
 
 		void* _originalWndProc = nullptr;
+		bool resizableEnabled = false;
+		bool windowDragEnabled = false;
 	};
 }

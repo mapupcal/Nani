@@ -169,6 +169,11 @@ namespace nani::canvas
 		return m_pImpl->GetCanvas();
 	}
 
+	void Window::SyncWindowDrag()
+	{
+		m_pImpl->SyncWindowDrag();
+	}
+
 	void Window::OnEvent(Event* e)
 	{
 		switch (e->type)

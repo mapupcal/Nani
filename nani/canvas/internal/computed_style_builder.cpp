@@ -83,6 +83,17 @@ namespace
 		return std::optional<scalar>();
 	}
 
+	std::optional<bool> AsBool(const std::string_view& str)
+	{
+		if (str.empty())
+			return std::optional<bool>();
+		if (str == "true" || str == "1")
+			return true;
+		if (str == "false" || str == "0")
+			return false;
+		return std::optional<bool>();
+	}
+
 	std::optional<FloatOptional> AsYogaFloatOptional(const std::string_view& str)
 	{
 		auto scalar = AsScalar(str);
@@ -387,6 +398,11 @@ namespace nani::canvas::internal
 {
 	void ComputedStyleBuilder::Load(const pugi::xml_node& styleNode)
 	{
+		if (auto attr = styleNode.attribute("window-drag"); !attr.empty())
+		{
+			if (auto v = AsBool(attr.as_string()); v.has_value())
+				WindowDrag = v;
+		}
 		LoadImpl(styleNode);
 	}
 
@@ -511,6 +527,9 @@ namespace nani::canvas::internal
 
 		if (auto v = ComputeShadow(); v.has_value())
 			visualPropsRef.shadow = v.value();
+
+		if (auto v = ComputeWindowDrag(); v.has_value())
+			visualPropsRef.windowDrag = v.value();
 
 		return computedStyle;
 	}

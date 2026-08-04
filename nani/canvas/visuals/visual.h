@@ -29,6 +29,9 @@ namespace nani::canvas::visuals
 		void Paint(SkCanvas* canvas, const basic::RectF& dirtyRect);
 		virtual void PaintOverride(SkCanvas* canvas, const basic::RectF& dirtyRect);
 
+		bool IsWindowDrag() const;
+		bool HasWindowDragDescendant() const;
+
 	public:
 		bool Filter(events::EventTarget* target, events::Event* e) override;
 

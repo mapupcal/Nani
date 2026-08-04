@@ -7,6 +7,7 @@
 #include "skia_utils.h"
 #include "events/event.h"
 #include "../visuals/view.h"
+#include "../visuals/visual.h"
 
 #include <include/gpu/ganesh/gl/GrGLInterface.h>
 #include <include/gpu/ganesh/GrContextOptions.h>
@@ -323,6 +324,11 @@ namespace nani::canvas::internal
 
 	void WindowPrivate::OnGLFWWindowMouseEnter(bool bEnter)
 	{
+		if (!bEnter)
+		{
+			if (visuals::View* view = window->GetView())
+				view->ClearHover();
+		}
 		Type type = bEnter ? Type::Enter : Type::Leave;
 		Event event(type);
 		window->FireEvent(&event);
@@ -377,6 +383,23 @@ namespace nani::canvas::internal
 			KeyReleaseEvent event(key, modifier, scancode);
 			window->FireEvent(&event);
 		}
+	}
+
+	void WindowPrivate::SyncWindowDrag()
+	{
+		bool enabled = false;
+		if (visuals::View* view = window ? window->GetView() : nullptr)
+		{
+			if (visuals::Visual* root = view->Visual())
+				enabled = root->HasWindowDragDescendant();
+		}
+
+		if (windowDragEnabled == enabled)
+			return;
+
+		windowDragEnabled = enabled;
+		if (glfwWindow)
+			Platform::SyncCustomWndProc(glfwWindow);
 	}
 
 	void WindowPrivate::onTick()

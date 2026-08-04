@@ -51,7 +51,8 @@ namespace nani::canvas::internal
 			lhs.transform == rhs.transform &&
 			lhs.transformOrigin == rhs.transformOrigin &&
 			(lhs.radius == rhs.radius) &&
-			(lhs.shadow == rhs.shadow);
+			(lhs.shadow == rhs.shadow) &&
+			(lhs.windowDrag == rhs.windowDrag);
 	}
 
 	const ComputedStyle::DiffResult ComputedStyle::Diff(const ComputedStyle* other) const

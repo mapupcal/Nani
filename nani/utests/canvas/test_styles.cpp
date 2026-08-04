@@ -71,6 +71,38 @@ TEST_F(StylesTest, LoadFromXML_WithColors)
 }
 
 // -----------------------------------------------------------
+// window-drag attribute on <Style>
+// -----------------------------------------------------------
+TEST_F(StylesTest, LoadFromXML_WindowDragAttribute)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="DragBar" window-drag="true">
+				<Dimension width="100" height="40" />
+			</Style>
+			<Style class="NoDrag" window-drag="false">
+				<Dimension width="50" height="50" />
+			</Style>
+			<Style class="DefaultDrag">
+				<Dimension width="50" height="50" />
+			</Style>
+		</Styles>
+	)");
+
+	auto drag = styles_->Compute(u8"DragBar");
+	ASSERT_NE(drag, nullptr);
+	EXPECT_TRUE(drag->visualProps.windowDrag);
+
+	auto noDrag = styles_->Compute(u8"NoDrag");
+	ASSERT_NE(noDrag, nullptr);
+	EXPECT_FALSE(noDrag->visualProps.windowDrag);
+
+	auto defaults = styles_->Compute(u8"DefaultDrag");
+	ASSERT_NE(defaults, nullptr);
+	EXPECT_FALSE(defaults->visualProps.windowDrag);
+}
+
+// -----------------------------------------------------------
 // Opacity
 // -----------------------------------------------------------
 TEST_F(StylesTest, LoadFromXML_WithOpacity)

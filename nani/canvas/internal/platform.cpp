@@ -1,10 +1,15 @@
 ﻿#include "platform.h"
 #include "window_p.h"
+#include "../visuals/view.h"
+#include "../window.h"
 
 #if defined(NANI_OS_WIN)
 #include <Windows.h>
+#include <windowsx.h>
 #define GLFW_EXPOSE_NATIVE_WIN32
 #endif
+
+#include <map>
 
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
@@ -62,14 +67,105 @@ namespace nani::canvas::internal
 #ifdef NANI_OS_WIN
 	namespace
 	{
-		static std::map<HWND, WindowPrivate*> g_hwnd2ResizableWindowPrivates;
+		static std::map<HWND, WindowPrivate*> g_hwnd2WindowPrivates;
 		LRESULT CALLBACK CustomWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 		using _WndProcType = decltype(CustomWndProc);
 
+		void EnsureCustomWndProc(HWND hwnd, WindowPrivate* pImpl)
+		{
+			if (!pImpl || pImpl->_originalWndProc)
+				return;
+			g_hwnd2WindowPrivates.insert({ hwnd, pImpl });
+			pImpl->_originalWndProc = (void*)::SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)CustomWndProc);
+		}
+
+		void ReleaseCustomWndProcIfUnused(HWND hwnd, WindowPrivate* pImpl)
+		{
+			if (!pImpl || !pImpl->_originalWndProc)
+				return;
+			if (pImpl->resizableEnabled || pImpl->windowDragEnabled)
+				return;
+
+			::SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)pImpl->_originalWndProc);
+			pImpl->_originalWndProc = nullptr;
+			g_hwnd2WindowPrivates.erase(hwnd);
+		}
+
+		LRESULT HitTestResizable(WindowPrivate* pImpl, POINT pt)
+		{
+			int width = (int)pImpl->size.width;
+			int height = (int)pImpl->size.height;
+			int borderWidth = (int)pImpl->borderWidth;
+			int radius = (int)pImpl->radius;
+
+			if (pt.x < radius && pt.y < radius)
+			{
+				int dx = pt.x - radius;
+				int dy = pt.y - radius;
+				if (dx * dx + dy * dy > radius * radius)
+					return HTNOWHERE;
+				else
+					return HTTOPLEFT;
+			}
+
+			if (pt.x > width - radius && pt.y < radius)
+			{
+				int dx = pt.x - (width - radius);
+				int dy = pt.y - radius;
+				if (dx * dx + dy * dy > radius * radius)
+					return HTNOWHERE;
+				else
+					return HTTOPRIGHT;
+			}
+
+			if (pt.x < radius && pt.y > height - radius)
+			{
+				int dx = pt.x - radius;
+				int dy = pt.y - (height - radius);
+				if (dx * dx + dy * dy > radius * radius)
+					return HTNOWHERE;
+				else
+					return HTBOTTOMLEFT;
+			}
+
+			if (pt.x > width - radius && pt.y > height - radius)
+			{
+				int dx = pt.x - (width - radius);
+				int dy = pt.y - (height - radius);
+				if (dx * dx + dy * dy > radius * radius)
+					return HTNOWHERE;
+				else
+					return HTBOTTOMRIGHT;
+			}
+
+			if (pt.y < borderWidth)
+			{
+				if (pt.x < borderWidth) return HTTOPLEFT;
+				if (pt.x > width - borderWidth) return HTTOPRIGHT;
+				return HTTOP;
+			}
+
+			if (pt.y > height - borderWidth)
+			{
+				if (pt.x < borderWidth)
+					return HTBOTTOMLEFT;
+				if (pt.x > width - borderWidth)
+					return HTBOTTOMRIGHT;
+				return HTBOTTOM;
+			}
+
+			if (pt.x < borderWidth)
+				return HTLEFT;
+			if (pt.x > width - borderWidth)
+				return HTRIGHT;
+
+			return HTCLIENT;
+		}
+
 		LRESULT CALLBACK CustomWndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 		{
-			auto iter = g_hwnd2ResizableWindowPrivates.find(hwnd);
-			if (iter == g_hwnd2ResizableWindowPrivates.end())
+			auto iter = g_hwnd2WindowPrivates.find(hwnd);
+			if (iter == g_hwnd2WindowPrivates.end())
 				return ::DefWindowProc(hwnd, msg, wParam, lParam);
 
 			WindowPrivate* pImpl = iter->second;
@@ -86,89 +182,67 @@ namespace nani::canvas::internal
 			}
 			case WM_NCHITTEST:
 			{
-				POINT pt = { LOWORD(lParam), HIWORD(lParam) };
+				POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 				::ScreenToClient(hwnd, &pt);
-				int width = pImpl->size.width;
-				int height = pImpl->size.height;
-				int borderWidth = pImpl->borderWidth;
-				int radius = pImpl->radius;
 
-				if (pt.x < radius && pt.y < radius)
+				const PointF localPt((scalar)pt.x, (scalar)pt.y);
+				visuals::View* view = pImpl->window ? pImpl->window->GetView() : nullptr;
+
+				if (pImpl->resizableEnabled)
 				{
-					int dx = pt.x - radius;
-					int dy = pt.y - radius;
-					if (dx * dx + dy * dy > radius * radius)
-						return HTNOWHERE;
-					else
-						return HTTOPLEFT;
+					LRESULT borderHit = HitTestResizable(pImpl, pt);
+					if (borderHit != HTCLIENT)
+					{
+						if (view)
+							view->ClearHover();
+						return borderHit;
+					}
 				}
 
-				if (pt.x > width - radius && pt.y < radius)
+				if (pImpl->windowDragEnabled && view && view->IsWindowDragAt(localPt))
 				{
-					int dx = pt.x - (width - radius);
-					int dy = pt.y - radius;
-					if (dx * dx + dy * dy > radius * radius)
-						return HTNOWHERE;
-					else
-						return HTTOPRIGHT;
+					view->UpdateHoverAt(localPt);
+					return HTCAPTION;
 				}
-
-				if (pt.x < radius && pt.y > height - radius)
-				{
-					int dx = pt.x - radius;
-					int dy = pt.y - (height - radius);
-					if (dx * dx + dy * dy > radius * radius)
-						return HTNOWHERE;
-					else
-						return HTBOTTOMLEFT;
-				}
-
-				if (pt.x > width - radius && pt.y > height - radius)
-				{
-					int dx = pt.x - (width - radius);
-					int dy = pt.y - (height - radius);
-					if (dx * dx + dy * dy > radius * radius)
-						return HTNOWHERE;
-					else
-						return HTBOTTOMRIGHT;
-				}
-
-				if (pt.y < borderWidth)
-				{
-					if (pt.x < borderWidth) return HTTOPLEFT;
-					if (pt.x > width - borderWidth) return HTTOPRIGHT;
-					return HTTOP;
-				}
-
-				if (pt.y > height - borderWidth)
-				{
-					if (pt.x < borderWidth)
-						return HTBOTTOMLEFT;
-					if (pt.x > width - borderWidth)
-						return HTBOTTOMRIGHT;
-					return HTBOTTOM;
-				}
-
-				if (pt.x < borderWidth) 
-					return HTLEFT;
-				if (pt.x > width - borderWidth)
-					return HTRIGHT;
 
 				return HTCLIENT;
 			}
 			case WM_DESTROY:
 			{
 				auto originalWndProc = pImpl->_originalWndProc;
-				g_hwnd2ResizableWindowPrivates.erase(hwnd);
+				g_hwnd2WindowPrivates.erase(hwnd);
 				::SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)(_WndProcType*)(originalWndProc));
 				pImpl->_originalWndProc = nullptr;
+				pImpl->resizableEnabled = false;
+				pImpl->windowDragEnabled = false;
 				return ::CallWindowProc((_WndProcType*)(originalWndProc), hwnd, msg, wParam, lParam);
 			}
 			}
 			return ::CallWindowProc((_WndProcType*)(pImpl->_originalWndProc), hwnd, msg, wParam, lParam);
 		}
+
 	}
 #endif
+
+	void Platform::SyncCustomWndProc(GLFWwindow* window)
+	{
+#ifdef NANI_OS_WIN
+		if (!window)
+			return;
+		HWND hwnd = glfwGetWin32Window(window);
+		WindowPrivate* pImpl = reinterpret_cast<WindowPrivate*>(glfwGetWindowUserPointer(window));
+		if (!pImpl)
+			return;
+
+		if (pImpl->resizableEnabled || pImpl->windowDragEnabled)
+			EnsureCustomWndProc(hwnd, pImpl);
+		else
+			ReleaseCustomWndProcIfUnused(hwnd, pImpl);
+#else
+		(void)window;
+#endif
+	}
+
 	void Platform::MakeResizableWindow(GLFWwindow* window, bool bResizable)
 	{
 #ifdef NANI_OS_WIN
@@ -178,25 +252,16 @@ namespace nani::canvas::internal
 		WindowPrivate* pImpl = reinterpret_cast<WindowPrivate*>(glfwGetWindowUserPointer(window));
 		if (!pImpl)
 			return;
+
+		pImpl->resizableEnabled = bResizable;
+		LONG style = ::GetWindowLong(hwnd, GWL_STYLE);
 		if (bResizable)
-		{
-			if (!pImpl->_originalWndProc)
-			{
-				SetWindowLong(hwnd, GWL_STYLE, GetWindowLong(hwnd, GWL_STYLE) | WS_THICKFRAME);
-				g_hwnd2ResizableWindowPrivates.insert({ hwnd, pImpl });
-				pImpl->_originalWndProc = (void*)::SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)CustomWndProc);
-			}
-		}
+			style |= WS_THICKFRAME;
 		else
-		{
-			if (pImpl->_originalWndProc)
-			{
-				SetWindowLong(hwnd, GWL_STYLE, GetWindowLong(hwnd, GWL_STYLE) & ~WS_THICKFRAME);
-				::SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR)pImpl->_originalWndProc);
-				pImpl->_originalWndProc = nullptr;
-				g_hwnd2ResizableWindowPrivates.erase(hwnd);
-			}
-		}
+			style &= ~WS_THICKFRAME;
+		::SetWindowLong(hwnd, GWL_STYLE, style);
+
+		SyncCustomWndProc(window);
 #else
 		NANI_ASSERT(false);
 		NANI_MESSAGE("Not Implement!")

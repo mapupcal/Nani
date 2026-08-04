@@ -161,4 +161,33 @@
         <Font family="Segoe UI" size="14" style="italic" weight="normal" />
         <TextDecoration line="linethrough" style="solid" color="#808080FF" />
     </Style>
+
+    <!-- ============================================================
+         window-drag attribute on <Style>:
+           window-drag="true"  — hit visual is a window drag region (HTCAPTION)
+           window-drag="false" — default; not a drag region
+         Only the hit visual itself is checked (no ancestor inheritance).
+         Title-bar chrome marks the panel and title text; buttons stay false.
+         ============================================================ -->
+    <Style class="TitleBar" window-drag="true">
+        <FlexBox flexDirection="row" direction="ltr" alignItems="center" shrink="0" />
+        <Dimension width="100%" height="56" minHeight="56" />
+        <Radius tl="12" tr="12" bl="0" br="0" />
+        <Colors background="#1E293BFF" />
+    </Style>
+
+    <Style class="TitleBarText" inherit="DefaultText" window-drag="true">
+        <Font family="Segoe UI" size="18" weight="bold" />
+        <FlexBox flex="1.0" />
+        <Dimension height="40" />
+        <Colors color="#F8FAFCFF" />
+        <TextAlignment horizontal="center" vertical="center" />
+    </Style>
+
+    <Style class="TitleBarButton">
+        <Dimension width="50" height="50" minWidth="50" minHeight="50" maxWidth="50" maxHeight="50" />
+        <Radius radius="8" />
+        <Colors background="#E25555FF" border="#F8DADAFF" />
+        <Borders value="1.5" />
+    </Style>
 </Styles>
