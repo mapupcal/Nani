@@ -13,6 +13,12 @@ namespace nani::canvas::text
 		Right
 	};
 
+	enum class TextWrapMode
+	{
+		NoWrap,
+		Wrap
+	};
+
 	enum class FontWeight : basic::dword
 	{
 		Thin = 100,

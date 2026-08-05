@@ -1,4 +1,5 @@
 ﻿#include <gtest/gtest.h>
+#include <limits>
 #include "defs.h"
 #include "canvas/elements/text_element.h"
 #include "canvas/visuals/text_visual.h"
@@ -35,6 +36,12 @@ protected:
 				</Style>
 				<Style class="CenterText" inherit="FixedText">
 					<TextAlignment horizontal="right" vertical="bottom" />
+				</Style>
+				<Style class="WrapText">
+					<Font family="Segoe UI" size="14" style="normal" weight="normal" />
+					<Colors color="#000000FF" />
+					<Dimension width="120" />
+					<TextAlignment horizontal="left" vertical="top" />
 				</Style>
 			</Styles>
 		)");
@@ -129,6 +136,65 @@ TEST_F(TextElementTest, ElideModeRoundTrip)
 
 	text->SetElideMode(TextElideMode::Right);
 	EXPECT_EQ(text->ElideMode(), TextElideMode::Right);
+}
+
+TEST_F(TextElementTest, WrapModeRoundTrip)
+{
+	TextElement* text = new TextElement(window_->RootElement(), u8"Wrap me");
+	EXPECT_EQ(text->WrapMode(), TextWrapMode::NoWrap);
+
+	text->SetWrapMode(TextWrapMode::Wrap);
+	EXPECT_EQ(text->WrapMode(), TextWrapMode::Wrap);
+
+	text->SetWrapMode(TextWrapMode::NoWrap);
+	EXPECT_EQ(text->WrapMode(), TextWrapMode::NoWrap);
+}
+
+TEST_F(TextElementTest, HardNewlineIncreasesLayoutHeight)
+{
+	TextElement* single = new TextElement(window_->RootElement(), u8"Hello");
+	single->SetElideMode(TextElideMode::None);
+	TextElement* multi = new TextElement(window_->RootElement(), u8"Hello\nWorld");
+	multi->SetElideMode(TextElideMode::None);
+
+	auto singleVisual = std::dynamic_pointer_cast<TextVisual>(
+		single->CreateVisual(window_->GetView(), nullptr));
+	auto multiVisual = std::dynamic_pointer_cast<TextVisual>(
+		multi->CreateVisual(window_->GetView(), nullptr));
+	ASSERT_NE(singleVisual, nullptr);
+	ASSERT_NE(multiVisual, nullptr);
+	singleVisual->BuildVisuals();
+	multiVisual->BuildVisuals();
+	// Yoga treats NaN as undefined; Exact available height would force stretch.
+	const float undefined = std::numeric_limits<float>::quiet_NaN();
+	singleVisual->CalculateLayout(SizeF(600.0f, undefined));
+	multiVisual->CalculateLayout(SizeF(600.0f, undefined));
+
+	EXPECT_GT(multiVisual->LayoutRect().Height(), singleVisual->LayoutRect().Height() * 1.5f);
+}
+
+TEST_F(TextElementTest, SoftWrapIncreasesLayoutHeight)
+{
+	TextElement* text = new TextElement(
+		window_->RootElement(),
+		u8"one two three four five six seven eight");
+	text->SetStyleClass(u8"WrapText");
+	text->SetWrapMode(TextWrapMode::Wrap);
+	text->SetElideMode(TextElideMode::None);
+
+	auto textVisual = std::dynamic_pointer_cast<TextVisual>(
+		text->CreateVisual(window_->GetView(), nullptr));
+	ASSERT_NE(textVisual, nullptr);
+	textVisual->BuildVisuals();
+	const float undefined = std::numeric_limits<float>::quiet_NaN();
+	textVisual->CalculateLayout(SizeF(120.0f, undefined));
+
+	Font font;
+	font.SetFamily(u8"Segoe UI");
+	font.SetSize(14.0f);
+	FontMetrics metrics(font);
+	EXPECT_GT(textVisual->LayoutRect().Height(), metrics.LineHeight() * 1.5f);
+	EXPECT_FLOAT_EQ(textVisual->LayoutRect().Width(), 120.0f);
 }
 
 TEST_F(TextElementTest, LayoutUsesIntrinsicSize)

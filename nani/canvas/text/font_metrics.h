@@ -33,6 +33,13 @@ namespace nani::canvas::text
 			const std::u8string_view& ellipsis = u8"…"
 		) const;
 
+		// Hard-breaks on '\n'. When wrap is true and maxWidth > 0, soft-wraps each
+		// hard line to maxWidth (preferring spaces, otherwise grapheme/UTF-8 chars).
+		std::vector<std::u8string> LayoutLines(
+			const std::u8string_view& text,
+			basic::single maxWidth,
+			bool wrap) const;
+
 	private:
 		std::shared_ptr<SkFont> m_spSkFont;
 	};

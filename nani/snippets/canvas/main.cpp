@@ -12,6 +12,7 @@
 using namespace nani::canvas::basic;
 using namespace nani::canvas::events;
 using namespace nani::canvas::elements;
+using namespace nani::canvas::text;
 using namespace nani::canvas;
 
 struct EventFilterDelegate : public EventFilter
@@ -262,6 +263,23 @@ int main(int argc, char** argv)
 				<Colors color="#1D4ED8FF" />
 				<TextDecoration line="underline" style="solid" color="#2563EBFF" />
 			</Style>
+
+			<Style class="MultiLineLabel" inherit="DefaultText">
+				<Dimension width="100%" height="22" />
+				<FlexBox shrink="0" />
+				<Colors color="#64748BFF" />
+				<TextAlignment horizontal="left" vertical="center" />
+			</Style>
+
+			<Style class="MultiLineDemo" inherit="DefaultText">
+				<Dimension width="100%" />
+				<FlexBox shrink="0" />
+				<Paddings value="10" />
+				<Borders value="1" />
+				<Radius radius="8" />
+				<Colors color="#0F172AFF" background="#F8FAFCFF" border="#94A3B8FF" />
+				<TextAlignment horizontal="left" vertical="top" />
+			</Style>
 		</Styles>
 	)");
 
@@ -314,6 +332,18 @@ int main(int argc, char** argv)
 		TextElement* text = new TextElement(demoLeft, demo.label);
 		text->SetStyleClass(demo.styleClass);
 	}
+
+	TextElement* multiLabel = new TextElement(demoLeft, u8"Multi-line text — hard \\n + soft wrap");
+	multiLabel->SetStyleClass(u8"MultiLineLabel");
+
+	TextElement* multiLine = new TextElement(
+		demoLeft,
+		u8"Line one via hard break.\nLine two via hard break.\n"
+		u8"Then a longer paragraph soft-wraps inside the fixed width: "
+		u8"alpha bravo charlie delta echo foxtrot golf hotel india juliet.");
+	multiLine->SetStyleClass(u8"MultiLineDemo");
+	multiLine->SetWrapMode(TextWrapMode::Wrap);
+	multiLine->SetElideMode(TextElideMode::None);
 
 	Element* demoRight = new Element(demoPanel);
 	demoRight->SetStyleClass(u8"DemoRight");

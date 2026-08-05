@@ -31,6 +31,9 @@ namespace nani::canvas::elements
 
 	void TextElement::SetElideMode(text::TextElideMode mode)
 	{
+		if (m_elideMode == mode)
+			return;
+
 		m_elideMode = mode;
 		ElementTextChangedEvent event(this);
 		FireEvent(&event);
@@ -39,6 +42,21 @@ namespace nani::canvas::elements
 	text::TextElideMode TextElement::ElideMode() const
 	{
 		return m_elideMode;
+	}
+
+	void TextElement::SetWrapMode(text::TextWrapMode mode)
+	{
+		if (m_wrapMode == mode)
+			return;
+
+		m_wrapMode = mode;
+		ElementTextChangedEvent event(this);
+		FireEvent(&event);
+	}
+
+	text::TextWrapMode TextElement::WrapMode() const
+	{
+		return m_wrapMode;
 	}
 
 	std::shared_ptr<Visual> TextElement::CreateVisual(View* view, Visual* visualParent)

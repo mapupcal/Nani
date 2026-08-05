@@ -153,34 +153,17 @@ namespace nani::canvas::text
 			return (c & 0xC0) == 0x80;
 		}
 
-		// Helper: Find a valid UTF-8 character boundary
-		// Returns the nearest valid boundary at or before the given position
+		// Helper: Floor to the UTF-8 character start at or before pos.
+		// Must not move forward — doing so makes elide binary-search set hi inside
+		// continuation bytes and loop forever when a multibyte glyph does not fit.
 		size_t FindUtf8Boundary(const char* data, size_t pos, size_t length)
 		{
 			if (pos >= length)
-			{
 				return length;
-			}
 
-			// Move forward to find a valid boundary
-			size_t boundary = pos;
-			while (boundary < length && IsUtf8ContinuationByte(data[boundary]))
-			{
-				boundary++;
-			}
-
-			// If we went past the end or couldn't find a boundary,
-			// try moving backward instead
-			if (boundary >= length)
-			{
-				boundary = pos;
-				while (boundary > 0 && IsUtf8ContinuationByte(data[boundary]))
-				{
-					boundary--;
-				}
-			}
-
-			return boundary;
+			while (pos > 0 && IsUtf8ContinuationByte(data[pos]))
+				--pos;
+			return pos;
 		}
 
 		// Helper: Find the start of the previous character
@@ -230,30 +213,32 @@ namespace nani::canvas::text
 				return std::u8string(ellipsis);
 			}
 
-			// Binary search for the maximum bytes that fit
+			// Binary search over UTF-8 character prefix lengths
 			size_t lo = 0, hi = byteLength;
 			size_t bestFit = 0;
 
 			while (lo <= hi && lo < byteLength)
 			{
 				size_t mid = lo + (hi - lo) / 2;
-				size_t boundary = FindUtf8Boundary(utf8Data, mid, byteLength);
+				size_t charStart = FindUtf8Boundary(utf8Data, mid, byteLength);
+				size_t prefixLen = (charStart < byteLength)
+					? NextCharStart(utf8Data, charStart, byteLength)
+					: byteLength;
 
-				if (boundary == 0)
-				{
-					break;
-				}
-
-				SkScalar width = skFont->measureText(utf8Data, boundary, SkTextEncoding::kUTF8);
+				SkScalar width = skFont->measureText(utf8Data, prefixLen, SkTextEncoding::kUTF8);
 
 				if (width <= availableWidth)
 				{
-					bestFit = boundary;
-					lo = boundary + 1;
+					bestFit = prefixLen;
+					lo = prefixLen;
+				}
+				else if (charStart == 0)
+				{
+					break;
 				}
 				else
 				{
-					hi = boundary - 1;
+					hi = charStart - 1;
 				}
 			}
 
@@ -291,7 +276,7 @@ namespace nani::canvas::text
 				return std::u8string(ellipsis);
 			}
 
-			// Binary search for the best start position
+			// Binary search for the earliest UTF-8 start that still fits
 			size_t lo = 0, hi = byteLength;
 			size_t bestStart = byteLength;
 
@@ -302,7 +287,9 @@ namespace nani::canvas::text
 
 				if (boundary >= byteLength)
 				{
-					hi = boundary - 1;
+					if (byteLength == 0)
+						break;
+					hi = byteLength - 1;
 					continue;
 				}
 
@@ -313,11 +300,13 @@ namespace nani::canvas::text
 				if (width <= availableWidth)
 				{
 					bestStart = boundary;
-					hi = boundary - 1;  // Try to include more text
+					if (boundary == 0)
+						break;
+					hi = boundary - 1;  // Try to keep more text on the left
 				}
 				else
 				{
-					lo = boundary + 1;  // Include less text
+					lo = NextCharStart(utf8Data, boundary, byteLength);
 				}
 			}
 
@@ -444,6 +433,84 @@ namespace nani::canvas::text
 			return result;
 		}
 
+		bool IsAsciiSpace(char ch)
+		{
+			return ch == ' ' || ch == '\t';
+		}
+
+		std::vector<std::u8string> WrapHardLine(
+			const std::shared_ptr<SkFont>& skFont,
+			const std::u8string_view& hardLine,
+			basic::single maxWidth)
+		{
+			std::vector<std::u8string> lines;
+			if (hardLine.empty())
+			{
+				lines.emplace_back();
+				return lines;
+			}
+
+			const char* data = reinterpret_cast<const char*>(hardLine.data());
+			const size_t length = hardLine.size();
+			const SkScalar fullWidth = skFont->measureText(data, length, SkTextEncoding::kUTF8);
+			if (fullWidth <= maxWidth)
+			{
+				lines.emplace_back(hardLine);
+				return lines;
+			}
+
+			size_t lineStart = 0;
+			while (lineStart < length)
+			{
+				size_t pos = lineStart;
+				size_t lastFit = lineStart;
+				size_t lastBreak = std::string_view::npos;
+
+				while (pos < length)
+				{
+					const size_t next = NextCharStart(data, pos, length);
+					const SkScalar width = skFont->measureText(
+						data + lineStart,
+						next - lineStart,
+						SkTextEncoding::kUTF8);
+					if (width > maxWidth)
+						break;
+
+					lastFit = next;
+					if (IsAsciiSpace(data[pos]))
+						lastBreak = pos;
+					pos = next;
+				}
+
+				size_t breakAt = lastFit;
+				size_t nextStart = lastFit;
+				if (lastFit == lineStart)
+				{
+					breakAt = NextCharStart(data, lineStart, length);
+					nextStart = breakAt;
+				}
+				else if (pos < length && lastBreak != std::string_view::npos && lastBreak > lineStart)
+				{
+					breakAt = lastBreak;
+					nextStart = lastBreak;
+					while (nextStart < length && IsAsciiSpace(data[nextStart]))
+						++nextStart;
+				}
+
+				lines.emplace_back(
+					reinterpret_cast<const char8_t*>(data + lineStart),
+					breakAt - lineStart);
+
+				if (nextStart <= lineStart)
+					nextStart = NextCharStart(data, lineStart, length);
+				lineStart = nextStart;
+			}
+
+			if (lines.empty())
+				lines.emplace_back();
+			return lines;
+		}
+
 	}
 
 	const std::u8string FontMetrics::ElidedText(
@@ -503,5 +570,46 @@ namespace nani::canvas::text
 		default:
 			return std::u8string(text);
 		}
+	}
+
+	std::vector<std::u8string> FontMetrics::LayoutLines(
+		const std::u8string_view& text,
+		basic::single maxWidth,
+		bool wrap) const
+	{
+		std::vector<std::u8string> lines;
+		if (text.empty())
+			return lines;
+
+		const bool softWrap = wrap && maxWidth > 0.0f;
+		size_t start = 0;
+		for (size_t i = 0; i <= text.size(); ++i)
+		{
+			const bool atEnd = i == text.size();
+			const bool atBreak = !atEnd && text[i] == u8'\n';
+			if (!atEnd && !atBreak)
+				continue;
+
+			size_t lineEnd = i;
+			if (atBreak && lineEnd > start && text[lineEnd - 1] == u8'\r')
+				--lineEnd;
+
+			const std::u8string_view hardLine = text.substr(start, lineEnd - start);
+			if (softWrap)
+			{
+				auto wrapped = WrapHardLine(m_spSkFont, hardLine, maxWidth);
+				lines.insert(lines.end(), wrapped.begin(), wrapped.end());
+			}
+			else
+			{
+				lines.emplace_back(hardLine);
+			}
+
+			if (atEnd)
+				break;
+			start = i + 1;
+		}
+
+		return lines;
 	}
 }

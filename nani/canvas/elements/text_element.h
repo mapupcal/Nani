@@ -19,6 +19,9 @@ namespace nani::canvas::elements
 		void SetElideMode(text::TextElideMode mode);
 		text::TextElideMode ElideMode() const;
 
+		void SetWrapMode(text::TextWrapMode mode);
+		text::TextWrapMode WrapMode() const;
+
 		std::shared_ptr<visuals::Visual> CreateVisual(
 			visuals::View* view,
 			visuals::Visual* visualParent) override;
@@ -26,5 +29,6 @@ namespace nani::canvas::elements
 	private:
 		std::u8string m_text;
 		text::TextElideMode m_elideMode = text::TextElideMode::Right;
+		text::TextWrapMode m_wrapMode = text::TextWrapMode::NoWrap;
 	};
 }

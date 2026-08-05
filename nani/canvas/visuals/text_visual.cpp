@@ -181,30 +181,49 @@ namespace nani::canvas::visuals
 				return { 0.0f, 0.0f };
 
 			FontMetrics metrics(style->visualProps.font);
-			const float textWidth = metrics.HorizontalAdvance(textElement->Text());
-			const float textHeight = metrics.LineHeight();
+			const bool wrap = textElement->WrapMode() == TextWrapMode::Wrap;
+			const float wrapWidth =
+				(wrap && (widthMode == YGMeasureModeExactly || widthMode == YGMeasureModeAtMost))
+					? width
+					: 0.0f;
+			const auto lines = metrics.LayoutLines(textElement->Text(), wrapWidth, wrap);
 
-			float measuredWidth = textWidth;
+			float contentWidth = 0.0f;
+			for (const auto& line : lines)
+				contentWidth = std::max(contentWidth, metrics.HorizontalAdvance(line));
+
+			const float lineHeight = metrics.LineHeight();
+			const float contentHeight = lines.empty()
+				? lineHeight
+				: lineHeight * static_cast<float>(lines.size());
+
+			float measuredWidth = contentWidth;
 			if (widthMode == YGMeasureModeExactly)
 				measuredWidth = width;
 			else if (widthMode == YGMeasureModeAtMost)
-				measuredWidth = std::min(textWidth, width);
+				measuredWidth = std::min(contentWidth, width);
 
-			float measuredHeight = textHeight;
+			float measuredHeight = contentHeight;
 			if (heightMode == YGMeasureModeExactly)
 				measuredHeight = height;
 			else if (heightMode == YGMeasureModeAtMost)
-				measuredHeight = std::min(textHeight, height);
+				measuredHeight = std::min(contentHeight, height);
 
 			return { measuredWidth, measuredHeight };
 		}
 
-		struct TextPaintLayout
+		struct TextLineLayout
 		{
-			std::u8string displayText;
+			std::u8string text;
 			float baselineX = 0.0f;
 			float baselineY = 0.0f;
-			float textWidth = 0.0f;
+			float width = 0.0f;
+			RectF rect;
+		};
+
+		struct TextPaintLayout
+		{
+			std::vector<TextLineLayout> lines;
 			RectF textRect;
 		};
 
@@ -230,52 +249,90 @@ namespace nani::canvas::visuals
 			if (contentRect.Width() <= 0.0f || contentRect.Height() <= 0.0f)
 				return false;
 
-			if (textElement->ElideMode() == TextElideMode::None)
-				out.displayText = std::u8string(text);
-			else
-				out.displayText = metrics.ElidedText(text, contentRect.Width(), textElement->ElideMode());
-
-			if (out.displayText.empty())
+			const bool wrap = textElement->WrapMode() == TextWrapMode::Wrap;
+			auto rawLines = metrics.LayoutLines(
+				text,
+				wrap ? contentRect.Width() : 0.0f,
+				wrap);
+			if (rawLines.empty())
 				return false;
 
-			out.textWidth = metrics.HorizontalAdvance(out.displayText);
-			const float textHeight = metrics.Ascent() + metrics.Descent();
-			const TextAlignment& textAlignment = style->visualProps.textAlignment;
-
-			switch (textAlignment.HorizontalAlign())
+			// Soft-wrapped text keeps full lines; NoWrap still supports hard '\n'
+			// and applies elide per visual line.
+			out.lines.clear();
+			out.lines.reserve(rawLines.size());
+			for (auto& line : rawLines)
 			{
-			case TextAlignment::Horizontal::Center:
-				out.baselineX = contentRect.left + (contentRect.Width() - out.textWidth) * 0.5f;
-				break;
-			case TextAlignment::Horizontal::Right:
-				out.baselineX = contentRect.right - out.textWidth;
-				break;
-			case TextAlignment::Horizontal::Left:
-			default:
-				out.baselineX = contentRect.left;
-				break;
+				TextLineLayout lineLayout;
+				if (!wrap && textElement->ElideMode() != TextElideMode::None)
+					lineLayout.text = metrics.ElidedText(line, contentRect.Width(), textElement->ElideMode());
+				else
+					lineLayout.text = std::move(line);
+
+				if (lineLayout.text.empty() && rawLines.size() == 1)
+					return false;
+
+				lineLayout.width = metrics.HorizontalAdvance(lineLayout.text);
+				out.lines.push_back(std::move(lineLayout));
 			}
 
+			const float lineHeight = metrics.LineHeight();
+			const float blockHeight = lineHeight * static_cast<float>(out.lines.size());
+			const TextAlignment& textAlignment = style->visualProps.textAlignment;
+
+			float blockTop = contentRect.top;
 			switch (textAlignment.VerticalAlign())
 			{
 			case TextAlignment::Vertical::Center:
-				out.baselineY = contentRect.top + (contentRect.Height() - textHeight) * 0.5f + metrics.Ascent();
+				blockTop = contentRect.top + (contentRect.Height() - blockHeight) * 0.5f;
 				break;
 			case TextAlignment::Vertical::Bottom:
-				out.baselineY = contentRect.bottom - metrics.Descent();
+				blockTop = contentRect.bottom - blockHeight;
 				break;
 			case TextAlignment::Vertical::Top:
 			default:
-				out.baselineY = contentRect.top + metrics.Ascent();
+				blockTop = contentRect.top;
 				break;
 			}
 
-			out.textRect = RectF(
-				out.baselineX,
-				out.baselineY - metrics.Ascent(),
-				out.baselineX + out.textWidth,
-				out.baselineY + metrics.Descent());
-			return true;
+			bool hasBounds = false;
+			for (size_t i = 0; i < out.lines.size(); ++i)
+			{
+				auto& lineLayout = out.lines[i];
+				switch (textAlignment.HorizontalAlign())
+				{
+				case TextAlignment::Horizontal::Center:
+					lineLayout.baselineX =
+						contentRect.left + (contentRect.Width() - lineLayout.width) * 0.5f;
+					break;
+				case TextAlignment::Horizontal::Right:
+					lineLayout.baselineX = contentRect.right - lineLayout.width;
+					break;
+				case TextAlignment::Horizontal::Left:
+				default:
+					lineLayout.baselineX = contentRect.left;
+					break;
+				}
+
+				lineLayout.baselineY = blockTop + lineHeight * static_cast<float>(i) + metrics.Ascent();
+				lineLayout.rect = RectF(
+					lineLayout.baselineX,
+					lineLayout.baselineY - metrics.Ascent(),
+					lineLayout.baselineX + lineLayout.width,
+					lineLayout.baselineY + metrics.Descent());
+
+				if (!hasBounds)
+				{
+					out.textRect = lineLayout.rect;
+					hasBounds = true;
+				}
+				else
+				{
+					out.textRect |= lineLayout.rect;
+				}
+			}
+
+			return hasBounds;
 		}
 	}
 
@@ -337,25 +394,31 @@ namespace nani::canvas::visuals
 		drawFont.setEdging(SkFont::Edging::kAntiAlias);
 		drawFont.setSubpixel(true);
 
-		const char* utf8Data = reinterpret_cast<const char*>(layout.displayText.data());
-		canvas->drawSimpleText(
-			utf8Data,
-			layout.displayText.size(),
-			SkTextEncoding::kUTF8,
-			layout.baselineX,
-			layout.baselineY,
-			drawFont,
-			paint);
-
 		FontMetrics metrics(font);
-		DrawTextDecorations(
-			canvas,
-			style->visualProps.textDecoration,
-			style,
-			layout.baselineX,
-			layout.baselineY,
-			layout.textWidth,
-			metrics);
+		for (const auto& line : layout.lines)
+		{
+			if (line.text.empty())
+				continue;
+
+			const char* utf8Data = reinterpret_cast<const char*>(line.text.data());
+			canvas->drawSimpleText(
+				utf8Data,
+				line.text.size(),
+				SkTextEncoding::kUTF8,
+				line.baselineX,
+				line.baselineY,
+				drawFont,
+				paint);
+
+			DrawTextDecorations(
+				canvas,
+				style->visualProps.textDecoration,
+				style,
+				line.baselineX,
+				line.baselineY,
+				line.width,
+				metrics);
+		}
 	}
 
 	bool TextVisual::Filter(events::EventTarget* target, events::Event* e)
