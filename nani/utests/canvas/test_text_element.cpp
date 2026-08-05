@@ -43,9 +43,50 @@ protected:
 					<Dimension width="120" />
 					<TextAlignment horizontal="left" vertical="top" />
 				</Style>
+				<Style class="NarrowElideText">
+					<Font family="Segoe UI" size="14" style="normal" weight="normal" />
+					<Colors color="#000000FF" />
+					<Dimension width="36" height="28" />
+					<TextAlignment horizontal="left" vertical="top" />
+				</Style>
+				<Style class="MultiLineFixed">
+					<Font family="Segoe UI" size="14" style="normal" weight="normal" />
+					<Colors color="#000000FF" />
+					<Dimension width="200" height="80" />
+					<TextAlignment horizontal="left" vertical="top" />
+				</Style>
+				<Style class="MultiLineBottomRight" inherit="MultiLineFixed">
+					<TextAlignment horizontal="right" vertical="bottom" />
+				</Style>
 			</Styles>
 		)");
 	}
+
+	class TextChangeWatcher : public EventFilter
+	{
+	public:
+		explicit TextChangeWatcher(Element* element)
+		{
+			element->RegisterEventFilter(this);
+		}
+
+		~TextChangeWatcher()
+		{
+			if (target_)
+				target_->UnRegisterEventFilter(this);
+		}
+
+		bool Filter(EventTarget* target, Event* e) override
+		{
+			target_ = target;
+			if (e->type == Type::ElementTextChanged)
+				++changeCount;
+			return false;
+		}
+
+		EventTarget* target_ = nullptr;
+		int changeCount = 0;
+	};
 
 	void TearDown() override
 	{
@@ -79,32 +120,6 @@ TEST_F(TextElementTest, SetTextUpdatesContent)
 TEST_F(TextElementTest, SetTextIgnoresSameValue)
 {
 	TextElement* text = new TextElement(window_->RootElement(), u8"Hello");
-
-	class TextChangeWatcher : public EventFilter
-	{
-	public:
-		explicit TextChangeWatcher(Element* element)
-		{
-			element->RegisterEventFilter(this);
-		}
-
-		~TextChangeWatcher()
-		{
-			if (target_)
-				target_->UnRegisterEventFilter(this);
-		}
-
-		bool Filter(EventTarget* target, Event* e) override
-		{
-			target_ = target;
-			if (e->type == Type::ElementTextChanged)
-				++changeCount;
-			return false;
-		}
-
-		EventTarget* target_ = nullptr;
-		int changeCount = 0;
-	};
 
 	TextChangeWatcher watcher(text);
 	text->SetText(u8"Hello");
@@ -345,5 +360,273 @@ TEST_F(TextElementTest, HitTestRespectsTextAlignment)
 	EXPECT_TRUE(textVisual->HitTest(PointF(hitX, hitY), &hitVisual, hitLocalPos));
 	EXPECT_EQ(hitVisual, textVisual.get());
 
+	window_->Hide();
+}
+
+// View Flush path: NoWrap elide with multibyte glyphs must finish at narrow widths
+// (binary-search UTF-8 boundary bug used to hang paint/hit). Also cover hard-newline
+// and soft-wrap hit targets on the second visual line.
+
+TEST_F(TextElementTest, NarrowNoWrapMultibyteElideFlushDoesNotHang)
+{
+	TextElement* text = new TextElement(
+		window_->RootElement(),
+		u8"Multi-line text — hard break demo");
+	text->SetStyleClass(u8"NarrowElideText");
+
+	window_->Show();
+	for (TextElideMode mode : {
+		TextElideMode::Right,
+		TextElideMode::Left,
+		TextElideMode::Middle })
+	{
+		text->SetElideMode(mode);
+		window_->GetView()->MarkDirty();
+		window_->GetView()->Flush();
+	}
+
+	auto* rootVisual = window_->GetView()->Visual();
+	auto textVisual = std::dynamic_pointer_cast<TextVisual>(rootVisual->Visuals().front());
+	ASSERT_NE(textVisual, nullptr);
+	EXPECT_FLOAT_EQ(textVisual->LayoutRect().Width(), 36.0f);
+
+	Visual* hitVisual = nullptr;
+	PointF hitLocalPos;
+	EXPECT_TRUE(textVisual->HitTest(PointF(2.0f, 8.0f), &hitVisual, hitLocalPos));
+
+	window_->Hide();
+}
+
+TEST_F(TextElementTest, HitTestHardNewlineSecondLine)
+{
+	TextElement* text = new TextElement(window_->RootElement(), u8"Hello\nWorld");
+	text->SetStyleClass(u8"MultiLineFixed");
+	text->SetElideMode(TextElideMode::None);
+
+	window_->Show();
+	window_->GetView()->Flush();
+
+	auto* rootVisual = window_->GetView()->Visual();
+	auto textVisual = std::dynamic_pointer_cast<TextVisual>(rootVisual->Visuals().front());
+	ASSERT_NE(textVisual, nullptr);
+
+	Font font;
+	font.SetFamily(u8"Segoe UI");
+	font.SetSize(14.0f);
+	FontMetrics metrics(font);
+	const float lineHeight = metrics.LineHeight();
+	const float textWidth = metrics.HorizontalAdvance(u8"Hello");
+
+	Visual* hitVisual = nullptr;
+	PointF hitLocalPos;
+
+	EXPECT_TRUE(textVisual->HitTest(
+		PointF(1.0f, metrics.Ascent() * 0.5f), &hitVisual, hitLocalPos));
+	EXPECT_EQ(hitVisual, textVisual.get());
+
+	EXPECT_TRUE(textVisual->HitTest(
+		PointF(1.0f, lineHeight + metrics.Ascent() * 0.5f), &hitVisual, hitLocalPos));
+	EXPECT_EQ(hitVisual, textVisual.get());
+
+	EXPECT_FALSE(textVisual->HitTest(
+		PointF(textWidth + 30.0f, metrics.Ascent() * 0.5f), &hitVisual, hitLocalPos));
+	EXPECT_FALSE(textVisual->HitTest(
+		PointF(1.0f, lineHeight * 2.0f + 4.0f), &hitVisual, hitLocalPos));
+
+	window_->Hide();
+}
+
+TEST_F(TextElementTest, HitTestSoftWrapSecondLine)
+{
+	TextElement* text = new TextElement(
+		window_->RootElement(),
+		u8"one two three four five six seven eight");
+	text->SetStyleClass(u8"WrapText");
+	text->SetWrapMode(TextWrapMode::Wrap);
+	text->SetElideMode(TextElideMode::None);
+
+	window_->Show();
+	window_->GetView()->Flush();
+
+	auto* rootVisual = window_->GetView()->Visual();
+	auto textVisual = std::dynamic_pointer_cast<TextVisual>(rootVisual->Visuals().front());
+	ASSERT_NE(textVisual, nullptr);
+
+	Font font;
+	font.SetFamily(u8"Segoe UI");
+	font.SetSize(14.0f);
+	FontMetrics metrics(font);
+	ASSERT_GT(textVisual->LayoutRect().Height(), metrics.LineHeight() * 1.5f);
+
+	Visual* hitVisual = nullptr;
+	PointF hitLocalPos;
+	EXPECT_TRUE(textVisual->HitTest(
+		PointF(2.0f, metrics.Ascent() * 0.5f), &hitVisual, hitLocalPos));
+	EXPECT_TRUE(textVisual->HitTest(
+		PointF(2.0f, metrics.LineHeight() + metrics.Ascent() * 0.5f),
+		&hitVisual,
+		hitLocalPos));
+	EXPECT_FALSE(textVisual->HitTest(
+		PointF(2.0f, textVisual->LayoutRect().Height() + 8.0f),
+		&hitVisual,
+		hitLocalPos));
+
+	window_->Hide();
+}
+
+// Wrap/elide interaction: Wrap skips per-line elide; NoWrap still elides each hard
+// line; SetWrapMode/SetElideMode fire ElementTextChanged only on real changes.
+// Alignment and shrink-resize Flush cover multi-line layout under the view tree.
+
+TEST_F(TextElementTest, WrapModeChangeFiresTextChangedAndIgnoresSameValue)
+{
+	TextElement* text = new TextElement(window_->RootElement(), u8"Wrap me");
+	TextChangeWatcher watcher(text);
+
+	text->SetWrapMode(TextWrapMode::NoWrap);
+	EXPECT_EQ(watcher.changeCount, 0);
+
+	text->SetWrapMode(TextWrapMode::Wrap);
+	EXPECT_EQ(watcher.changeCount, 1);
+
+	text->SetWrapMode(TextWrapMode::Wrap);
+	EXPECT_EQ(watcher.changeCount, 1);
+}
+
+TEST_F(TextElementTest, ElideModeChangeFiresTextChangedAndIgnoresSameValue)
+{
+	TextElement* text = new TextElement(window_->RootElement(), u8"Elide me");
+	TextChangeWatcher watcher(text);
+
+	text->SetElideMode(TextElideMode::Right);
+	EXPECT_EQ(watcher.changeCount, 0);
+
+	text->SetElideMode(TextElideMode::None);
+	EXPECT_EQ(watcher.changeCount, 1);
+
+	text->SetElideMode(TextElideMode::None);
+	EXPECT_EQ(watcher.changeCount, 1);
+}
+
+TEST_F(TextElementTest, WrapSkipsElideAndGrowsHeight)
+{
+	const std::u8string longText =
+		u8"alpha bravo charlie delta echo foxtrot golf hotel india juliet";
+	TextElement* wrap = new TextElement(window_->RootElement(), longText);
+	wrap->SetStyleClass(u8"WrapText");
+	wrap->SetWrapMode(TextWrapMode::Wrap);
+	wrap->SetElideMode(TextElideMode::Right);
+
+	TextElement* noWrap = new TextElement(window_->RootElement(), longText);
+	noWrap->SetStyleClass(u8"WrapText");
+	noWrap->SetWrapMode(TextWrapMode::NoWrap);
+	noWrap->SetElideMode(TextElideMode::Right);
+
+	auto wrapVisual = std::dynamic_pointer_cast<TextVisual>(
+		wrap->CreateVisual(window_->GetView(), nullptr));
+	auto noWrapVisual = std::dynamic_pointer_cast<TextVisual>(
+		noWrap->CreateVisual(window_->GetView(), nullptr));
+	ASSERT_NE(wrapVisual, nullptr);
+	ASSERT_NE(noWrapVisual, nullptr);
+	wrapVisual->BuildVisuals();
+	noWrapVisual->BuildVisuals();
+	const float undefined = std::numeric_limits<float>::quiet_NaN();
+	wrapVisual->CalculateLayout(SizeF(120.0f, undefined));
+	noWrapVisual->CalculateLayout(SizeF(120.0f, undefined));
+
+	Font font;
+	font.SetFamily(u8"Segoe UI");
+	font.SetSize(14.0f);
+	FontMetrics metrics(font);
+	EXPECT_GT(wrapVisual->LayoutRect().Height(), metrics.LineHeight() * 1.5f);
+	EXPECT_NEAR(noWrapVisual->LayoutRect().Height(), metrics.LineHeight(), 1.0f);
+}
+
+TEST_F(TextElementTest, NoWrapHardNewlineElidesPerLine)
+{
+	TextElement* text = new TextElement(
+		window_->RootElement(),
+		u8"AAAAAAAAAAAAAAA\nBBBBBBBBBBBBBBB");
+	text->SetStyleClass(u8"MultiLineFixed");
+	text->SetWrapMode(TextWrapMode::NoWrap);
+	text->SetElideMode(TextElideMode::Right);
+
+	window_->Show();
+	window_->GetView()->Flush();
+
+	auto* rootVisual = window_->GetView()->Visual();
+	auto textVisual = std::dynamic_pointer_cast<TextVisual>(rootVisual->Visuals().front());
+	ASSERT_NE(textVisual, nullptr);
+
+	Font font;
+	font.SetFamily(u8"Segoe UI");
+	font.SetSize(14.0f);
+	FontMetrics metrics(font);
+	const float lineHeight = metrics.LineHeight();
+
+	Visual* hitVisual = nullptr;
+	PointF hitLocalPos;
+	EXPECT_TRUE(textVisual->HitTest(
+		PointF(4.0f, metrics.Ascent() * 0.5f), &hitVisual, hitLocalPos));
+	EXPECT_TRUE(textVisual->HitTest(
+		PointF(4.0f, lineHeight + metrics.Ascent() * 0.5f), &hitVisual, hitLocalPos));
+	EXPECT_FALSE(textVisual->HitTest(
+		PointF(4.0f, lineHeight * 2.0f + 6.0f), &hitVisual, hitLocalPos));
+
+	window_->Hide();
+}
+
+TEST_F(TextElementTest, HitTestMultilineBottomRightAlignment)
+{
+	TextElement* text = new TextElement(window_->RootElement(), u8"Hi\nYo");
+	text->SetStyleClass(u8"MultiLineBottomRight");
+	text->SetElideMode(TextElideMode::None);
+
+	window_->Show();
+	window_->GetView()->Flush();
+
+	auto* rootVisual = window_->GetView()->Visual();
+	auto textVisual = std::dynamic_pointer_cast<TextVisual>(rootVisual->Visuals().front());
+	ASSERT_NE(textVisual, nullptr);
+
+	const RectF layout = textVisual->LayoutRect();
+	Font font;
+	font.SetFamily(u8"Segoe UI");
+	font.SetSize(14.0f);
+	FontMetrics metrics(font);
+	const float lineHeight = metrics.LineHeight();
+	const float textWidth = metrics.HorizontalAdvance(u8"Hi");
+
+	Visual* hitVisual = nullptr;
+	PointF hitLocalPos;
+	EXPECT_FALSE(textVisual->HitTest(PointF(1.0f, 1.0f), &hitVisual, hitLocalPos));
+
+	const float hitX = layout.Width() - textWidth * 0.5f;
+	const float hitY = layout.Height() - lineHeight + metrics.Ascent() * 0.5f;
+	EXPECT_TRUE(textVisual->HitTest(PointF(hitX, hitY), &hitVisual, hitLocalPos));
+	EXPECT_EQ(hitVisual, textVisual.get());
+
+	window_->Hide();
+}
+
+TEST_F(TextElementTest, NarrowResizeFlushDoesNotHang)
+{
+	TextElement* text = new TextElement(
+		window_->RootElement(),
+		u8"Multi-line text — resize stress alpha bravo charlie");
+	text->SetStyleClass(u8"NarrowElideText");
+	text->SetElideMode(TextElideMode::Right);
+
+	window_->Show();
+	for (float w = 600.0f; w >= 80.0f; w -= 40.0f)
+	{
+		window_->Resize(SizeF(w, 400.0f));
+		window_->GetView()->MarkDirty();
+		window_->GetView()->Flush();
+	}
+
+	auto* rootVisual = window_->GetView()->Visual();
+	ASSERT_NE(rootVisual, nullptr);
+	EXPECT_FALSE(rootVisual->Visuals().empty());
 	window_->Hide();
 }

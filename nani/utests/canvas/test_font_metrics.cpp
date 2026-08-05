@@ -146,11 +146,15 @@ TEST_F(FontMetricsTest, LayoutLinesSoftWrapsByWidth)
 		EXPECT_LE(metrics.HorizontalAdvance(line), fullWidth * 0.35f + 1.0f);
 }
 
+// Elide must tolerate multibyte glyphs at every width (including below ellipsis
+// advance). LayoutLines covers CRLF, empty hard lines, disabled soft-wrap,
+// space breaks, forced UTF-8 char breaks, and CJK soft-wrap.
+
 TEST_F(FontMetricsTest, ElidedTextTinyWidthWithMultibyteDoesNotHang)
 {
 	FontMetrics metrics(font_);
-	// Em dash is 3-byte UTF-8; old FindUtf8Boundary moved forward and
-	// deadlocked the elide binary search when the glyph did not fit.
+	// Em dash is 3-byte UTF-8; flooring the binary-search boundary incorrectly
+	// used to loop forever when that glyph did not fit the remaining width.
 	const std::u8string text = u8"Multi-line text — hard break";
 	const float fullWidth = metrics.HorizontalAdvance(text);
 	const float ellipsisWidth = metrics.HorizontalAdvance(u8"…");
@@ -182,4 +186,142 @@ TEST_F(FontMetricsTest, LayoutLinesTinyWidthDoesNotHang)
 		EXPECT_FALSE(lines.empty());
 		EXPECT_LE(lines.size(), text.size() + 2u);
 	}
+}
+
+TEST_F(FontMetricsTest, LayoutLinesStripsCrBeforeLf)
+{
+	FontMetrics metrics(font_);
+	const auto lines = metrics.LayoutLines(u8"Hello\r\nWorld", 0.0f, false);
+	ASSERT_EQ(lines.size(), 2u);
+	EXPECT_TRUE(lines[0] == u8"Hello");
+	EXPECT_TRUE(lines[1] == u8"World");
+}
+
+TEST_F(FontMetricsTest, LayoutLinesKeepsEmptyHardLine)
+{
+	FontMetrics metrics(font_);
+	const auto lines = metrics.LayoutLines(u8"A\n\nB", 0.0f, false);
+	ASSERT_EQ(lines.size(), 3u);
+	EXPECT_TRUE(lines[0] == u8"A");
+	EXPECT_TRUE(lines[1].empty());
+	EXPECT_TRUE(lines[2] == u8"B");
+}
+
+TEST_F(FontMetricsTest, LayoutLinesNoWrapKeepsHardBreaksWithoutSoftWrap)
+{
+	FontMetrics metrics(font_);
+	const std::u8string text = u8"one two three four five six";
+	const float fullWidth = metrics.HorizontalAdvance(text);
+	const auto lines = metrics.LayoutLines(u8"one two three four five six\nnext", fullWidth * 0.2f, false);
+	ASSERT_EQ(lines.size(), 2u);
+	EXPECT_TRUE(lines[0] == text);
+	EXPECT_TRUE(lines[1] == u8"next");
+}
+
+TEST_F(FontMetricsTest, LayoutLinesNonPositiveWidthDisablesSoftWrap)
+{
+	FontMetrics metrics(font_);
+	const std::u8string text = u8"one two three four five six";
+	const auto zero = metrics.LayoutLines(text, 0.0f, true);
+	const auto negative = metrics.LayoutLines(text, -10.0f, true);
+	ASSERT_EQ(zero.size(), 1u);
+	ASSERT_EQ(negative.size(), 1u);
+	EXPECT_TRUE(zero[0] == text);
+	EXPECT_TRUE(negative[0] == text);
+}
+
+TEST_F(FontMetricsTest, LayoutLinesBreaksAtSpacesAndSkipsBreakSpaces)
+{
+	FontMetrics metrics(font_);
+	const std::u8string text = u8"alpha bravo charlie";
+	const float maxWidth = metrics.HorizontalAdvance(u8"alpha ");
+	ASSERT_GT(maxWidth, 0.0f);
+	ASSERT_LT(maxWidth, metrics.HorizontalAdvance(u8"alpha bravo"));
+
+	const auto lines = metrics.LayoutLines(text, maxWidth, true);
+	ASSERT_GE(lines.size(), 2u);
+	EXPECT_TRUE(lines[0] == u8"alpha");
+	EXPECT_FALSE(lines[1].empty());
+	EXPECT_NE(lines[1].front(), u8' ');
+}
+
+TEST_F(FontMetricsTest, LayoutLinesBreaksLongWordByUtf8Char)
+{
+	FontMetrics metrics(font_);
+	const std::u8string text = u8"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	const float charWidth = metrics.HorizontalAdvance(u8"A");
+	ASSERT_GT(charWidth, 0.0f);
+
+	const auto lines = metrics.LayoutLines(text, charWidth * 3.5f, true);
+	ASSERT_GT(lines.size(), 1u);
+	for (const auto& line : lines)
+	{
+		EXPECT_FALSE(line.empty());
+		EXPECT_LE(metrics.HorizontalAdvance(line), charWidth * 3.5f + 1.0f);
+	}
+}
+
+TEST_F(FontMetricsTest, LayoutLinesSoftWrapsMultibyteText)
+{
+	FontMetrics metrics(font_);
+	const std::u8string text = u8"你好世界测试文本换行";
+	const float fullWidth = metrics.HorizontalAdvance(text);
+	ASSERT_GT(fullWidth, 0.0f);
+
+	const auto lines = metrics.LayoutLines(text, fullWidth * 0.4f, true);
+	ASSERT_GT(lines.size(), 1u);
+	for (const auto& line : lines)
+		EXPECT_LE(metrics.HorizontalAdvance(line), fullWidth * 0.4f + 1.0f);
+}
+
+// ElidedText contracts: empty/non-positive width, ellipsis-only fallback,
+// Left/Middle/Right marker placement, and custom ellipsis strings.
+
+TEST_F(FontMetricsTest, ElidedTextNonPositiveWidthReturnsEmpty)
+{
+	FontMetrics metrics(font_);
+	EXPECT_TRUE(metrics.ElidedText(u8"Hello", 0.0f, TextElideMode::Right).empty());
+	EXPECT_TRUE(metrics.ElidedText(u8"Hello", -1.0f, TextElideMode::Left).empty());
+	EXPECT_TRUE(metrics.ElidedText(u8"", 100.0f, TextElideMode::Right).empty());
+}
+
+TEST_F(FontMetricsTest, ElidedTextReturnsEllipsisWhenWiderThanBudget)
+{
+	FontMetrics metrics(font_);
+	const float ellipsisWidth = metrics.HorizontalAdvance(u8"…");
+	ASSERT_GT(ellipsisWidth, 0.0f);
+
+	const auto elided = metrics.ElidedText(u8"HelloWorld", ellipsisWidth * 0.5f, TextElideMode::Right);
+	EXPECT_TRUE(elided == u8"…");
+}
+
+TEST_F(FontMetricsTest, ElidedTextLeftAndMiddleShapes)
+{
+	FontMetrics metrics(font_);
+	const std::u8string text = u8"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	const float fullWidth = metrics.HorizontalAdvance(text);
+	const float maxWidth = fullWidth * 0.45f;
+
+	const auto left = metrics.ElidedText(text, maxWidth, TextElideMode::Left);
+	const auto middle = metrics.ElidedText(text, maxWidth, TextElideMode::Middle);
+	const auto right = metrics.ElidedText(text, maxWidth, TextElideMode::Right);
+
+	ASSERT_FALSE(left.empty());
+	ASSERT_FALSE(middle.empty());
+	ASSERT_FALSE(right.empty());
+	EXPECT_TRUE(left.starts_with(u8"…"));
+	EXPECT_TRUE(right.ends_with(u8"…"));
+	EXPECT_NE(middle.find(u8"…"), std::u8string::npos);
+	EXPECT_FALSE(middle.starts_with(u8"…"));
+	EXPECT_FALSE(middle.ends_with(u8"…"));
+}
+
+TEST_F(FontMetricsTest, ElidedTextCustomEllipsis)
+{
+	FontMetrics metrics(font_);
+	const std::u8string text = u8"ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+	const float fullWidth = metrics.HorizontalAdvance(text);
+	const auto elided = metrics.ElidedText(text, fullWidth * 0.4f, TextElideMode::Right, u8"...");
+	EXPECT_NE(elided.find(u8"..."), std::u8string::npos);
+	EXPECT_EQ(elided.find(u8"…"), std::u8string::npos);
 }
