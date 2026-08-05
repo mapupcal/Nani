@@ -44,6 +44,24 @@ private:
 	EventTarget* m_target = nullptr;
 };
 
+namespace
+{
+	ScrollAreaElement* CreateCategory(
+		Element* parent,
+		const std::u8string_view& title)
+	{
+		Element* panel = new Element(parent);
+		panel->SetStyleClass(u8"CategoryPanel");
+
+		TextElement* label = new TextElement(panel, title);
+		label->SetStyleClass(u8"CategoryTitle");
+
+		auto* scroll = new ScrollAreaElement(panel);
+		scroll->SetStyleClass(u8"CategoryScroll");
+		return scroll;
+	}
+}
+
 int main(int argc, char** argv)
 {
 	Env env(argc, argv);
@@ -99,23 +117,71 @@ int main(int argc, char** argv)
 				<Colors background="#1E293BFF" />
 			</Style>
 
-			<Style class="DemoPanel">
-				<FlexBox flexDirection="row" flex="1.0" grow="1.0" shrink="1.0" alignItems="stretch" />
-				<Gaps gap="16" />
-				<Paddings value="20" />
+			<Style class="DefaultText">
+				<Font family="Segoe UI" size="14" style="normal" weight="normal" />
+				<Colors color="#334155FF" />
+				<TextDecoration line="none" />
+			</Style>
+
+			<Style class="TitleBarText" inherit="DefaultText" window-drag="true">
+				<Font family="Segoe UI" size="18" weight="bold" />
+				<FlexBox flex="1.0" />
+				<Dimension height="40" />
+				<Colors color="#F8FAFCFF" />
+				<TextAlignment horizontal="center" vertical="center" />
+			</Style>
+
+			<Style class="TitleBarText" state="hovered">
+				<Colors color="#CBD5E1FF" />
+				<TextDecoration line="linethrough" style="solid" color="#F87171FF" />
+			</Style>
+
+			<Style class="DemoBody">
+				<FlexBox flexDirection="column" flex="1.0" grow="1.0" shrink="1.0" />
+				<Gaps gap="12" />
+				<Paddings value="16" />
 				<Dimension width="100%" />
 			</Style>
 
-			<Style class="DemoLeft">
-				<FlexBox flexDirection="column" flex="1.0" grow="1.0" shrink="1.0" />
+			<Style class="CategoryRow">
+				<FlexBox flexDirection="row" flex="1.0" grow="1.0" shrink="1.0" alignItems="stretch" />
 				<Gaps gap="12" />
+				<Dimension width="100%" />
+			</Style>
+
+			<Style class="CategoryPanel">
+				<FlexBox flexDirection="column" flex="1.0" grow="1.0" shrink="1.0" />
+				<Gaps gap="8" />
+				<Paddings value="10" />
+				<Borders value="1" />
+				<Radius radius="10" />
+				<Colors background="#FFFFFFEE" border="#94A3B8FF" />
 				<Dimension height="100%" />
 			</Style>
 
-			<Style class="DemoRight">
-				<FlexBox flexDirection="column" shrink="0" />
+			<Style class="CategoryTitle" inherit="DefaultText">
+				<Font family="Segoe UI" size="13" weight="bold" />
+				<Dimension width="100%" height="22" />
+				<FlexBox shrink="0" />
+				<Colors color="#64748BFF" />
+				<TextAlignment horizontal="left" vertical="center" />
+			</Style>
+
+			<Style class="ScrollableColumn">
+				<FlexBox flexDirection="column" overflow="scroll" />
+			</Style>
+
+			<Style class="CategoryScroll" inherit="ScrollableColumn">
+				<FlexBox flex="1.0" grow="1.0" shrink="1.0" flexDirection="column" overflow="scroll" />
+				<Dimension width="100%" height="100%" />
 				<Gaps gap="8" />
-				<Dimension width="280" height="100%" />
+				<Paddings value="4" />
+			</Style>
+
+			<Style class="EffectsContent">
+				<FlexBox flexDirection="column" shrink="0" />
+				<Gaps gap="12" />
+				<Dimension width="100%" />
 			</Style>
 
 			<Style class="EffectsRow">
@@ -136,7 +202,7 @@ int main(int argc, char** argv)
 				<Shadow color="#0F172A66" x="4" y="6" b="10" s="1" />
 			</Style>
 
-			<Style class="OpacityCard" >
+			<Style class="OpacityCard">
 				<Dimension width="72" height="72" />
 				<Radius radius="12" />
 				<Colors opacity="0.45" background="#38BDF8FF" border="#0EA5E9FF" />
@@ -150,28 +216,17 @@ int main(int argc, char** argv)
 				<Colors background="#FDE68AFF" border="#D97706FF" />
 			</Style>
 
-			<Style class="DefaultText">
-				<Font family="Segoe UI" size="14" style="normal" weight="normal" />
-				<Colors color="#334155FF" />
-				<TextDecoration line="none" />
-			</Style>
-
-			<Style class="TitleBarText" inherit="DefaultText" window-drag="true">
-				<Font family="Segoe UI" size="18" weight="bold" />
-				<FlexBox flex="1.0" />
-				<Dimension height="40" />
-				<Colors color="#F8FAFCFF" />
-				<TextAlignment horizontal="center" vertical="center" />
-			</Style>
-
-			<Style class="TitleBarText" state="hovered">
-				<Colors color="#CBD5E1FF" />
-				<TextDecoration line="linethrough" style="solid" color="#F87171FF" />
+			<Style class="EffectsHint" inherit="DefaultText">
+				<Dimension width="100%" height="40" />
+				<FlexBox shrink="0" />
+				<Colors color="#94A3B8FF" />
+				<TextAlignment horizontal="left" vertical="top" />
 			</Style>
 
 			<Style class="DemoText" inherit="DefaultText">
 				<Font family="Segoe UI" size="16" />
 				<Dimension height="28" width="100%" />
+				<FlexBox shrink="0" />
 				<TextAlignment horizontal="left" vertical="center" />
 			</Style>
 
@@ -217,25 +272,14 @@ int main(int argc, char** argv)
 				<TextDecoration line="underline,overline" style="solid" color="#64748BFF" />
 			</Style>
 
-			<Style class="ScrollableColumn">
-				<FlexBox flexDirection="column" overflow="scroll" />
-			</Style>
-
-			<Style class="ScrollDemo" inherit="ScrollableColumn">
-				<Dimension width="100%" height="100%" />
-				<FlexBox flex="1.0" grow="1.0" shrink="1.0" flexDirection="column" overflow="scroll" />
-				<Paddings value="8" />
-				<Gaps gap="6" />
+			<Style class="MultiLineDemo" inherit="DefaultText">
+				<Dimension width="100%" />
+				<FlexBox shrink="0" />
+				<Paddings value="10" />
 				<Borders value="1" />
 				<Radius radius="8" />
-				<Colors background="#FFFFFFEE" border="#94A3B8FF" />
-			</Style>
-
-			<Style class="ScrollDemoLabel" inherit="DefaultText">
-				<Dimension width="100%" height="22" />
-				<FlexBox shrink="0" />
-				<Colors color="#64748BFF" />
-				<TextAlignment horizontal="left" vertical="center" />
+				<Colors color="#0F172AFF" background="#F8FAFCFF" border="#CBD5E1FF" />
+				<TextAlignment horizontal="left" vertical="top" />
 			</Style>
 
 			<Style class="ScrollDemoItem">
@@ -263,33 +307,31 @@ int main(int argc, char** argv)
 				<Colors color="#1D4ED8FF" />
 				<TextDecoration line="underline" style="solid" color="#2563EBFF" />
 			</Style>
-
-			<Style class="MultiLineLabel" inherit="DefaultText">
-				<Dimension width="100%" height="22" />
-				<FlexBox shrink="0" />
-				<Colors color="#64748BFF" />
-				<TextAlignment horizontal="left" vertical="center" />
-			</Style>
-
-			<Style class="MultiLineDemo" inherit="DefaultText">
-				<Dimension width="100%" />
-				<FlexBox shrink="0" />
-				<Paddings value="10" />
-				<Borders value="1" />
-				<Radius radius="8" />
-				<Colors color="#0F172AFF" background="#F8FAFCFF" border="#94A3B8FF" />
-				<TextAlignment horizontal="left" vertical="top" />
-			</Style>
 		</Styles>
 	)");
 
-	Element* panel = new Element(window->RootElement());
-	panel->SetStyleClass(u8"TitleBar");
+	// ---------------------------------------------------------------------------
+	// Element tree:
+	//   NaniWindow
+	//   ├── TitleBar
+	//   │   ├── TitleBarText
+	//   │   └── TitleBarButton (close)
+	//   └── DemoBody
+	//       ├── CategoryRow
+	//       │   ├── Visual Effects  → ScrollArea → cards
+	//       │   └── Text Decorations → ScrollArea → hover demos
+	//       └── CategoryRow
+	//           ├── Multi-line Text → ScrollArea → wrap sample
+	//           └── Scroll Items    → ScrollArea → item rows
+	// ---------------------------------------------------------------------------
 
-	TextElement* title = new TextElement(panel, u8"Nani Canvas");
+	Element* titleBar = new Element(window->RootElement());
+	titleBar->SetStyleClass(u8"TitleBar");
+
+	TextElement* title = new TextElement(titleBar, u8"Nani Canvas");
 	title->SetStyleClass(u8"TitleBarText");
 
-	Element* close = new Element(panel);
+	Element* close = new Element(titleBar);
 	close->SetStyleClass(u8"TitleBarButton");
 	EventFilterDelegate closeWatcher(close);
 	closeWatcher.delegate = [=](Event* e) -> bool {
@@ -298,13 +340,20 @@ int main(int argc, char** argv)
 		return false;
 	};
 
-	Element* demoPanel = new Element(window->RootElement());
-	demoPanel->SetStyleClass(u8"DemoPanel");
+	Element* demoBody = new Element(window->RootElement());
+	demoBody->SetStyleClass(u8"DemoBody");
 
-	Element* demoLeft = new Element(demoPanel);
-	demoLeft->SetStyleClass(u8"DemoLeft");
+	Element* topRow = new Element(demoBody);
+	topRow->SetStyleClass(u8"CategoryRow");
+	Element* bottomRow = new Element(demoBody);
+	bottomRow->SetStyleClass(u8"CategoryRow");
 
-	Element* effectsRow = new Element(demoLeft);
+	// --- Visual effects ---
+	ScrollAreaElement* effectsScroll = CreateCategory(topRow, u8"Visual Effects");
+	Element* effectsContent = new Element(effectsScroll);
+	effectsContent->SetStyleClass(u8"EffectsContent");
+
+	Element* effectsRow = new Element(effectsContent);
 	effectsRow->SetStyleClass(u8"EffectsRow");
 	Element* shadowCard = new Element(effectsRow);
 	shadowCard->SetStyleClass(u8"ShadowCard");
@@ -313,11 +362,18 @@ int main(int argc, char** argv)
 	Element* radiusCard = new Element(effectsRow);
 	radiusCard->SetStyleClass(u8"RadiusCard");
 
+	TextElement* effectsHint = new TextElement(
+		effectsContent,
+		u8"Hover the white card for shadow. Drag it to move the window.");
+	effectsHint->SetStyleClass(u8"EffectsHint");
+
+	// --- Text decorations ---
+	ScrollAreaElement* decorationScroll = CreateCategory(topRow, u8"Text Decorations");
 	const struct
 	{
 		const char8_t* label;
 		const char8_t* styleClass;
-	} demos[] = {
+	} decorationDemos[] = {
 		{ u8"Hover me - Underline (solid)", u8"DemoUnderline" },
 		{ u8"Hover me - Overline (dotted)", u8"DemoOverline" },
 		{ u8"Hover me - Line-through (solid)", u8"DemoLineThrough" },
@@ -326,36 +382,29 @@ int main(int argc, char** argv)
 		{ u8"Hover me - Underline (wavy)", u8"DemoWavyUnderline" },
 		{ u8"Hover me - Underline + Overline", u8"DemoCombo" },
 	};
-
-	for (const auto& demo : demos)
+	for (const auto& demo : decorationDemos)
 	{
-		TextElement* text = new TextElement(demoLeft, demo.label);
+		TextElement* text = new TextElement(decorationScroll, demo.label);
 		text->SetStyleClass(demo.styleClass);
 	}
 
-	TextElement* multiLabel = new TextElement(demoLeft, u8"Multi-line text — hard \\n + soft wrap");
-	multiLabel->SetStyleClass(u8"MultiLineLabel");
-
+	// --- Multi-line text ---
+	ScrollAreaElement* multiLineScroll = CreateCategory(bottomRow, u8"Multi-line Text");
 	TextElement* multiLine = new TextElement(
-		demoLeft,
+		multiLineScroll,
 		u8"Line one via hard break.\nLine two via hard break.\n"
-		u8"Then a longer paragraph soft-wraps inside the fixed width: "
-		u8"alpha bravo charlie delta echo foxtrot golf hotel india juliet.");
+		u8"Then a longer paragraph soft-wraps inside the scroll viewport: "
+		u8"alpha bravo charlie delta echo foxtrot golf hotel india juliet "
+		u8"kilo lima mike november oscar papa quebec romeo sierra tango.");
 	multiLine->SetStyleClass(u8"MultiLineDemo");
 	multiLine->SetWrapMode(TextWrapMode::Wrap);
 	multiLine->SetElideMode(TextElideMode::None);
 
-	Element* demoRight = new Element(demoPanel);
-	demoRight->SetStyleClass(u8"DemoRight");
-
-	TextElement* scrollLabel = new TextElement(demoRight, u8"ScrollArea — mouse wheel");
-	scrollLabel->SetStyleClass(u8"ScrollDemoLabel");
-
-	auto* scrollArea = new ScrollAreaElement(demoRight);
-	scrollArea->SetStyleClass(u8"ScrollDemo");
+	// --- Scroll item list ---
+	ScrollAreaElement* itemScroll = CreateCategory(bottomRow, u8"ScrollArea Items");
 	for (int i = 1; i <= 25; ++i)
 	{
-		Element* row = new Element(scrollArea);
+		Element* row = new Element(itemScroll);
 		row->SetStyleClass(u8"ScrollDemoItem");
 		const std::string ascii = "Scroll item " + std::to_string(i);
 		const std::u8string label(ascii.begin(), ascii.end());
