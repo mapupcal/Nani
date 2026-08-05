@@ -20,6 +20,21 @@ namespace nani::runtime
 
 	}
 
+	Directory Directory::FromFile(const u8string_view& filePath)
+	{
+		if (filePath.empty())
+			return Directory();
+
+		error_code ec;
+		filesystem::path path = filesystem::absolute(
+			filesystem::path(u8string(filePath)),
+			ec);
+		if (ec)
+			return Directory();
+
+		return Directory(path.parent_path().u8string());
+	}
+
 	bool Directory::Exists() const
 	{
 		error_code ec;

@@ -1,0 +1,256 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Styles>
+	<Style class="NaniWindow">
+		<FlexBox direction="ltr" flexDirection="column" />
+		<Radius radius="12" />
+		<Colors background="#0F172AFF"/>
+	</Style>
+
+	<Style class="Button">
+		<Dimension width="50" height="50" minWidth="50" minHeight="50" maxWidth="50" maxHeight="50" />
+		<Radius radius="8" />
+		<Colors background="#33415580" border="#64748B80"/>
+	</Style>
+
+	<Style class="Button" state="hovered">
+		<Radius radius="10" />
+		<Colors background="#475569CC" border="#94A3B8CC"/>
+	</Style>
+
+	<Style class="TitleBar" window-drag="true">
+		<FlexBox direction="ltr" flexDirection="row" alignItems="center" shrink="0" />
+		<Gaps gap="12" />
+		<Paddings l="16" r="14" t="0" b="0" />
+		<Dimension width="100%" height="52" minHeight="52" />
+		<Radius tl="12" tr="12" bl="0" br="0" />
+		<Colors background="#020617FF" />
+	</Style>
+
+	<Style class="TitleBarActions">
+		<FlexBox flexDirection="row" alignItems="center" shrink="0" />
+		<Gaps gap="10" />
+		<Dimension height="100%" />
+	</Style>
+
+	<Style class="TitleBarChrome">
+		<Dimension width="28" height="28" minWidth="28" minHeight="28" maxWidth="28" maxHeight="28" />
+		<Radius radius="14" />
+		<Borders value="1" />
+		<FlexBox shrink="0" />
+	</Style>
+
+	<Style class="ThemeBarButton" inherit="TitleBarChrome">
+		<Colors background="#38BDF866" border="#0EA5E999"/>
+	</Style>
+
+	<Style class="ThemeBarButton" state="hovered">
+		<Colors background="#38BDF8FF" border="#BAE6FDFF"/>
+		<Shadow color="#0EA5E966" x="0" y="2" b="8" s="0" />
+		<Transform>
+			<Scaling x="1.06" y="1.06" />
+		</Transform>
+	</Style>
+
+	<Style class="TitleBarButton" inherit="TitleBarChrome">
+		<Colors background="#F8717166" border="#EF444499"/>
+	</Style>
+
+	<Style class="TitleBarButton" state="hovered">
+		<Colors background="#EF4444FF" border="#FECACAFF"/>
+		<Shadow color="#EF444466" x="0" y="2" b="8" s="0" />
+		<Transform>
+			<Scaling x="1.06" y="1.06" />
+		</Transform>
+	</Style>
+
+	<Style class="DefaultText">
+		<Font family="Segoe UI" size="14" style="normal" weight="normal" />
+		<Colors color="#E2E8F0FF" />
+		<TextDecoration line="none" />
+	</Style>
+
+	<Style class="TitleBarText" inherit="DefaultText" window-drag="true">
+		<Font family="Segoe UI" size="18" weight="bold" />
+		<FlexBox flex="1.0" />
+		<Dimension height="40" />
+		<Colors color="#F8FAFCFF" />
+		<TextAlignment horizontal="center" vertical="center" />
+	</Style>
+
+	<Style class="TitleBarText" state="hovered">
+		<Colors color="#94A3B8FF" />
+		<TextDecoration line="linethrough" style="solid" color="#F87171FF" />
+	</Style>
+
+	<Style class="DemoBody">
+		<FlexBox flexDirection="column" flex="1.0" grow="1.0" shrink="1.0" />
+		<Gaps gap="12" />
+		<Paddings value="16" />
+		<Dimension width="100%" />
+	</Style>
+
+	<Style class="CategoryRow">
+		<FlexBox flexDirection="row" flex="1.0" grow="1.0" shrink="1.0" alignItems="stretch" />
+		<Gaps gap="12" />
+		<Dimension width="100%" />
+	</Style>
+
+	<Style class="CategoryPanel">
+		<FlexBox flexDirection="column" flex="1.0" grow="1.0" shrink="1.0" />
+		<Gaps gap="8" />
+		<Paddings value="10" />
+		<Borders value="1" />
+		<Radius radius="10" />
+		<Colors background="#1E293BFF" border="#334155FF" />
+		<Dimension height="100%" />
+	</Style>
+
+	<Style class="CategoryTitle" inherit="DefaultText">
+		<Font family="Segoe UI" size="13" weight="bold" />
+		<Dimension width="100%" height="22" />
+		<FlexBox shrink="0" />
+		<Colors color="#94A3B8FF" />
+		<TextAlignment horizontal="left" vertical="center" />
+	</Style>
+
+	<Style class="ScrollableColumn">
+		<FlexBox flexDirection="column" overflow="scroll" />
+	</Style>
+
+	<Style class="CategoryScroll" inherit="ScrollableColumn">
+		<FlexBox flex="1.0" grow="1.0" shrink="1.0" flexDirection="column" overflow="scroll" />
+		<Dimension width="100%" height="100%" />
+		<Gaps gap="8" />
+		<Paddings value="4" />
+	</Style>
+
+	<Style class="EffectsContent">
+		<FlexBox flexDirection="column" shrink="0" />
+		<Gaps gap="12" />
+		<Dimension width="100%" />
+	</Style>
+
+	<Style class="EffectsRow">
+		<FlexBox flexDirection="row" alignItems="center" shrink="0" />
+		<Gaps gap="16" />
+		<Dimension width="100%" height="96" />
+	</Style>
+
+	<Style class="ShadowCard" window-drag="true">
+		<Dimension width="72" height="72" />
+		<Radius radius="12" />
+		<Borders value="2" />
+		<Colors background="#334155FF" border="#64748BFF" />
+	</Style>
+
+	<Style class="ShadowCard" state="hovered">
+		<Colors background="#475569FF" border="#94A3B8FF" />
+		<Shadow color="#00000099" x="4" y="6" b="12" s="1" />
+	</Style>
+
+	<Style class="OpacityCard">
+		<Dimension width="72" height="72" />
+		<Radius radius="12" />
+		<Colors opacity="0.55" background="#22D3EEFF" border="#06B6D4FF" />
+		<Borders value="2" />
+	</Style>
+
+	<Style class="RadiusCard">
+		<Dimension width="72" height="72" />
+		<Radius tl="4" tr="20" bl="20" br="4" />
+		<Borders value="3" />
+		<Colors background="#A78BFAFF" border="#7C3AEDFF" />
+	</Style>
+
+	<Style class="EffectsHint" inherit="DefaultText">
+		<Dimension width="100%" height="40" />
+		<FlexBox shrink="0" />
+		<Colors color="#64748BFF" />
+		<TextAlignment horizontal="left" vertical="top" />
+	</Style>
+
+	<Style class="DemoText" inherit="DefaultText">
+		<Font family="Segoe UI" size="16" />
+		<Dimension height="28" width="100%" />
+		<FlexBox shrink="0" />
+		<TextAlignment horizontal="left" vertical="center" />
+	</Style>
+
+	<Style class="DemoUnderline" inherit="DemoText" />
+	<Style class="DemoUnderline" state="hovered">
+		<Colors color="#93C5FDFF" />
+		<TextDecoration line="underline" style="solid" color="#60A5FAFF" />
+	</Style>
+
+	<Style class="DemoOverline" inherit="DemoText" />
+	<Style class="DemoOverline" state="hovered">
+		<Colors color="#5EEAD4FF" />
+		<TextDecoration line="overline" style="dotted" color="#2DD4BFFF" />
+	</Style>
+
+	<Style class="DemoLineThrough" inherit="DemoText" />
+	<Style class="DemoLineThrough" state="hovered">
+		<Colors color="#FCA5A5FF" />
+		<TextDecoration line="linethrough" style="solid" color="#F87171FF" />
+	</Style>
+
+	<Style class="DemoDashedUnderline" inherit="DemoText" />
+	<Style class="DemoDashedUnderline" state="hovered">
+		<Colors color="#C4B5FDFF" />
+		<TextDecoration line="underline" style="dashed" color="#A78BFAFF" />
+	</Style>
+
+	<Style class="DemoDoubleUnderline" inherit="DemoText" />
+	<Style class="DemoDoubleUnderline" state="hovered">
+		<Colors color="#FDBA74FF" />
+		<TextDecoration line="underline" style="double" color="#FB923CFF" />
+	</Style>
+
+	<Style class="DemoWavyUnderline" inherit="DemoText" />
+	<Style class="DemoWavyUnderline" state="hovered">
+		<Colors color="#F9A8D4FF" />
+		<TextDecoration line="underline" style="wavy" color="#F472B6FF" />
+	</Style>
+
+	<Style class="DemoCombo" inherit="DemoText" />
+	<Style class="DemoCombo" state="hovered">
+		<Colors color="#CBD5E1FF" />
+		<TextDecoration line="underline,overline" style="solid" color="#94A3B8FF" />
+	</Style>
+
+	<Style class="MultiLineDemo" inherit="DefaultText">
+		<Dimension width="100%" />
+		<FlexBox shrink="0" />
+		<Paddings value="10" />
+		<Borders value="1" />
+		<Radius radius="8" />
+		<Colors color="#F8FAFCFF" background="#0B1220FF" border="#334155FF" />
+		<TextAlignment horizontal="left" vertical="top" />
+	</Style>
+
+	<Style class="ScrollDemoItem">
+		<Dimension width="100%" height="32" minHeight="32" />
+		<FlexBox shrink="0" grow="0" flexDirection="row" alignItems="center" />
+		<Colors background="#334155FF" border="#33415500" />
+		<Borders value="1" />
+		<Radius radius="4" />
+		<Paddings l="8" r="8" t="0" b="0" />
+	</Style>
+
+	<Style class="ScrollDemoItem" state="hovered">
+		<Colors background="#1D4ED8FF" border="#60A5FAFF" />
+		<Radius radius="6" />
+	</Style>
+
+	<Style class="ScrollDemoItemText" inherit="DefaultText">
+		<FlexBox flex="1.0" grow="1.0" />
+		<Dimension height="100%" />
+		<TextAlignment horizontal="left" vertical="center" />
+		<Colors color="#E2E8F0FF" />
+	</Style>
+
+	<Style class="ScrollDemoItemText" state="hovered">
+		<Colors color="#F8FAFCFF" />
+		<TextDecoration line="underline" style="solid" color="#BFDBFEFF" />
+	</Style>
+</Styles>

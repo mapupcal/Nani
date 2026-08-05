@@ -10,6 +10,10 @@ namespace nani::runtime
 		~Directory();
 
 	public:
+		// Directory containing the given file path (absolute or relative to cwd).
+		// Empty / unresolvable paths fall back to the current working directory.
+		static Directory FromFile(const std::u8string_view& filePath);
+
 		bool Exists() const;
 		bool Exists(const std::u8string_view& dirPath) const;
 		bool CD(const std::u8string_view& dirPath);

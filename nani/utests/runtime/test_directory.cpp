@@ -17,6 +17,25 @@ protected:
 	}
 };
 
+TEST_F(DirectoryTest, FromFileUsesParentDirectory)
+{
+	const auto cwd = std::filesystem::current_path();
+	const auto filePath = (cwd / "dummy.txt").u8string();
+	const Directory dir = Directory::FromFile(filePath);
+
+	EXPECT_TRUE(dir.IsAbsolute());
+	EXPECT_TRUE(std::filesystem::equivalent(
+		std::filesystem::path(dir.AbsolutePath()),
+		cwd));
+	EXPECT_TRUE(dir.FilePath(u8"assets/styles.xml").ends_with(u8"assets/styles.xml"));
+}
+
+TEST_F(DirectoryTest, FromFileEmptyFallsBackToCwd)
+{
+	const Directory dir = Directory::FromFile(u8"");
+	EXPECT_TRUE(dir.AbsolutePath() == std::filesystem::absolute(std::filesystem::current_path()).u8string());
+}
+
 TEST_F(DirectoryTest, Basic)
 {
 	{
