@@ -16,7 +16,7 @@ namespace nani::canvas::internal
 	public:
 		using Clock = std::chrono::steady_clock;
 
-		explicit TimerPrivate(Timer* q);
+		explicit TimerPrivate(Timer* timer_);
 		~TimerPrivate() = default;
 
 	public:
@@ -26,7 +26,7 @@ namespace nani::canvas::internal
 		bool DeleteWhenDone() const;
 
 	public:
-		Timer* q = nullptr;
+		Timer* timer = nullptr;
 		std::function<void()> callback;
 		basic::dword intervalMs = 0;
 		bool singleShot = false;

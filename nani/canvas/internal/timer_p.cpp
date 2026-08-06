@@ -4,8 +4,8 @@
 
 namespace nani::canvas::internal
 {
-	TimerPrivate::TimerPrivate(Timer* q_)
-		: q(q_)
+	TimerPrivate::TimerPrivate(Timer* timer_)
+		: timer(timer_)
 	{
 	}
 
@@ -15,8 +15,8 @@ namespace nani::canvas::internal
 		if (cb)
 			cb();
 
-		events::TimerEvent event(q);
-		q->FireEvent(&event);
+		events::TimerEvent event(timer);
+		timer->FireEvent(&event);
 	}
 
 	void TimerPrivate::ArmFromNow()

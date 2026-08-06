@@ -10,6 +10,7 @@ namespace nani::canvas::internal::font_resolver
 	namespace
 	{
 		constexpr size_t kMaxUnicharCacheEntries = 20000;
+		constexpr size_t kMaxChainCacheEntries = 256;
 
 		size_t NextUnichar(const char* data, size_t size, size_t index, SkUnichar& out)
 		{
@@ -150,6 +151,13 @@ namespace nani::canvas::internal::font_resolver
 			{
 				const SkString hint = skia_utils::ToSkString(preferredFamilies.front());
 				chain.hintFamily.assign(hint.c_str(), hint.size());
+			}
+
+			if (caches.chains.size() >= kMaxChainCacheEntries &&
+				caches.chains.find(mapKey) == caches.chains.end())
+			{
+				caches.chains.clear();
+				caches.unicharFaces.clear();
 			}
 
 			auto [it, inserted] = caches.chains.insert_or_assign(mapKey, std::move(chain));

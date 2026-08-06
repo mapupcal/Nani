@@ -114,15 +114,6 @@ namespace nani::canvas::text::utf8
 		return index + 1;
 	}
 
-	inline size_t DecodeNext(std::u8string_view text, size_t index, char32_t& out)
-	{
-		return DecodeNext(
-			reinterpret_cast<const char*>(text.data()),
-			text.size(),
-			index,
-			out);
-	}
-
 	inline std::u8string Encode(char32_t codepoint)
 	{
 		char8_t bytes[4] = {};

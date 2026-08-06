@@ -67,6 +67,34 @@ namespace nani::canvas::visuals
 			float maxLineWidth = 0.0f;
 		};
 
+		struct LayoutKey
+		{
+			RectF contentRect;
+			Font font;
+			std::u8string text;
+			std::u8string preedit;
+			std::u8string passwordEcho;
+			size_t caret = 0;
+			bool multiLine = false;
+			bool passwordMode = false;
+			bool passwordVisible = false;
+			TextAlignment::Vertical verticalAlign = TextAlignment::Vertical::Center;
+
+			friend bool operator==(const LayoutKey& lhs, const LayoutKey& rhs)
+			{
+				return lhs.contentRect == rhs.contentRect &&
+					lhs.font == rhs.font &&
+					lhs.text == rhs.text &&
+					lhs.preedit == rhs.preedit &&
+					lhs.passwordEcho == rhs.passwordEcho &&
+					lhs.caret == rhs.caret &&
+					lhs.multiLine == rhs.multiLine &&
+					lhs.passwordMode == rhs.passwordMode &&
+					lhs.passwordVisible == rhs.passwordVisible &&
+					lhs.verticalAlign == rhs.verticalAlign;
+			}
+		};
+
 		Color ResolveSelectionBackground(const ComputedStyle* style)
 		{
 			if (style && style->visualProps.selectionBackground.a != 0)
@@ -112,9 +140,7 @@ namespace nani::canvas::visuals
 			const size_t caret = input->CaretIndex();
 			const bool mask =
 				input->IsPasswordMode() && !input->IsPasswordVisible();
-			const std::u8string_view echo = input->PasswordEcho().empty()
-				? std::u8string_view(u8"\u2022")
-				: input->PasswordEcho();
+			const std::u8string_view echo = input->PasswordEcho();
 
 			AppendMaskedRange(model, text, 0, caret, mask, echo);
 			model.caretDisplayOffset = model.display.size();
@@ -357,9 +383,7 @@ namespace nani::canvas::visuals
 	struct InputTextVisual::LayoutCache
 	{
 		DocumentLayout layout;
-		Font font;
-		bool multiLine = false;
-		TextAlignment::Vertical verticalAlign = TextAlignment::Vertical::Center;
+		LayoutKey key;
 		bool valid = false;
 	};
 
@@ -409,26 +433,30 @@ namespace nani::canvas::visuals
 		if (!input || !style || !m_layoutCache)
 			return false;
 
-		const RectF contentRect = LocalContentRect();
-		auto& cache = *m_layoutCache;
-		if (cache.valid &&
-			cache.layout.contentRect.left == contentRect.left &&
-			cache.layout.contentRect.top == contentRect.top &&
-			cache.layout.contentRect.right == contentRect.right &&
-			cache.layout.contentRect.bottom == contentRect.bottom)
-		{
-			return true;
-		}
+		LayoutKey key{
+			LocalContentRect(),
+			style->visualProps.font,
+			std::u8string(input->Text()),
+			std::u8string(input->PreeditText()),
+			std::u8string(input->PasswordEcho()),
+			input->CaretIndex(),
+			input->IsMultiLine(),
+			input->IsPasswordMode(),
+			input->IsPasswordVisible(),
+			style->visualProps.textAlignment.VerticalAlign(),
+		};
 
-		if (!ResolveDocumentLayout(input, style, contentRect, cache.layout))
+		auto& cache = *m_layoutCache;
+		if (cache.valid && cache.key == key)
+			return true;
+
+		if (!ResolveDocumentLayout(input, style, key.contentRect, cache.layout))
 		{
 			cache.valid = false;
 			return false;
 		}
 
-		cache.font = style->visualProps.font;
-		cache.multiLine = input->IsMultiLine();
-		cache.verticalAlign = style->visualProps.textAlignment.VerticalAlign();
+		cache.key = std::move(key);
 		cache.valid = true;
 		return true;
 	}
