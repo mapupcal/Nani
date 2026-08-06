@@ -2,10 +2,15 @@
 #include "skia_utils.h"
 #include "../text/utf8.h"
 
+#include <algorithm>
+#include <unordered_map>
+
 namespace nani::canvas::internal::font_resolver
 {
 	namespace
 	{
+		constexpr size_t kMaxUnicharCacheEntries = 20000;
+
 		size_t NextUnichar(const char* data, size_t size, size_t index, SkUnichar& out)
 		{
 			char32_t codepoint = 0;
@@ -17,6 +22,43 @@ namespace nani::canvas::internal::font_resolver
 		bool TypefaceHasGlyph(SkTypeface* face, SkUnichar uni)
 		{
 			return face && face->unicharToGlyph(uni) != 0;
+		}
+
+		size_t MixHash(size_t seed, size_t value)
+		{
+			return seed ^ (value + 0x9e3779b9 + (seed << 6) + (seed >> 2));
+		}
+
+		size_t HashFamilies(
+			std::span<const std::u8string> preferredFamilies,
+			std::span<const std::u8string> fallbackFamilies)
+		{
+			size_t hash = 0;
+			for (const auto& family : preferredFamilies)
+				hash = MixHash(hash, std::hash<std::u8string>{}(family));
+			hash = MixHash(hash, 0x9e3779b9u);
+			for (const auto& family : fallbackFamilies)
+				hash = MixHash(hash, std::hash<std::u8string>{}(family));
+			return hash;
+		}
+
+		uint32_t StyleBits(const SkFontStyle& style)
+		{
+			return (static_cast<uint32_t>(style.weight()) & 0xFFFFu)
+				| ((static_cast<uint32_t>(style.width()) & 0xFFu) << 16)
+				| ((static_cast<uint32_t>(style.slant()) & 0xFFu) << 24);
+		}
+
+		uint64_t UnicharCacheKey(
+			uint32_t primaryId,
+			uint32_t styleBits,
+			size_t familiesHash,
+			SkUnichar uni)
+		{
+			uint64_t key = primaryId;
+			key = (key << 32) ^ (static_cast<uint64_t>(styleBits) << 16) ^ familiesHash;
+			key ^= static_cast<uint64_t>(static_cast<uint32_t>(uni)) * 0x9e3779b97f4a7c15ULL;
+			return key;
 		}
 
 		void CollectTypefaces(
@@ -32,41 +74,152 @@ namespace nani::canvas::internal::font_resolver
 			}
 		}
 
+		struct TypefaceChain
+		{
+			uint32_t styleBits = 0;
+			size_t familiesHash = 0;
+			std::vector<std::u8string> preferred;
+			std::vector<std::u8string> fallback;
+			std::vector<sk_sp<SkTypeface>> faces;
+			std::string hintFamily;
+		};
+
+		struct ResolverCaches
+		{
+			std::unordered_map<size_t, TypefaceChain> chains;
+			std::unordered_map<uint64_t, sk_sp<SkTypeface>> unicharFaces;
+
+			void Clear()
+			{
+				chains.clear();
+				unicharFaces.clear();
+			}
+		};
+
+		ResolverCaches& Caches()
+		{
+			static ResolverCaches caches;
+			return caches;
+		}
+
+		size_t ChainMapKey(uint32_t styleBits, size_t familiesHash)
+		{
+			return MixHash(static_cast<size_t>(styleBits), familiesHash);
+		}
+
+		const TypefaceChain& GetTypefaceChain(
+			SkFontMgr* fontMgr,
+			std::span<const std::u8string> preferredFamilies,
+			std::span<const std::u8string> fallbackFamilies,
+			const SkFontStyle& style)
+		{
+			const uint32_t styleBits = StyleBits(style);
+			const size_t familiesHash = HashFamilies(preferredFamilies, fallbackFamilies);
+			const size_t mapKey = ChainMapKey(styleBits, familiesHash);
+
+			auto& caches = Caches();
+			if (auto it = caches.chains.find(mapKey); it != caches.chains.end())
+			{
+				const TypefaceChain& cached = it->second;
+				if (cached.styleBits == styleBits &&
+					cached.familiesHash == familiesHash &&
+					cached.preferred.size() == preferredFamilies.size() &&
+					cached.fallback.size() == fallbackFamilies.size() &&
+					std::equal(
+						cached.preferred.begin(),
+						cached.preferred.end(),
+						preferredFamilies.begin()) &&
+					std::equal(
+						cached.fallback.begin(),
+						cached.fallback.end(),
+						fallbackFamilies.begin()))
+				{
+					return cached;
+				}
+			}
+
+			TypefaceChain chain;
+			chain.styleBits = styleBits;
+			chain.familiesHash = familiesHash;
+			chain.preferred.assign(preferredFamilies.begin(), preferredFamilies.end());
+			chain.fallback.assign(fallbackFamilies.begin(), fallbackFamilies.end());
+			chain.faces.reserve(preferredFamilies.size() + fallbackFamilies.size());
+			CollectTypefaces(fontMgr, preferredFamilies, style, chain.faces);
+			CollectTypefaces(fontMgr, fallbackFamilies, style, chain.faces);
+			if (!preferredFamilies.empty())
+			{
+				const SkString hint = skia_utils::ToSkString(preferredFamilies.front());
+				chain.hintFamily.assign(hint.c_str(), hint.size());
+			}
+
+			auto [it, inserted] = caches.chains.insert_or_assign(mapKey, std::move(chain));
+			(void)inserted;
+			return it->second;
+		}
+
 		sk_sp<SkTypeface> ResolveTypefaceForUnichar(
 			SkFontMgr* fontMgr,
 			SkTypeface* primary,
-			const std::vector<sk_sp<SkTypeface>>& chain,
-			const char* hintFamilyName,
+			const TypefaceChain& chain,
 			const SkFontStyle& style,
 			SkUnichar uni)
 		{
+			const uint32_t primaryId = primary ? primary->uniqueID() : 0;
+			const uint64_t cacheKey = UnicharCacheKey(
+				primaryId,
+				chain.styleBits,
+				chain.familiesHash,
+				uni);
+
+			auto& caches = Caches();
+			if (auto it = caches.unicharFaces.find(cacheKey); it != caches.unicharFaces.end())
+				return it->second;
+
+			sk_sp<SkTypeface> resolved;
 			if (TypefaceHasGlyph(primary, uni))
-				return sk_ref_sp(primary);
-
-			for (const auto& face : chain)
 			{
-				if (TypefaceHasGlyph(face.get(), uni))
-					return face;
+				resolved = sk_ref_sp(primary);
 			}
-
-			if (fontMgr)
+			else
 			{
-				if (sk_sp<SkTypeface> face =
-					fontMgr->matchFamilyStyleCharacter(hintFamilyName, style, nullptr, 0, uni))
+				for (const auto& face : chain.faces)
 				{
-					return face;
-				}
-				if (hintFamilyName)
-				{
-					if (sk_sp<SkTypeface> face =
-						fontMgr->matchFamilyStyleCharacter(nullptr, style, nullptr, 0, uni))
+					if (TypefaceHasGlyph(face.get(), uni))
 					{
-						return face;
+						resolved = face;
+						break;
 					}
 				}
 			}
 
-			return sk_ref_sp(primary);
+			if (!resolved && fontMgr)
+			{
+				const char* hintFamilyName =
+					chain.hintFamily.empty() ? nullptr : chain.hintFamily.c_str();
+				resolved = fontMgr->matchFamilyStyleCharacter(
+					hintFamilyName,
+					style,
+					nullptr,
+					0,
+					uni);
+				if (!resolved && hintFamilyName)
+				{
+					resolved = fontMgr->matchFamilyStyleCharacter(
+						nullptr,
+						style,
+						nullptr,
+						0,
+						uni);
+				}
+			}
+
+			if (!resolved)
+				resolved = sk_ref_sp(primary);
+
+			if (caches.unicharFaces.size() >= kMaxUnicharCacheEntries)
+				caches.unicharFaces.clear();
+			caches.unicharFaces.emplace(cacheKey, resolved);
+			return resolved;
 		}
 
 		template <typename RunFn>
@@ -85,19 +238,11 @@ namespace nani::canvas::internal::font_resolver
 			const size_t size = text.size();
 			SkTypeface* primary = baseFont.getTypeface();
 			const SkFontStyle style = primary ? primary->fontStyle() : SkFontStyle::Normal();
-
-			std::vector<sk_sp<SkTypeface>> chain;
-			chain.reserve(preferredFamilies.size() + fallbackFamilies.size());
-			CollectTypefaces(fontMgr, preferredFamilies, style, chain);
-			CollectTypefaces(fontMgr, fallbackFamilies, style, chain);
-
-			SkString hintStorage;
-			const char* hintFamilyName = nullptr;
-			if (!preferredFamilies.empty())
-			{
-				hintStorage = skia_utils::ToSkString(preferredFamilies.front());
-				hintFamilyName = hintStorage.c_str();
-			}
+			const TypefaceChain& chain = GetTypefaceChain(
+				fontMgr,
+				preferredFamilies,
+				fallbackFamilies,
+				style);
 
 			size_t index = 0;
 			SkUnichar firstUni = 0;
@@ -106,7 +251,6 @@ namespace nani::canvas::internal::font_resolver
 				fontMgr,
 				primary,
 				chain,
-				hintFamilyName,
 				style,
 				firstUni);
 			size_t runStart = index;
@@ -130,7 +274,6 @@ namespace nani::canvas::internal::font_resolver
 					fontMgr,
 					primary,
 					chain,
-					hintFamilyName,
 					style,
 					uni);
 				const bool sameFace =
@@ -151,6 +294,11 @@ namespace nani::canvas::internal::font_resolver
 		{
 			return std::span<const std::u8string>(families.data(), families.size());
 		}
+	}
+
+	void ClearCaches()
+	{
+		Caches().Clear();
 	}
 
 	float Measure(

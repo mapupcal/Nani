@@ -43,6 +43,13 @@ TEST_F(EventTest, EventAcceptDefaultsFalseAndCanBeSet)
 	EXPECT_TRUE(e.IsAccepted());
 }
 
+TEST_F(EventTest, ImeCaretRectEventStoresClientRect)
+{
+	ImeCaretRectEvent e(RectF(1.0f, 2.0f, 3.0f, 4.0f));
+	EXPECT_EQ(e.type, Type::ImeCaretRect);
+	EXPECT_EQ(e.clientRect, RectF(1.0f, 2.0f, 3.0f, 4.0f));
+}
+
 // ============================================================
 // MoveEvent
 // ============================================================

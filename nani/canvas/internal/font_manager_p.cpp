@@ -1,4 +1,5 @@
 ﻿#include "font_manager_p.h"
+#include "font_resolver.h"
 #include "skia_utils.h"
 #include "text/font.h"
 
@@ -170,6 +171,7 @@ namespace nani::canvas::internal
 	void FontManagerPrivate::ClearCache()
 	{
 		m_fontCache.clear();
+		font_resolver::ClearCaches();
 	}
 
 	SkFontMgr* FontManagerPrivate::FontMgr() const

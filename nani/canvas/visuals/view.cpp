@@ -7,6 +7,7 @@
 #include "elements/input_text_element.h"
 
 #include "events/event.h"
+#include "window.h"
 
 #include "internal/skia_defs.h"
 
@@ -111,7 +112,19 @@ namespace nani::canvas::visuals
 			OnPaintRequest(static_cast<events::PaintRequestEvent*>(e));
 			break;
 		}
+		case events::Type::ImeCaretRect:
+		{
+			OnImeCaretRect(static_cast<events::ImeCaretRectEvent*>(e));
+			break;
 		}
+		}
+	}
+
+	void View::OnImeCaretRect(events::ImeCaretRectEvent* e)
+	{
+		if (!e || !Window())
+			return;
+		Window()->SetImeCaretRect(e->clientRect);
 	}
 
 	void View::OnLayoutRequest(events::LayoutRequestEvent* e)

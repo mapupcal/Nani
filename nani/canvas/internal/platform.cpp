@@ -232,11 +232,15 @@ namespace nani::canvas::internal
 					events::ImeCompositionStartEvent event;
 					pImpl->window->FireEvent(&event);
 				}
-				break;
+				// Preedit is drawn by InputTextVisual; do not create the default
+				// Imm composition window (would show a duplicate string).
+				return 0;
 			}
 			case WM_IME_COMPOSITION:
 			{
-				if (pImpl->window && (lParam & GCS_COMPSTR))
+				const bool hasCompStr = (lParam & GCS_COMPSTR) != 0;
+				const bool hasResultStr = (lParam & GCS_RESULTSTR) != 0;
+				if (pImpl->window && hasCompStr)
 				{
 					HIMC himc = ::ImmGetContext(hwnd);
 					if (himc)
@@ -245,11 +249,14 @@ namespace nani::canvas::internal
 						::ImmReleaseContext(hwnd, himc);
 					}
 				}
-				if (pImpl->window && (lParam & GCS_RESULTSTR))
+				if (pImpl->window && hasResultStr)
 				{
 					events::ImeCompositionEndEvent event;
 					pImpl->window->FireEvent(&event);
 				}
+				// Suppress default composition painting when we only update preedit.
+				if (hasCompStr && !hasResultStr)
+					return 0;
 				break;
 			}
 			case WM_IME_ENDCOMPOSITION:
@@ -358,12 +365,8 @@ namespace nani::canvas::internal
 		if (!himc)
 			return;
 
-		COMPOSITIONFORM form = {};
-		form.dwStyle = CFS_POINT;
-		form.ptCurrentPos.x = static_cast<LONG>(clientCaretRect.left);
-		form.ptCurrentPos.y = static_cast<LONG>(clientCaretRect.bottom);
-		::ImmSetCompositionWindow(himc, &form);
-
+		// Only anchor the candidate list. Composition/preedit string is drawn by
+		// InputTextVisual; ImmSetCompositionWindow would revive a duplicate UI.
 		CANDIDATEFORM candidate = {};
 		candidate.dwIndex = 0;
 		candidate.dwStyle = CFS_CANDIDATEPOS;

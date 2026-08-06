@@ -11,6 +11,8 @@
 namespace nani::canvas::internal::font_resolver
 {
 	// Resolve glyph runs: Font.families -> platform fallbacks -> matchFamilyStyleCharacter.
+	void ClearCaches();
+
 	float Measure(
 		const SkFont& baseFont,
 		SkFontMgr* fontMgr,

@@ -15,6 +15,8 @@
 #include "../internal/yoga_defs.h"
 #include "../internal/yoga_utils.h"
 
+#include <memory>
+
 using namespace nani::canvas::elements;
 using namespace nani::canvas::events;
 using namespace nani::canvas::basic;
@@ -292,11 +294,15 @@ namespace nani::canvas::visuals
 		{
 			for (Visual* current = visual; current; )
 			{
-				local = current->Transform().ApplyTo(local);
 				Visual* parent = current->Parent();
 				if (!parent)
+				{
+					// Root has no parent offset; still apply its local transform.
+					local = current->Transform().ApplyTo(local);
 					break;
-				local += current->LayoutRect().TopLeft();
+				}
+				// Match paint/hit-test: child origin is LayoutRect - parent scroll.
+				local = current->MapToParentLocal(local);
 				current = parent;
 			}
 			return local;
@@ -348,8 +354,18 @@ namespace nani::canvas::visuals
 		}
 	}
 
+	struct InputTextVisual::LayoutCache
+	{
+		DocumentLayout layout;
+		Font font;
+		bool multiLine = false;
+		TextAlignment::Vertical verticalAlign = TextAlignment::Vertical::Center;
+		bool valid = false;
+	};
+
 	InputTextVisual::InputTextVisual(visuals::View* view, InputTextElement* element, Visual* parent)
 		: Visual(view, element, parent)
+		, m_layoutCache(std::make_unique<LayoutCache>())
 	{
 		m_blinkTimer.SetInterval(kBlinkIntervalMs);
 		m_blinkTimer.SetCallback([this] { OnBlinkTimeout(); });
@@ -380,14 +396,50 @@ namespace nani::canvas::visuals
 		return yoga_utils::LocalContentRect(LayoutRect(), YogaNode());
 	}
 
-	void InputTextVisual::EnsureCaretVisible()
+	void InputTextVisual::InvalidateLayoutCache() const
+	{
+		if (m_layoutCache)
+			m_layoutCache->valid = false;
+	}
+
+	bool InputTextVisual::EnsureDocumentLayout() const
 	{
 		auto* input = InputText();
 		const ComputedStyle* style = GetComputedStyle();
-		DocumentLayout layout;
-		if (!ResolveDocumentLayout(input, style, LocalContentRect(), layout))
+		if (!input || !style || !m_layoutCache)
+			return false;
+
+		const RectF contentRect = LocalContentRect();
+		auto& cache = *m_layoutCache;
+		if (cache.valid &&
+			cache.layout.contentRect.left == contentRect.left &&
+			cache.layout.contentRect.top == contentRect.top &&
+			cache.layout.contentRect.right == contentRect.right &&
+			cache.layout.contentRect.bottom == contentRect.bottom)
+		{
+			return true;
+		}
+
+		if (!ResolveDocumentLayout(input, style, contentRect, cache.layout))
+		{
+			cache.valid = false;
+			return false;
+		}
+
+		cache.font = style->visualProps.font;
+		cache.multiLine = input->IsMultiLine();
+		cache.verticalAlign = style->visualProps.textAlignment.VerticalAlign();
+		cache.valid = true;
+		return true;
+	}
+
+	void InputTextVisual::EnsureCaretVisible()
+	{
+		if (!EnsureDocumentLayout())
 			return;
 
+		const auto& layout = m_layoutCache->layout;
+		const ComputedStyle* style = GetComputedStyle();
 		FontMetrics metrics(style->visualProps.font);
 		const float contentWidth = layout.contentRect.Width();
 		const float contentHeight = layout.contentRect.Height();
@@ -423,6 +475,7 @@ namespace nani::canvas::visuals
 
 	void InputTextVisual::BuildVisuals()
 	{
+		InvalidateLayoutCache();
 		Visual::BuildVisuals();
 		YGNodeRef yogaNode = YogaNode();
 		if (!yogaNode)
@@ -440,11 +493,10 @@ namespace nani::canvas::visuals
 		auto* input = InputText();
 		const ComputedStyle* style = GetComputedStyle();
 		EnsureCaretVisible();
-
-		DocumentLayout layout;
-		if (!ResolveDocumentLayout(input, style, LocalContentRect(), layout))
+		if (!EnsureDocumentLayout())
 			return;
 
+		const auto& layout = m_layoutCache->layout;
 		FontMetrics metrics(style->visualProps.font);
 		const Color textColor = text_paint_utils::ResolveTextColor(style);
 		const Color selectedTextColor = ResolveSelectionTextColor(style);
@@ -589,10 +641,10 @@ namespace nani::canvas::visuals
 			return;
 
 		EnsureCaretVisible();
-		DocumentLayout layout;
-		if (!ResolveDocumentLayout(input, GetComputedStyle(), LocalContentRect(), layout))
+		if (!EnsureDocumentLayout())
 			return;
 
+		const auto& layout = m_layoutCache->layout;
 		FontMetrics metrics(GetComputedStyle()->visualProps.font);
 		const size_t caretDisplay = layout.display.caretDisplayOffset;
 		const size_t lineIndex = LineIndexForDisplayOffset(layout, caretDisplay);
@@ -607,11 +659,12 @@ namespace nani::canvas::visuals
 		const PointF rootTopLeft = MapLocalToRoot(this, PointF(caretX, top));
 		const PointF rootBottom = MapLocalToRoot(this, PointF(caretX, bottom));
 		const RectF clientRect = view->Window()->ClientRect();
-		view->Window()->SetImeCaretRect(RectF(
+		ImeCaretRectEvent imeCaret(RectF(
 			rootTopLeft.x + clientRect.left,
 			rootTopLeft.y + clientRect.top,
 			rootTopLeft.x + clientRect.left + 1.0f,
 			rootBottom.y + clientRect.top));
+		view->FireEvent(&imeCaret);
 	}
 
 	void InputTextVisual::SyncCaretBlink(bool focused)
@@ -652,13 +705,11 @@ namespace nani::canvas::visuals
 
 	size_t InputTextVisual::CaretIndexAtLocalPos(basic::single localX, basic::single localY) const
 	{
-		auto* input = InputText();
-		const ComputedStyle* style = GetComputedStyle();
-		DocumentLayout layout;
-		if (!ResolveDocumentLayout(input, style, LocalContentRect(), layout))
+		if (!EnsureDocumentLayout())
 			return 0;
 
-		FontMetrics metrics(style->visualProps.font);
+		const auto& layout = m_layoutCache->layout;
+		FontMetrics metrics(GetComputedStyle()->visualProps.font);
 		const float contentX = localX - layout.contentRect.left + m_scrollX;
 		const float contentY = localY - layout.contentRect.top + m_scrollY;
 		return CaretIndexFromContentPos(metrics, layout, contentX, contentY);
@@ -673,10 +724,10 @@ namespace nani::canvas::visuals
 		const bool extend = (e->modifier & Modifier::Shift) != Modifier::None;
 		const bool ctrl = (e->modifier & Modifier::Ctrl) != Modifier::None;
 
-		DocumentLayout layout;
-		if (!ResolveDocumentLayout(input, GetComputedStyle(), LocalContentRect(), layout))
+		if (!EnsureDocumentLayout())
 			return false;
 
+		const auto& layout = m_layoutCache->layout;
 		FontMetrics metrics(GetComputedStyle()->visualProps.font);
 		const size_t caretDisplay = SourceToDisplayOffset(layout.display, input->CaretIndex());
 		const size_t lineIndex = LineIndexForDisplayOffset(layout, caretDisplay);
@@ -778,6 +829,7 @@ namespace nani::canvas::visuals
 			switch (e->type)
 			{
 			case Type::ElementTextChanged:
+				InvalidateLayoutCache();
 				Reflow();
 				EnsureCaretVisible();
 				if (input->States()->IsFocused())
@@ -786,9 +838,10 @@ namespace nani::canvas::visuals
 					Repaint();
 				return false;
 			case Type::ElementStatesChanged:
-				Reflow();
+				InvalidateLayoutCache();
 				SyncCaretBlink(input->States()->IsFocused());
-				return false;
+				// Fall through so Visual::Update() rebuilds focused/hovered styles.
+				break;
 			case Type::KeyPress:
 				if (HandleMultiLineKey(static_cast<KeyPressEvent*>(e)))
 				{

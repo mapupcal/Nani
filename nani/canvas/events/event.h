@@ -182,6 +182,15 @@ namespace nani::canvas::events
 		~ImeCompositionEndEvent() = default;
 	};
 
+	class NANI_CANVAS_API ImeCaretRectEvent : public Event
+	{
+	public:
+		explicit ImeCaretRectEvent(const basic::RectF& clientRect_);
+		~ImeCaretRectEvent() = default;
+
+		const basic::RectF clientRect;
+	};
+
 	class NANI_CANVAS_API ElementModifyEvent : public Event
 	{
 	public:

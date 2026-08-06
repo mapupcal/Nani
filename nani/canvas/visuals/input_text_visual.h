@@ -27,6 +27,8 @@ namespace nani::canvas::visuals
 	private:
 		elements::InputTextElement* InputText() const;
 		basic::RectF LocalContentRect() const;
+		void InvalidateLayoutCache() const;
+		bool EnsureDocumentLayout() const;
 		void SyncImeCaretRect();
 		void SyncCaretBlink(bool focused);
 		void ResetCaretBlink();
@@ -39,7 +41,10 @@ namespace nani::canvas::visuals
 		void HandleMouseRelease(events::MouseReleaseEvent* e);
 
 	private:
+		struct LayoutCache;
+
 		Timer m_blinkTimer;
+		mutable std::unique_ptr<LayoutCache> m_layoutCache;
 		basic::single m_scrollX = 0.0f;
 		basic::single m_scrollY = 0.0f;
 		bool m_caretVisible = true;

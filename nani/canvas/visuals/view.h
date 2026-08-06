@@ -28,6 +28,7 @@ namespace nani::canvas::visuals
 		// from visuals.
 		void OnLayoutRequest(events::LayoutRequestEvent* e);
 		void OnPaintRequest(events::PaintRequestEvent* e);
+		void OnImeCaretRect(events::ImeCaretRectEvent* e);
 
 		// from window.
 		void OnMouseMove(events::MouseMoveEvent* e);

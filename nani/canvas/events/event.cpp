@@ -142,6 +142,13 @@ namespace nani::canvas::events
 
 	}
 
+	ImeCaretRectEvent::ImeCaretRectEvent(const basic::RectF& clientRect_)
+		: Event(Type::ImeCaretRect)
+		, clientRect(clientRect_)
+	{
+
+	}
+
 	ElementModifyEvent::ElementModifyEvent(Type type, elements::Element* element_)
 		: Event(type)
 		, element(element_)

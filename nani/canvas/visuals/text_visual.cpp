@@ -11,6 +11,8 @@
 #include "../internal/yoga_defs.h"
 #include "../internal/yoga_utils.h"
 
+#include <memory>
+
 using namespace nani::canvas::elements;
 using namespace nani::canvas::events;
 using namespace nani::canvas::basic;
@@ -299,13 +301,76 @@ namespace nani::canvas::visuals
 		}
 	}
 
+	struct TextVisual::LayoutCache
+	{
+		TextPaintLayout layout;
+		RectF layoutRect;
+		Font font;
+		TextWrapMode wrapMode = TextWrapMode::NoWrap;
+		TextElideMode elideMode = TextElideMode::None;
+		std::u8string text;
+		bool valid = false;
+	};
+
 	TextVisual::TextVisual(visuals::View* view, elements::TextElement* element, Visual* parent)
 		: Visual(view, element, parent)
+		, m_layoutCache(std::make_unique<LayoutCache>())
 	{
+	}
+
+	TextVisual::~TextVisual() = default;
+
+	void TextVisual::InvalidateLayoutCache() const
+	{
+		if (m_layoutCache)
+			m_layoutCache->valid = false;
+	}
+
+	bool TextVisual::EnsurePaintLayout() const
+	{
+		auto* textElement = AsTextElement(this);
+		const ComputedStyle* style = GetComputedStyle();
+		if (!textElement || !style || !m_layoutCache)
+			return false;
+
+		const RectF layoutRect = LayoutRect();
+		auto& cache = *m_layoutCache;
+		if (cache.valid &&
+			cache.layoutRect.left == layoutRect.left &&
+			cache.layoutRect.top == layoutRect.top &&
+			cache.layoutRect.right == layoutRect.right &&
+			cache.layoutRect.bottom == layoutRect.bottom &&
+			cache.font == style->visualProps.font &&
+			cache.wrapMode == textElement->WrapMode() &&
+			cache.elideMode == textElement->ElideMode() &&
+			cache.text == textElement->Text())
+		{
+			return true;
+		}
+
+		if (!ResolveTextPaintLayout(
+			textElement,
+			style,
+			YogaNode(),
+			layoutRect,
+			cache.layout))
+		{
+			cache.valid = false;
+			return false;
+		}
+
+		cache.layoutRect = layoutRect;
+		cache.font = style->visualProps.font;
+		cache.wrapMode = textElement->WrapMode();
+		cache.elideMode = textElement->ElideMode();
+		cache.text = std::u8string(textElement->Text());
+		cache.valid = true;
+		return true;
 	}
 
 	void TextVisual::BuildVisuals()
 	{
+		InvalidateLayoutCache();
 		Visual::BuildVisuals();
 		YGNodeRef yogaNode = YogaNode();
 		if (!yogaNode)
@@ -318,18 +383,10 @@ namespace nani::canvas::visuals
 
 	bool TextVisual::HitTestOverride(const basic::PointF& localPos)
 	{
-		TextPaintLayout layout;
-		if (!ResolveTextPaintLayout(
-			AsTextElement(this),
-			GetComputedStyle(),
-			YogaNode(),
-			LayoutRect(),
-			layout))
-		{
+		if (!EnsurePaintLayout())
 			return false;
-		}
 
-		return layout.textRect.IsContains(localPos);
+		return m_layoutCache->layout.textRect.IsContains(localPos);
 	}
 
 	void TextVisual::PaintOverride(SkCanvas* canvas, const basic::RectF& dirtyRect)
@@ -337,14 +394,11 @@ namespace nani::canvas::visuals
 		Visual::PaintOverride(canvas, dirtyRect);
 
 		const ComputedStyle* style = GetComputedStyle();
-		auto* textElement = AsTextElement(this);
-
-		TextPaintLayout layout;
-		if (!ResolveTextPaintLayout(textElement, style, YogaNode(), LayoutRect(), layout))
+		if (!EnsurePaintLayout())
 			return;
 
-		const Font& font = style->visualProps.font;
-		FontMetrics metrics(font);
+		const auto& layout = m_layoutCache->layout;
+		FontMetrics metrics(style->visualProps.font);
 
 		SkPaint paint;
 		paint.setAntiAlias(true);
@@ -371,11 +425,21 @@ namespace nani::canvas::visuals
 
 	bool TextVisual::Filter(events::EventTarget* target, events::Event* e)
 	{
-		if (target == AsTextElement(this) && e->type == Type::ElementTextChanged)
+		if (target == AsTextElement(this) && e)
 		{
-			Reflow();
-			Repaint();
-			return false;
+			if (e->type == Type::ElementTextChanged)
+			{
+				InvalidateLayoutCache();
+				Reflow();
+				Repaint();
+				return false;
+			}
+
+			if (e->type == Type::ElementStatesChanged)
+			{
+				// Style (e.g. hovered TextDecoration) is rebuilt in Visual::Update().
+				InvalidateLayoutCache();
+			}
 		}
 
 		return Visual::Filter(target, e);

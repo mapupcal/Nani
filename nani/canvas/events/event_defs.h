@@ -25,6 +25,7 @@ namespace nani::canvas::events
 		ImeCompositionStart,
 		ImeCompositionUpdate,
 		ImeCompositionEnd,
+		ImeCaretRect,
 
 		Show,
 		Hide,
