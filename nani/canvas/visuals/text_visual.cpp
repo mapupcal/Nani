@@ -7,6 +7,7 @@
 #include "../internal/computed_style.h"
 #include "../internal/skia_defs.h"
 #include "../internal/skia_utils.h"
+#include "../internal/text_paint_utils.h"
 #include "../internal/yoga_defs.h"
 #include "../internal/yoga_utils.h"
 
@@ -30,26 +31,11 @@ namespace nani::canvas::visuals
 			return (lines & flag) != DecorationLine::None;
 		}
 
-		Color ResolveTextColor(const ComputedStyle* style)
-		{
-			if (!style)
-				return Colors::Black;
-
-			const auto& visualProps = style->visualProps;
-			if (visualProps.color.a != 0)
-				return visualProps.color;
-
-			if (visualProps.textDecoration.Color().a != 0)
-				return visualProps.textDecoration.Color();
-
-			return Colors::Black;
-		}
-
 		Color ResolveDecorationColor(const TextDecoration& decoration, const ComputedStyle* style)
 		{
 			if (decoration.Color().a != 0)
 				return decoration.Color();
-			return ResolveTextColor(style);
+			return text_paint_utils::ResolveTextColor(style);
 		}
 
 		void DrawDecorationStroke(
@@ -196,19 +182,10 @@ namespace nani::canvas::visuals
 				? lineHeight
 				: lineHeight * static_cast<float>(lines.size());
 
-			float measuredWidth = contentWidth;
-			if (widthMode == YGMeasureModeExactly)
-				measuredWidth = width;
-			else if (widthMode == YGMeasureModeAtMost)
-				measuredWidth = std::min(contentWidth, width);
-
-			float measuredHeight = contentHeight;
-			if (heightMode == YGMeasureModeExactly)
-				measuredHeight = height;
-			else if (heightMode == YGMeasureModeAtMost)
-				measuredHeight = std::min(contentHeight, height);
-
-			return { measuredWidth, measuredHeight };
+			return {
+				yoga_utils::ResolveMeasuredSize(contentWidth, widthMode, width),
+				yoga_utils::ResolveMeasuredSize(contentHeight, heightMode, height)
+			};
 		}
 
 		struct TextLineLayout
@@ -242,9 +219,7 @@ namespace nani::canvas::visuals
 
 			FontMetrics metrics(style->visualProps.font);
 
-			RectF contentRect = layoutRect;
-			contentRect.MoveTo(PointF(0.0f, 0.0f));
-			contentRect = contentRect - (yoga_utils::GetNodeBorders(yogaNode) + yoga_utils::GetNodePaddings(yogaNode));
+			const RectF contentRect = yoga_utils::LocalContentRect(layoutRect, yogaNode);
 			if (contentRect.Width() <= 0.0f || contentRect.Height() <= 0.0f)
 				return false;
 
@@ -278,21 +253,10 @@ namespace nani::canvas::visuals
 			const float lineHeight = metrics.LineHeight();
 			const float blockHeight = lineHeight * static_cast<float>(out.lines.size());
 			const TextAlignment& textAlignment = style->visualProps.textAlignment;
-
-			float blockTop = contentRect.top;
-			switch (textAlignment.VerticalAlign())
-			{
-			case TextAlignment::Vertical::Center:
-				blockTop = contentRect.top + (contentRect.Height() - blockHeight) * 0.5f;
-				break;
-			case TextAlignment::Vertical::Bottom:
-				blockTop = contentRect.bottom - blockHeight;
-				break;
-			case TextAlignment::Vertical::Top:
-			default:
-				blockTop = contentRect.top;
-				break;
-			}
+			const float blockTop = text_paint_utils::AlignedBlockTop(
+				contentRect,
+				blockHeight,
+				textAlignment.VerticalAlign());
 
 			bool hasBounds = false;
 			for (size_t i = 0; i < out.lines.size(); ++i)
@@ -385,7 +349,7 @@ namespace nani::canvas::visuals
 		SkPaint paint;
 		paint.setAntiAlias(true);
 		paint.setStyle(SkPaint::kFill_Style);
-		paint.setColor(skia_utils::ToSkColor(ResolveTextColor(style)));
+		paint.setColor(skia_utils::ToSkColor(text_paint_utils::ResolveTextColor(style)));
 
 		for (const auto& line : layout.lines)
 		{

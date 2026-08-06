@@ -10,6 +10,7 @@
 #include "../internal/computed_style.h"
 #include "../internal/skia_defs.h"
 #include "../internal/skia_utils.h"
+#include "../internal/text_paint_utils.h"
 #include "../internal/yoga_defs.h"
 #include "../internal/yoga_utils.h"
 
@@ -23,16 +24,6 @@ namespace nani::canvas::visuals
 {
 	namespace
 	{
-		Color ResolveTextColor(const ComputedStyle* style)
-		{
-			if (!style)
-				return Colors::Black;
-
-			if (style->visualProps.color.a != 0)
-				return style->visualProps.color;
-			return Colors::Black;
-		}
-
 		struct InputTextLayout
 		{
 			RectF contentRect;
@@ -72,20 +63,10 @@ namespace nani::canvas::visuals
 			out.descent = metrics.Descent();
 
 			const float lineHeight = metrics.LineHeight();
-			float textTop = contentRect.top;
-			switch (style->visualProps.textAlignment.VerticalAlign())
-			{
-			case TextAlignment::Vertical::Center:
-				textTop = contentRect.top + (contentRect.Height() - lineHeight) * 0.5f;
-				break;
-			case TextAlignment::Vertical::Bottom:
-				textTop = contentRect.bottom - lineHeight;
-				break;
-			case TextAlignment::Vertical::Top:
-			default:
-				textTop = contentRect.top;
-				break;
-			}
+			const float textTop = text_paint_utils::AlignedBlockTop(
+				contentRect,
+				lineHeight,
+				style->visualProps.textAlignment.VerticalAlign());
 
 			out.textX = contentRect.left;
 			out.baselineY = textTop + out.ascent;
@@ -120,20 +101,10 @@ namespace nani::canvas::visuals
 
 			const float contentWidth = metrics.HorizontalAdvance(display);
 			const float contentHeight = metrics.LineHeight();
-
-			float measuredWidth = contentWidth;
-			if (widthMode == YGMeasureModeExactly)
-				measuredWidth = width;
-			else if (widthMode == YGMeasureModeAtMost)
-				measuredWidth = std::min(contentWidth, width);
-
-			float measuredHeight = contentHeight;
-			if (heightMode == YGMeasureModeExactly)
-				measuredHeight = height;
-			else if (heightMode == YGMeasureModeAtMost)
-				measuredHeight = std::min(contentHeight, height);
-
-			return { measuredWidth, measuredHeight };
+			return {
+				yoga_utils::ResolveMeasuredSize(contentWidth, widthMode, width),
+				yoga_utils::ResolveMeasuredSize(contentHeight, heightMode, height)
+			};
 		}
 
 		PointF MapLocalToRoot(Visual* visual, PointF local)
@@ -165,12 +136,7 @@ namespace nani::canvas::visuals
 	{
 		// Paint is in local space with origin at the border-box top-left.
 		// ContentRect() keeps Yoga parent offsets, so rebuild from a local layout rect.
-		RectF content = LayoutRect();
-		content.MoveTo(PointF(0.0f, 0.0f));
-		YGNodeRef yogaNode = YogaNode();
-		if (!yogaNode)
-			return content;
-		return content - (yoga_utils::GetNodeBorders(yogaNode) + yoga_utils::GetNodePaddings(yogaNode));
+		return yoga_utils::LocalContentRect(LayoutRect(), YogaNode());
 	}
 
 	void InputTextVisual::BuildVisuals()
@@ -207,7 +173,7 @@ namespace nani::canvas::visuals
 		SkPaint paint;
 		paint.setAntiAlias(true);
 		paint.setStyle(SkPaint::kFill_Style);
-		paint.setColor(skia_utils::ToSkColor(ResolveTextColor(style)));
+		paint.setColor(skia_utils::ToSkColor(text_paint_utils::ResolveTextColor(style)));
 
 		auto drawUtf8 = [&](const std::u8string_view& chunk, float x)
 		{

@@ -89,11 +89,42 @@ namespace nani::canvas::internal::skia_utils
 		NANI_MESSAGE("not impl.");
 	}
 
+	SkString ToSkString(const std::u8string_view& text)
+	{
+		const char* data = reinterpret_cast<const char*>(text.data());
+		return SkString(data, static_cast<size_t>(text.size()));
+	}
+
+	std::u8string ToU8String(const SkString& text)
+	{
+		if (text.isEmpty())
+			return {};
+		return std::u8string(
+			reinterpret_cast<const char8_t*>(text.c_str()),
+			text.size());
+	}
+
 	std::u8string GetFamilyName(sk_sp<SkTypeface> typeface)
 	{
+		if (!typeface)
+			return {};
 		SkString skName;
 		typeface->getFamilyName(&skName);
-		std::u8string family(skName.begin(), skName.end());
-		return family;
+		return ToU8String(skName);
+	}
+
+	sk_sp<SkTypeface> MatchFamilyStyle(
+		SkFontMgr* fontMgr,
+		const std::u8string_view& family,
+		const SkFontStyle& style)
+	{
+		if (!fontMgr || family.empty())
+			return nullptr;
+
+		const SkString skFamilyName = ToSkString(family);
+		sk_sp<SkTypeface> typeface = fontMgr->matchFamilyStyle(skFamilyName.c_str(), style);
+		if (!typeface)
+			typeface = fontMgr->matchFamilyStyle(skFamilyName.c_str(), SkFontStyle::Normal());
+		return typeface;
 	}
 }

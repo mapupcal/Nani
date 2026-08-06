@@ -5,6 +5,8 @@
 namespace
 {
 	using namespace nani::canvas::text;
+	using namespace nani::canvas::internal;
+
 	SkFontStyle::Weight ConvertWeight(FontWeight weight)
 	{
 		switch (weight)
@@ -57,27 +59,6 @@ namespace
 		return std::make_shared<SkFont>(typeface, size);
 	}
 
-	SkString U8StringToSkString(const std::u8string_view& u8str)
-	{
-		const char* data = reinterpret_cast<const char*>(u8str.data());
-		return SkString(data, u8str.size());
-	}
-
-	sk_sp<SkTypeface> MatchFamilyStyle(
-		SkFontMgr* fontMgr,
-		const std::u8string_view& family,
-		const SkFontStyle& style)
-	{
-		if (!fontMgr || family.empty())
-			return nullptr;
-
-		SkString skFamilyName = U8StringToSkString(family);
-		sk_sp<SkTypeface> typeface = fontMgr->matchFamilyStyle(skFamilyName.c_str(), style);
-		if (!typeface)
-			typeface = fontMgr->matchFamilyStyle(skFamilyName.c_str(), SkFontStyle::Normal());
-		return typeface;
-	}
-
 	std::vector<std::u8string> PlatformFallbackFamilies()
 	{
 		std::vector<std::u8string> families;
@@ -119,11 +100,7 @@ namespace nani::canvas::internal
 			m_spSkFontMgr->getFamilyName(i, &familyName);
 
 			if (!familyName.isEmpty())
-			{
-				std::u8string u8Name(reinterpret_cast<const char8_t*>(familyName.c_str()),
-					familyName.size());
-				families.push_back(std::move(u8Name));
-			}
+				families.push_back(skia_utils::ToU8String(familyName));
 		}
 
 		return families;
@@ -155,7 +132,7 @@ namespace nani::canvas::internal
 		sk_sp<SkTypeface> typeface;
 		for (const auto& family : font.Families())
 		{
-			typeface = MatchFamilyStyle(m_spSkFontMgr.get(), family, style);
+			typeface = skia_utils::MatchFamilyStyle(m_spSkFontMgr.get(), family, style);
 			if (typeface)
 				break;
 		}
@@ -164,7 +141,7 @@ namespace nani::canvas::internal
 		{
 			for (const auto& family : m_fallbackFamilies)
 			{
-				typeface = MatchFamilyStyle(m_spSkFontMgr.get(), family, style);
+				typeface = skia_utils::MatchFamilyStyle(m_spSkFontMgr.get(), family, style);
 				if (typeface)
 					break;
 			}

@@ -1,4 +1,5 @@
 ﻿#include "font_resolver.h"
+#include "skia_utils.h"
 #include "../text/utf8.h"
 
 namespace nani::canvas::internal::font_resolver
@@ -11,28 +12,6 @@ namespace nani::canvas::internal::font_resolver
 			const size_t next = text::utf8::DecodeNext(data, size, index, codepoint);
 			out = static_cast<SkUnichar>(codepoint);
 			return next;
-		}
-
-		const char* FamilyCStr(const std::u8string& family, std::string& storage)
-		{
-			storage.assign(family.begin(), family.end());
-			return storage.c_str();
-		}
-
-		sk_sp<SkTypeface> MatchFamily(
-			SkFontMgr* fontMgr,
-			const std::u8string& family,
-			const SkFontStyle& style)
-		{
-			if (!fontMgr || family.empty())
-				return nullptr;
-
-			std::string storage;
-			const char* name = FamilyCStr(family, storage);
-			sk_sp<SkTypeface> face = fontMgr->matchFamilyStyle(name, style);
-			if (!face)
-				face = fontMgr->matchFamilyStyle(name, SkFontStyle::Normal());
-			return face;
 		}
 
 		bool TypefaceHasGlyph(SkTypeface* face, SkUnichar uni)
@@ -48,7 +27,7 @@ namespace nani::canvas::internal::font_resolver
 		{
 			for (const auto& family : families)
 			{
-				if (sk_sp<SkTypeface> face = MatchFamily(fontMgr, family, style))
+				if (sk_sp<SkTypeface> face = skia_utils::MatchFamilyStyle(fontMgr, family, style))
 					out.push_back(std::move(face));
 			}
 		}
@@ -112,10 +91,13 @@ namespace nani::canvas::internal::font_resolver
 			CollectTypefaces(fontMgr, preferredFamilies, style, chain);
 			CollectTypefaces(fontMgr, fallbackFamilies, style, chain);
 
-			std::string hintStorage;
+			SkString hintStorage;
 			const char* hintFamilyName = nullptr;
 			if (!preferredFamilies.empty())
-				hintFamilyName = FamilyCStr(preferredFamilies.front(), hintStorage);
+			{
+				hintStorage = skia_utils::ToSkString(preferredFamilies.front());
+				hintFamilyName = hintStorage.c_str();
+			}
 
 			size_t index = 0;
 			SkUnichar firstUni = 0;
@@ -164,6 +146,11 @@ namespace nani::canvas::internal::font_resolver
 			}
 			flush(size);
 		}
+
+		std::span<const std::u8string> AsSpan(const std::vector<std::u8string>& families)
+		{
+			return std::span<const std::u8string>(families.data(), families.size());
+		}
 	}
 
 	float Measure(
@@ -185,6 +172,21 @@ namespace nani::canvas::internal::font_resolver
 				width += font.measureText(bytes, byteCount, SkTextEncoding::kUTF8);
 			});
 		return width;
+	}
+
+	float Measure(
+		const SkFont& baseFont,
+		SkFontMgr* fontMgr,
+		const text::Font& font,
+		std::span<const std::u8string> fallbackFamilies,
+		const std::u8string_view& text)
+	{
+		return Measure(
+			baseFont,
+			fontMgr,
+			AsSpan(font.Families()),
+			fallbackFamilies,
+			text);
 	}
 
 	void Draw(
@@ -220,5 +222,28 @@ namespace nani::canvas::internal::font_resolver
 					paint);
 				cursorX += font.measureText(bytes, byteCount, SkTextEncoding::kUTF8);
 			});
+	}
+
+	void Draw(
+		SkCanvas* canvas,
+		const SkFont& baseFont,
+		SkFontMgr* fontMgr,
+		const text::Font& font,
+		std::span<const std::u8string> fallbackFamilies,
+		const std::u8string_view& text,
+		float x,
+		float y,
+		const SkPaint& paint)
+	{
+		Draw(
+			canvas,
+			baseFont,
+			fontMgr,
+			AsSpan(font.Families()),
+			fallbackFamilies,
+			text,
+			x,
+			y,
+			paint);
 	}
 }

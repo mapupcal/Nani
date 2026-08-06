@@ -12,8 +12,10 @@ namespace nani::canvas::text
 {
 	namespace
 	{
-		std::span<const std::u8string> AsSpan(const std::vector<std::u8string>& families)
+		std::span<const std::u8string> FallbackSpan()
 		{
+			const auto& families =
+				internal::FontManagerPrivate::Instance()->FallbackFamilies();
 			return std::span<const std::u8string>(families.data(), families.size());
 		}
 	}
@@ -138,8 +140,8 @@ namespace nani::canvas::text
 		return internal::font_resolver::Measure(
 			*m_spSkFont,
 			mgr->FontMgr(),
-			AsSpan(m_font.Families()),
-			AsSpan(mgr->FallbackFamilies()),
+			m_font,
+			FallbackSpan(),
 			text);
 	}
 
@@ -176,8 +178,8 @@ namespace nani::canvas::text
 			canvas,
 			drawFont,
 			mgr->FontMgr(),
-			AsSpan(m_font.Families()),
-			AsSpan(mgr->FallbackFamilies()),
+			m_font,
+			FallbackSpan(),
 			text,
 			x,
 			y,

@@ -107,6 +107,7 @@ nani_add_library(canvas SHARED
 	internal/skia_defs.h
 	internal/skia_utils.cpp
 	internal/skia_utils.h
+	internal/text_paint_utils.h
 )
 target_include_directories(canvas PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}

@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "text_defs.h"
+#include "../defs.h"
 
 namespace nani::canvas::text::utf8
 {

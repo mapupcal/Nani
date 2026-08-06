@@ -56,6 +56,24 @@ namespace nani::canvas::internal::yoga_utils
 		return GetNodeBorderRect(node) - (GetNodeBorders(node) + GetNodePaddings(node));
 	}
 
+	const basic::RectF LocalContentRect(const basic::RectF& layoutRect, YGNodeRef node)
+	{
+		RectF content = layoutRect;
+		content.MoveTo(PointF(0.0f, 0.0f));
+		if (!node)
+			return content;
+		return content - (GetNodeBorders(node) + GetNodePaddings(node));
+	}
+
+	float ResolveMeasuredSize(float desired, YGMeasureMode mode, float constraint)
+	{
+		if (mode == YGMeasureModeExactly)
+			return constraint;
+		if (mode == YGMeasureModeAtMost)
+			return std::min(desired, constraint);
+		return desired;
+	}
+
 	const basic::PointF GetPointInRect(const basic::RectF& rect, const facebook::yoga::StyleLength& x, const facebook::yoga::StyleLength& y)
 	{
 		PointF point = rect.TopLeft();

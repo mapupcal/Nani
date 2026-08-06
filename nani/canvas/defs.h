@@ -59,6 +59,7 @@ namespace nani::canvas::text
 
 class SkCanvas;
 class SkFont;
+class SkPaint;
 class SkTypeface;
 class SkFontMgr;
 

@@ -1,9 +1,7 @@
 ﻿#pragma once
+
 #include "text_defs.h"
 #include "font.h"
-
-class SkCanvas;
-class SkPaint;
 
 namespace nani::canvas::text
 {
