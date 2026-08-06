@@ -11,5 +11,6 @@ namespace nani::canvas
 
 	public:
 		int WaitForQuit();
+		void ProcessEvents();
 	};
 }

@@ -9,6 +9,7 @@
 namespace nani::canvas::internal
 {
 	class WindowPrivate;
+	class TimerPrivate;
 	struct ScreenData;
 	class ComputedStyle;
 	class ComputedStyleBuilder;
@@ -20,6 +21,7 @@ namespace nani::canvas
 	class Window;
 	class Styles;
 	class Screen;
+	class Timer;
 }
 namespace nani::canvas::elements
 {

@@ -81,6 +81,8 @@ nani_add_library(canvas SHARED
 
 	env.cpp
 	env.h
+	timer.cpp
+	timer.h
 	window.cpp
 	window.h
 
@@ -95,6 +97,8 @@ nani_add_library(canvas SHARED
 	internal/font_resolver.h
 	internal/platform.cpp
 	internal/platform.h
+	internal/timer_p.cpp
+	internal/timer_p.h
 	internal/window_p.cpp
 	internal/window_p.h
 	internal/yoga_defs.h

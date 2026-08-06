@@ -11,6 +11,7 @@ namespace nani::canvas::events
 
 		AboutToQuit,
 		Quit,
+		Timer,
 
 		MouseMove,
 		MousePress,

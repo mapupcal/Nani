@@ -22,6 +22,7 @@ nani_add_executable(canvas_utests
 	test_view.cpp
 	test_scroll_area.cpp
 	test_input_text.cpp
+	test_timer.cpp
 )
 
 target_include_directories(canvas_utests PRIVATE

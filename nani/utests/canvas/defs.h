@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "canvas/env.h"
+#include "canvas/timer.h"
 #include "canvas/window.h"
 #include "canvas/styles.h"
 #include "canvas/basic/transformf.h"

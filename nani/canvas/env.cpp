@@ -16,4 +16,9 @@ namespace nani::canvas
 	{
 		return internal::EnvPrivate::Instance()->WaitForQuit();
 	}
+
+	void Env::ProcessEvents()
+	{
+		internal::EnvPrivate::Instance()->ProcessEvents();
+	}
 }

@@ -1,6 +1,11 @@
 ﻿#pragma once
 #include "event_defs.h"
 
+namespace nani::canvas
+{
+	class Timer;
+}
+
 namespace nani::canvas::events
 {
 	class NANI_CANVAS_API Event
@@ -137,6 +142,15 @@ namespace nani::canvas::events
 		~CharEvent() = default;
 
 		const char32_t codepoint = 0;
+	};
+
+	class NANI_CANVAS_API TimerEvent : public Event
+	{
+	public:
+		explicit TimerEvent(canvas::Timer* timer_);
+		~TimerEvent() = default;
+
+		canvas::Timer* const timer = nullptr;
 	};
 
 	class NANI_CANVAS_API ImeCompositionStartEvent : public Event

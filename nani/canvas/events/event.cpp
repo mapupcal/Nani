@@ -106,6 +106,13 @@ namespace nani::canvas::events
 
 	}
 
+	TimerEvent::TimerEvent(canvas::Timer* timer_)
+		: Event(Type::Timer)
+		, timer(timer_)
+	{
+
+	}
+
 	ImeCompositionStartEvent::ImeCompositionStartEvent()
 		: Event(Type::ImeCompositionStart)
 	{
