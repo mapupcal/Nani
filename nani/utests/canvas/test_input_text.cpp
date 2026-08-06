@@ -601,3 +601,49 @@ TEST_F(InputTextTest, FocusStartsCaretBlinkRepaint)
 	ProcessEvents();
 	EXPECT_GT(watcher.requestCount, afterFocus);
 }
+
+TEST_F(InputTextTest, ScrollFollowsCaretWhenTextOverflows)
+{
+	window_->RootElement()->GetStyles()->LoadFromXML(R"(
+		<Styles>
+			<Style class="NaniWindow">
+				<FlexBox flexDirection="column" />
+			</Style>
+			<Style class="NarrowInput">
+				<Font family="Segoe UI" size="14" style="normal" weight="normal" />
+				<Dimension width="80" height="32" />
+				<Paddings l="4" t="4" r="4" b="4" />
+				<Borders value="1" />
+				<Colors background="#FFFFFFFF" border="#000000FF" color="#000000FF" />
+			</Style>
+		</Styles>
+	)");
+
+	auto* input = new InputTextElement(
+		window_->RootElement(),
+		u8"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789");
+	input->SetStyleClass(u8"NarrowInput");
+	input->SetCaretIndex(input->Text().size());
+	window_->Show();
+	window_->GetView()->Flush();
+
+	auto* rootVisual = window_->GetView()->Visual();
+	ASSERT_NE(rootVisual, nullptr);
+	ASSERT_FALSE(rootVisual->Visuals().empty());
+	auto* inputVisual = dynamic_cast<InputTextVisual*>(rootVisual->Visuals().front().get());
+	ASSERT_NE(inputVisual, nullptr);
+
+	EXPECT_GT(inputVisual->ScrollOffset(), 0.0f);
+
+	KeyPressEvent home(Key::Home);
+	input->FireEvent(&home);
+	window_->GetView()->Flush();
+	EXPECT_FLOAT_EQ(inputVisual->ScrollOffset(), 0.0f);
+
+	KeyPressEvent end(Key::End);
+	input->FireEvent(&end);
+	window_->GetView()->Flush();
+	EXPECT_GT(inputVisual->ScrollOffset(), 0.0f);
+
+	window_->Hide();
+}

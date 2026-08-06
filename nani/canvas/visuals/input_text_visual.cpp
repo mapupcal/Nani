@@ -46,6 +46,7 @@ namespace nani::canvas::visuals
 			InputTextElement* input,
 			const ComputedStyle* style,
 			const RectF& contentRect,
+			basic::single scrollX,
 			InputTextLayout& out)
 		{
 			if (!input || !style)
@@ -72,7 +73,7 @@ namespace nani::canvas::visuals
 				lineHeight,
 				style->visualProps.textAlignment.VerticalAlign());
 
-			out.textX = contentRect.left;
+			out.textX = contentRect.left - scrollX;
 			out.baselineY = textTop + out.ascent;
 			return true;
 		}
@@ -157,11 +158,43 @@ namespace nani::canvas::visuals
 		return static_cast<InputTextElement*>(Element());
 	}
 
+	basic::single InputTextVisual::ScrollOffset() const
+	{
+		return m_scrollX;
+	}
+
 	RectF InputTextVisual::LocalContentRect() const
 	{
 		// Paint is in local space with origin at the border-box top-left.
 		// ContentRect() keeps Yoga parent offsets, so rebuild from a local layout rect.
 		return yoga_utils::LocalContentRect(LayoutRect(), YogaNode());
+	}
+
+	void InputTextVisual::EnsureCaretVisible()
+	{
+		auto* input = InputText();
+		const ComputedStyle* style = GetComputedStyle();
+		const RectF contentRect = LocalContentRect();
+		if (!input || !style || contentRect.Width() <= 0.0f)
+			return;
+
+		FontMetrics metrics(style->visualProps.font);
+		std::u8string display(input->Text());
+		display.insert(input->CaretIndex(), input->PreeditText());
+
+		const float contentWidth = contentRect.Width();
+		const float textWidth = metrics.HorizontalAdvance(display);
+		const float caretX =
+			metrics.HorizontalAdvance(input->Text().substr(0, input->CaretIndex())) +
+			metrics.HorizontalAdvance(input->PreeditText());
+		const float maxScroll = std::max(0.0f, textWidth - contentWidth);
+
+		m_scrollX = std::clamp(m_scrollX, 0.0f, maxScroll);
+		if (caretX - m_scrollX > contentWidth)
+			m_scrollX = caretX - contentWidth;
+		else if (caretX - m_scrollX < 0.0f)
+			m_scrollX = caretX;
+		m_scrollX = std::clamp(m_scrollX, 0.0f, maxScroll);
 	}
 
 	void InputTextVisual::BuildVisuals()
@@ -182,8 +215,10 @@ namespace nani::canvas::visuals
 
 		auto* input = InputText();
 		const ComputedStyle* style = GetComputedStyle();
+		EnsureCaretVisible();
+
 		InputTextLayout layout;
-		if (!ResolveInputTextLayout(input, style, LocalContentRect(), layout))
+		if (!ResolveInputTextLayout(input, style, LocalContentRect(), m_scrollX, layout))
 			return;
 
 		canvas->save();
@@ -291,8 +326,10 @@ namespace nani::canvas::visuals
 		if (!input || !view || !view->Window() || !input->States()->IsFocused())
 			return;
 
+		EnsureCaretVisible();
+
 		InputTextLayout layout;
-		if (!ResolveInputTextLayout(input, GetComputedStyle(), LocalContentRect(), layout))
+		if (!ResolveInputTextLayout(input, GetComputedStyle(), LocalContentRect(), m_scrollX, layout))
 			return;
 
 		const float caretX = layout.textX + layout.prefixWidth + layout.preeditWidth;
@@ -353,7 +390,7 @@ namespace nani::canvas::visuals
 			return 0;
 
 		const RectF contentRect = LocalContentRect();
-		const float x = localX - contentRect.left;
+		const float x = localX - contentRect.left + m_scrollX;
 		const std::u8string_view text = input->Text();
 		FontMetrics metrics(style->visualProps.font);
 
@@ -418,6 +455,7 @@ namespace nani::canvas::visuals
 			{
 			case Type::ElementTextChanged:
 				Reflow();
+				EnsureCaretVisible();
 				if (input->States()->IsFocused())
 					ResetCaretBlink();
 				else
