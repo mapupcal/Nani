@@ -11,6 +11,7 @@
 #define GLFW_EXPOSE_NATIVE_WIN32
 #endif
 
+#include <cmath>
 #include <map>
 
 #include <GLFW/glfw3.h>
@@ -232,6 +233,15 @@ namespace nani::canvas::internal
 					events::ImeCompositionStartEvent event;
 					pImpl->window->FireEvent(&event);
 				}
+				// Anchor before Imm places the candidate list. Do not handle
+				// WM_IME_NOTIFY->ImmSet* (that re-enters and freezes the UI).
+				// Clear valid so SetImeCompositionRect re-applies even if unchanged.
+				if (pImpl->imeCaretRectValid)
+				{
+					const basic::RectF rect = pImpl->imeCaretRect;
+					pImpl->imeCaretRectValid = false;
+					Platform::SetImeCompositionRect(pImpl->glfwWindow, rect);
+				}
 				// Preedit is drawn by InputTextVisual; do not create the default
 				// Imm composition window (would show a duplicate string).
 				return 0;
@@ -360,21 +370,62 @@ namespace nani::canvas::internal
 		if (!window)
 			return;
 
+		WindowPrivate* pImpl = reinterpret_cast<WindowPrivate*>(glfwGetWindowUserPointer(window));
+		if (!pImpl || pImpl->imeUpdatingForms)
+			return;
+
+		// ImmSet* can synthesize IMN_* notifications; ignore same-rect updates and
+		// re-entrant calls so we never loop (that previously froze on focus).
+		constexpr float kEps = 0.5f;
+		if (pImpl->imeCaretRectValid &&
+			std::abs(pImpl->imeCaretRect.left - clientCaretRect.left) < kEps &&
+			std::abs(pImpl->imeCaretRect.top - clientCaretRect.top) < kEps &&
+			std::abs(pImpl->imeCaretRect.right - clientCaretRect.right) < kEps &&
+			std::abs(pImpl->imeCaretRect.bottom - clientCaretRect.bottom) < kEps)
+		{
+			return;
+		}
+
+		pImpl->imeCaretRect = clientCaretRect;
+		pImpl->imeCaretRectValid = true;
+		pImpl->imeUpdatingForms = true;
+
 		HWND hwnd = glfwGetWin32Window(window);
 		HIMC himc = ::ImmGetContext(hwnd);
 		if (!himc)
+		{
+			pImpl->imeUpdatingForms = false;
 			return;
+		}
 
-		// Only anchor the candidate list. Composition/preedit string is drawn by
-		// InputTextVisual; ImmSetCompositionWindow would revive a duplicate UI.
+		const LONG left = static_cast<LONG>(clientCaretRect.left);
+		const LONG top = static_cast<LONG>(clientCaretRect.top);
+		const LONG right = clientCaretRect.right > clientCaretRect.left
+			? static_cast<LONG>(clientCaretRect.right)
+			: left + 1;
+		const LONG bottom = clientCaretRect.bottom > clientCaretRect.top
+			? static_cast<LONG>(clientCaretRect.bottom)
+			: top + 1;
+
+		// Qt-style anchor: composition point at preedit/caret top-left; candidate
+		// excludes that rect so Imm parks the list against its bottom edge.
+		// STARTCOMPOSITION returns 0, so Imm still must not paint a second preedit.
+		COMPOSITIONFORM composition = {};
+		composition.dwStyle = CFS_FORCE_POSITION;
+		composition.ptCurrentPos.x = left;
+		composition.ptCurrentPos.y = top;
+		::ImmSetCompositionWindow(himc, &composition);
+
 		CANDIDATEFORM candidate = {};
 		candidate.dwIndex = 0;
-		candidate.dwStyle = CFS_CANDIDATEPOS;
-		candidate.ptCurrentPos.x = static_cast<LONG>(clientCaretRect.left);
-		candidate.ptCurrentPos.y = static_cast<LONG>(clientCaretRect.bottom);
+		candidate.dwStyle = CFS_EXCLUDE;
+		candidate.ptCurrentPos.x = left;
+		candidate.ptCurrentPos.y = bottom;
+		candidate.rcArea = { left, top, right, bottom };
 		::ImmSetCandidateWindow(himc, &candidate);
 
 		::ImmReleaseContext(hwnd, himc);
+		pImpl->imeUpdatingForms = false;
 #else
 		(void)window;
 		(void)clientCaretRect;

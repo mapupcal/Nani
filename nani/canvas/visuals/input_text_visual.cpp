@@ -646,24 +646,41 @@ namespace nani::canvas::visuals
 
 		const auto& layout = m_layoutCache->layout;
 		FontMetrics metrics(GetComputedStyle()->visualProps.font);
-		const size_t caretDisplay = layout.display.caretDisplayOffset;
-		const size_t lineIndex = LineIndexForDisplayOffset(layout, caretDisplay);
+		// Prefer the full preedit span so Imm anchors to the composed text, not
+		// only the trailing caret (which sits at preedit end).
+		const bool hasPreedit =
+			layout.display.preeditDisplayEnd > layout.display.preeditDisplayStart;
+		const size_t anchorDisplay = hasPreedit
+			? layout.display.preeditDisplayStart
+			: layout.display.caretDisplayOffset;
+		const size_t endDisplay = hasPreedit
+			? layout.display.preeditDisplayEnd
+			: layout.display.caretDisplayOffset;
+		const size_t lineIndex = LineIndexForDisplayOffset(layout, anchorDisplay);
 		const auto& line = layout.lines[lineIndex];
-		const float caretX = layout.contentRect.left - m_scrollX + metrics.HorizontalAdvance(
+		const float originX = layout.contentRect.left - m_scrollX;
+		const float originY = -m_scrollY;
+		const float x0 = originX + metrics.HorizontalAdvance(
 			std::u8string_view(layout.display.display).substr(
 				line.displayStart,
-				std::min(caretDisplay, line.displayEnd) - line.displayStart));
-		const float top = line.top - m_scrollY;
-		const float bottom = line.bottom - m_scrollY;
+				std::min(anchorDisplay, line.displayEnd) - line.displayStart));
+		const float x1 = hasPreedit
+			? originX + metrics.HorizontalAdvance(
+				std::u8string_view(layout.display.display).substr(
+					line.displayStart,
+					std::min(endDisplay, line.displayEnd) - line.displayStart))
+			: x0 + 1.0f;
+		const float top = line.top + originY;
+		const float bottom = line.bottom + originY;
 
-		const PointF rootTopLeft = MapLocalToRoot(this, PointF(caretX, top));
-		const PointF rootBottom = MapLocalToRoot(this, PointF(caretX, bottom));
+		const PointF rootTopLeft = MapLocalToRoot(this, PointF(x0, top));
+		const PointF rootBottomRight = MapLocalToRoot(this, PointF(x1, bottom));
 		const RectF clientRect = view->Window()->ClientRect();
 		ImeCaretRectEvent imeCaret(RectF(
 			rootTopLeft.x + clientRect.left,
 			rootTopLeft.y + clientRect.top,
-			rootTopLeft.x + clientRect.left + 1.0f,
-			rootBottom.y + clientRect.top));
+			rootBottomRight.x + clientRect.left,
+			rootBottomRight.y + clientRect.top));
 		view->FireEvent(&imeCaret);
 	}
 

@@ -77,5 +77,8 @@ namespace nani::canvas::internal
 		bool resizableEnabled = false;
 		bool windowDragEnabled = false;
 		bool imeHookEnabled = false;
+		bool imeCaretRectValid = false;
+		bool imeUpdatingForms = false;
+		basic::RectF imeCaretRect;
 	};
 }
