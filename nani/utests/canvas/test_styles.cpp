@@ -1326,9 +1326,33 @@ TEST_F(StylesTest, LoadFromXML_WithFont)
 
 	const auto& font = cs->visualProps.font;
 	EXPECT_EQ(font.Family(), u8"Arial");
+	ASSERT_EQ(font.Families().size(), 1u);
+	EXPECT_TRUE(font.Families().front() == u8"Arial");
 	EXPECT_FLOAT_EQ(font.Size(), 16.0f);
 	EXPECT_EQ(font.Weight(), text::FontWeight::Bold);
 	EXPECT_EQ(font.Style(), text::FontStyle::Italic);
+}
+
+// Font node: comma-separated family list (CSS font-family style)
+TEST_F(StylesTest, LoadFromXML_WithFontFamiliesList)
+{
+	styles_->LoadFromXML(R"(
+		<Styles>
+			<Style class="TextFamilies">
+				<Font family="Segoe UI, Microsoft YaHei UI, , SimSun" size="14" />
+			</Style>
+		</Styles>
+	)");
+
+	auto cs = styles_->Compute(u8"TextFamilies");
+	ASSERT_NE(cs, nullptr);
+
+	const auto& font = cs->visualProps.font;
+	EXPECT_EQ(font.Family(), u8"Segoe UI");
+	ASSERT_EQ(font.Families().size(), 3u);
+	EXPECT_TRUE(font.Families()[0] == u8"Segoe UI");
+	EXPECT_TRUE(font.Families()[1] == u8"Microsoft YaHei UI");
+	EXPECT_TRUE(font.Families()[2] == u8"SimSun");
 }
 
 // Font node: default values when attributes are missing

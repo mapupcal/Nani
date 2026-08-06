@@ -117,7 +117,8 @@
 
     <!-- ============================================================
          DefaultText — Base text style with Font, TextDecoration, TextAlignment.
-         Font: family, size, style (normal|italic|oblique), weight
+         Font: family (comma-separated preferred list), size,
+               style (normal|italic|oblique), weight
          TextDecoration: line (underline,overline,linethrough comma-separated),
                          style (solid|double|dotted|dashed|wavy), color
          TextAlignment: horizontal (left|center|right),

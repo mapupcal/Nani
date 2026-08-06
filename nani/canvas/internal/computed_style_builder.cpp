@@ -255,6 +255,30 @@ namespace
 		return origin;
 	}
 
+	// CSS-like font-family list, e.g. "Segoe UI, Microsoft YaHei UI".
+	std::vector<std::u8string> AsFontFamilies(const std::string_view& str)
+	{
+		std::vector<std::u8string> families;
+		if (str.empty())
+			return families;
+
+		std::string_view remaining = str;
+		while (!remaining.empty())
+		{
+			auto pos = remaining.find(',');
+			std::string_view tokenView =
+				(pos == std::string_view::npos) ? remaining : remaining.substr(0, pos);
+			std::string token = Trim(tokenView);
+			if (!token.empty())
+				families.emplace_back(token.begin(), token.end());
+
+			if (pos == std::string_view::npos)
+				break;
+			remaining = remaining.substr(pos + 1);
+		}
+		return families;
+	}
+
 	std::optional<FontStyle> AsFontStyle(const std::string_view& str)
 	{
 		if (str.empty())
@@ -829,8 +853,7 @@ namespace nani::canvas::internal
 			std::string name = attribute.name();
 			if (name == "family")
 			{
-				std::string family = attribute.value();
-				font.SetFamily(std::u8string(family.cbegin(), family.cend()));
+				font.SetFamilies(AsFontFamilies(attribute.value()));
 			}
 			else if (name == "size")
 			{
