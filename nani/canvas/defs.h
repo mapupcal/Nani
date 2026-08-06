@@ -49,6 +49,7 @@ namespace nani::canvas::events
 	class CharEvent;
 	class ImeCompositionStartEvent;
 	class ImeCompositionUpdateEvent;
+	class ImeCompositionCommitEvent;
 	class ImeCompositionEndEvent;
 }
 namespace nani::canvas::text

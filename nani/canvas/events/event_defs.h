@@ -24,6 +24,7 @@ namespace nani::canvas::events
 
 		ImeCompositionStart,
 		ImeCompositionUpdate,
+		ImeCompositionCommit,
 		ImeCompositionEnd,
 		ImeCaretRect,
 

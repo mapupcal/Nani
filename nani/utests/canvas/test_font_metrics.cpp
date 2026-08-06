@@ -286,6 +286,18 @@ TEST_F(FontMetricsTest, CjkAdvanceUsesFallbackGlyphs)
 	EXPECT_GT(cjk, latin * 0.8f);
 }
 
+TEST_F(FontMetricsTest, EmojiVariationSelectorDoesNotAddExtraAdvance)
+{
+	FontMetrics metrics(font_);
+	// ❤️ = U+2764 HEAVY BLACK HEART + U+FE0F emoji variation selector.
+	const float heart = metrics.HorizontalAdvance(u8"\u2764");
+	const float heartEmoji = metrics.HorizontalAdvance(u8"\u2764\uFE0F");
+	ASSERT_GT(heart, 0.0f);
+	ASSERT_GT(heartEmoji, 0.0f);
+	// FE0F must not measure like a separate gap/space after the heart.
+	EXPECT_NEAR(heartEmoji, heart, 1.0f);
+}
+
 TEST_F(FontMetricsTest, PlatformFallbackFamiliesAreConfigured)
 {
 	FontManager mgr;

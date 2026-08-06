@@ -50,15 +50,24 @@ namespace nani::canvas::internal::font_resolver
 				| ((static_cast<uint32_t>(style.slant()) & 0xFFu) << 24);
 		}
 
+		bool IsVariationSelector(SkUnichar uni)
+		{
+			// VS1–VS16 (includes FE0E text / FE0F emoji presentation).
+			return uni >= 0xFE00 && uni <= 0xFE0F;
+		}
+
 		uint64_t UnicharCacheKey(
 			uint32_t primaryId,
 			uint32_t styleBits,
 			size_t familiesHash,
-			SkUnichar uni)
+			SkUnichar uni,
+			bool preferEmoji)
 		{
 			uint64_t key = primaryId;
 			key = (key << 32) ^ (static_cast<uint64_t>(styleBits) << 16) ^ familiesHash;
 			key ^= static_cast<uint64_t>(static_cast<uint32_t>(uni)) * 0x9e3779b97f4a7c15ULL;
+			if (preferEmoji)
+				key ^= 0xA5A5A5A5A5A5A5A5ULL;
 			return key;
 		}
 
@@ -170,25 +179,52 @@ namespace nani::canvas::internal::font_resolver
 			SkTypeface* primary,
 			const TypefaceChain& chain,
 			const SkFontStyle& style,
-			SkUnichar uni)
+			SkUnichar uni,
+			bool preferEmoji = false)
 		{
 			const uint32_t primaryId = primary ? primary->uniqueID() : 0;
 			const uint64_t cacheKey = UnicharCacheKey(
 				primaryId,
 				chain.styleBits,
 				chain.familiesHash,
-				uni);
+				uni,
+				preferEmoji);
 
 			auto& caches = Caches();
 			if (auto it = caches.unicharFaces.find(cacheKey); it != caches.unicharFaces.end())
 				return it->second;
 
 			sk_sp<SkTypeface> resolved;
-			if (TypefaceHasGlyph(primary, uni))
+
+			// ❤ + FE0F (and similar): prefer a color-emoji face even when the
+			// primary UI font already covers the base symbol as text.
+			if (preferEmoji && fontMgr)
+			{
+				const char* bcp47[] = { "und-Zsye" };
+				resolved = fontMgr->matchFamilyStyleCharacter(
+					nullptr,
+					style,
+					bcp47,
+					1,
+					uni);
+				if (!resolved)
+				{
+					for (const auto& face : chain.faces)
+					{
+						if (TypefaceHasGlyph(face.get(), uni))
+						{
+							resolved = face;
+							break;
+						}
+					}
+				}
+			}
+
+			if (!resolved && TypefaceHasGlyph(primary, uni))
 			{
 				resolved = sk_ref_sp(primary);
 			}
-			else
+			else if (!resolved)
 			{
 				for (const auto& face : chain.faces)
 				{
@@ -252,7 +288,29 @@ namespace nani::canvas::internal::font_resolver
 				fallbackFamilies,
 				style);
 
+			auto peekEmojiVariation = [&](size_t afterBase) -> bool
+			{
+				if (afterBase >= size)
+					return false;
+				SkUnichar vs = 0;
+				NextUnichar(data, size, afterBase, vs);
+				return vs == 0xFE0F;
+			};
+
 			size_t index = 0;
+			// Leading variation selectors are ignorable; skip so they cannot
+			// open a run that measures like a blank gap.
+			while (index < size)
+			{
+				SkUnichar lead = 0;
+				const size_t afterLead = NextUnichar(data, size, index, lead);
+				if (!IsVariationSelector(lead))
+					break;
+				index = afterLead;
+			}
+			if (index >= size)
+				return;
+
 			SkUnichar firstUni = 0;
 			size_t next = NextUnichar(data, size, index, firstUni);
 			sk_sp<SkTypeface> runFace = ResolveTypefaceForUnichar(
@@ -260,7 +318,8 @@ namespace nani::canvas::internal::font_resolver
 				primary,
 				chain,
 				style,
-				firstUni);
+				firstUni,
+				peekEmojiVariation(next));
 			size_t runStart = index;
 			index = next;
 
@@ -271,19 +330,43 @@ namespace nani::canvas::internal::font_resolver
 				SkFont runFont = baseFont;
 				if (runFace)
 					runFont.setTypeface(runFace);
-				runFn(runFont, data + runStart, runEnd - runStart);
+
+				// Drop VS from the shaped/drawn bytes. Font choice already
+				// peeked FE0F; leaving FE0F in the run often adds a blank advance.
+				std::string filtered;
+				filtered.reserve(runEnd - runStart);
+				for (size_t i = runStart; i < runEnd; )
+				{
+					SkUnichar uni = 0;
+					const size_t after = NextUnichar(data, runEnd, i, uni);
+					if (!IsVariationSelector(uni))
+						filtered.append(data + i, after - i);
+					i = after;
+				}
+				if (filtered.empty())
+					return;
+				runFn(runFont, filtered.data(), filtered.size());
 			};
 
 			while (index < size)
 			{
 				SkUnichar uni = 0;
 				next = NextUnichar(data, size, index, uni);
+				// Keep VS with the preceding base (❤️ = U+2764 + U+FE0F). A
+				// separate FE0F run often gets a non-zero advance ("extra space").
+				if (IsVariationSelector(uni))
+				{
+					index = next;
+					continue;
+				}
+
 				sk_sp<SkTypeface> face = ResolveTypefaceForUnichar(
 					fontMgr,
 					primary,
 					chain,
 					style,
-					uni);
+					uni,
+					peekEmojiVariation(next));
 				const bool sameFace =
 					(runFace && face && runFace->uniqueID() == face->uniqueID()) ||
 					(!runFace && !face);

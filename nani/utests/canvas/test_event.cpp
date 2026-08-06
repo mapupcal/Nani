@@ -221,6 +221,10 @@ TEST_F(EventTest, ImeCompositionEvents)
 	EXPECT_EQ(update.type, Type::ImeCompositionUpdate);
 	EXPECT_TRUE(update.preedit == u8"ni");
 
+	ImeCompositionCommitEvent commit(u8"你");
+	EXPECT_EQ(commit.type, Type::ImeCompositionCommit);
+	EXPECT_TRUE(commit.text == u8"你");
+
 	ImeCompositionEndEvent end;
 	EXPECT_EQ(end.type, Type::ImeCompositionEnd);
 }

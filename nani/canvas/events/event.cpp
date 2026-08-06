@@ -136,6 +136,13 @@ namespace nani::canvas::events
 
 	}
 
+	ImeCompositionCommitEvent::ImeCompositionCommitEvent(const std::u8string_view& text_)
+		: Event(Type::ImeCompositionCommit)
+		, text(text_)
+	{
+
+	}
+
 	ImeCompositionEndEvent::ImeCompositionEndEvent()
 		: Event(Type::ImeCompositionEnd)
 	{

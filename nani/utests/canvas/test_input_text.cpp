@@ -310,6 +310,27 @@ TEST_F(InputTextTest, ImeCompositionPreedit)
 	EXPECT_EQ(input->Text(), u8"hi你");
 }
 
+TEST_F(InputTextTest, ImeCompositionCommitInsertsResultIncludingEmoji)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"hi");
+	input->SetCaretIndex(2);
+
+	ImeCompositionStartEvent start;
+	input->FireEvent(&start);
+	ImeCompositionUpdateEvent update(u8"\U0001F600");
+	input->FireEvent(&update);
+	EXPECT_EQ(input->PreeditText(), u8"\U0001F600");
+	EXPECT_EQ(input->Text(), u8"hi");
+
+	// RESULTSTR commit path used by Win+. / Imm — must insert, not only End.
+	ImeCompositionCommitEvent commit(u8"\U0001F600");
+	input->FireEvent(&commit);
+	EXPECT_EQ(input->Text(), u8"hi\U0001F600");
+	EXPECT_TRUE(input->PreeditText().empty());
+	EXPECT_FALSE(input->IsComposing());
+	EXPECT_EQ(input->CaretIndex(), input->Text().size());
+}
+
 TEST_F(InputTextTest, EndCompositionClearsPreedit)
 {
 	auto* input = new InputTextElement(window_->RootElement(), u8"ab");

@@ -276,6 +276,14 @@ namespace nani::canvas::elements
 			NotifyTextChanged();
 			return;
 		}
+		case Type::ImeCompositionCommit:
+		{
+			auto* commit = static_cast<ImeCompositionCommitEvent*>(e);
+			ClearCompositionState(false);
+			if (!commit->text.empty())
+				InsertUtf8(commit->text);
+			return;
+		}
 		case Type::ImeCompositionEnd:
 		{
 			EndComposition();

@@ -175,6 +175,17 @@ namespace nani::canvas::events
 		const std::u8string preedit;
 	};
 
+	// Finalized IME / emoji-panel text (GCS_RESULTSTR). Apps must insert this;
+	// End alone only clears preedit and does not commit.
+	class NANI_CANVAS_API ImeCompositionCommitEvent : public Event
+	{
+	public:
+		explicit ImeCompositionCommitEvent(const std::u8string_view& text_);
+		~ImeCompositionCommitEvent() = default;
+
+		const std::u8string text;
+	};
+
 	class NANI_CANVAS_API ImeCompositionEndEvent : public Event
 	{
 	public:

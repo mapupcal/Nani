@@ -124,23 +124,43 @@ namespace nani::canvas::internal
 			return std::u8string(utf8.begin(), utf8.end());
 		}
 
+		std::u8string ReadImeString(HIMC himc, DWORD index)
+		{
+			if (!himc)
+				return {};
+
+			const LONG bytes = ::ImmGetCompositionStringW(himc, index, nullptr, 0);
+			if (bytes <= 0)
+				return {};
+
+			std::wstring buffer(static_cast<size_t>(bytes) / sizeof(wchar_t), L'\0');
+			::ImmGetCompositionStringW(himc, index, buffer.data(), static_cast<DWORD>(bytes));
+			return WideToUtf8(buffer);
+		}
+
 		void FireImeCompositionUpdate(WindowPrivate* pImpl, HIMC himc)
 		{
 			if (!pImpl || !pImpl->window || !himc)
 				return;
 
-			const LONG bytes = ::ImmGetCompositionStringW(himc, GCS_COMPSTR, nullptr, 0);
-			if (bytes <= 0)
-			{
-				events::ImeCompositionUpdateEvent event(u8"");
-				pImpl->window->FireEvent(&event);
-				return;
-			}
-
-			std::wstring buffer(static_cast<size_t>(bytes) / sizeof(wchar_t), L'\0');
-			::ImmGetCompositionStringW(himc, GCS_COMPSTR, buffer.data(), static_cast<DWORD>(bytes));
-			events::ImeCompositionUpdateEvent event(WideToUtf8(buffer));
+			events::ImeCompositionUpdateEvent event(ReadImeString(himc, GCS_COMPSTR));
 			pImpl->window->FireEvent(&event);
+		}
+
+		// Returns true when RESULTSTR was committed by the app (caller should
+		// return 0 so DefWindowProc/GLFW do not also synthesize WM_CHARs).
+		bool FireImeCompositionCommit(WindowPrivate* pImpl, HIMC himc)
+		{
+			if (!pImpl || !pImpl->window || !himc)
+				return false;
+
+			const std::u8string text = ReadImeString(himc, GCS_RESULTSTR);
+			if (text.empty())
+				return false;
+
+			events::ImeCompositionCommitEvent event(text);
+			pImpl->window->FireEvent(&event);
+			return true;
 		}
 
 		LRESULT HitTestResizable(WindowPrivate* pImpl, POINT pt)
@@ -250,22 +270,31 @@ namespace nani::canvas::internal
 			{
 				const bool hasCompStr = (lParam & GCS_COMPSTR) != 0;
 				const bool hasResultStr = (lParam & GCS_RESULTSTR) != 0;
-				if (pImpl->window && hasCompStr)
+				bool committedResult = false;
+				if (pImpl->window && (hasCompStr || hasResultStr))
 				{
 					HIMC himc = ::ImmGetContext(hwnd);
 					if (himc)
 					{
-						FireImeCompositionUpdate(pImpl, himc);
+						// Commit finalized text ourselves. Win+. emoji panel and
+						// many IMEs put the payload in GCS_RESULTSTR; only firing
+						// End clears preedit and drops the characters when no
+						// subsequent WM_CHAR arrives.
+						if (hasResultStr)
+							committedResult = FireImeCompositionCommit(pImpl, himc);
+						if (hasCompStr && !committedResult)
+							FireImeCompositionUpdate(pImpl, himc);
 						::ImmReleaseContext(hwnd, himc);
 					}
 				}
-				if (pImpl->window && hasResultStr)
+				if (pImpl->window && hasResultStr && !committedResult)
 				{
 					events::ImeCompositionEndEvent event;
 					pImpl->window->FireEvent(&event);
 				}
-				// Suppress default composition painting when we only update preedit.
-				if (hasCompStr && !hasResultStr)
+				// Suppress default Imm painting / duplicate WM_CHAR after we
+				// already inserted RESULTSTR (or when only updating preedit).
+				if ((hasCompStr && !hasResultStr) || committedResult)
 					return 0;
 				break;
 			}

@@ -236,6 +236,7 @@ namespace nani::canvas
 		}
 		case events::Type::ImeCompositionStart:
 		case events::Type::ImeCompositionUpdate:
+		case events::Type::ImeCompositionCommit:
 		case events::Type::ImeCompositionEnd:
 		{
 			m_pView->OnImeComposition(e);
