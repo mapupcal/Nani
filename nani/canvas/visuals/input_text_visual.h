@@ -21,7 +21,8 @@ namespace nani::canvas::visuals
 		void PaintOverride(SkCanvas* canvas, const basic::RectF& dirtyRect) override;
 		bool Filter(events::EventTarget* target, events::Event* e) override;
 
-		basic::single ScrollOffset() const;
+		basic::single ScrollOffsetX() const;
+		basic::single ScrollOffsetY() const;
 
 	private:
 		elements::InputTextElement* InputText() const;
@@ -31,7 +32,8 @@ namespace nani::canvas::visuals
 		void ResetCaretBlink();
 		void OnBlinkTimeout();
 		void EnsureCaretVisible();
-		size_t CaretIndexAtLocalX(basic::single localX) const;
+		bool HandleMultiLineKey(events::KeyPressEvent* e);
+		size_t CaretIndexAtLocalPos(basic::single localX, basic::single localY) const;
 		void HandleMousePress(events::MousePressEvent* e);
 		void HandleMouseMove(events::MouseMoveEvent* e);
 		void HandleMouseRelease(events::MouseReleaseEvent* e);
@@ -39,6 +41,7 @@ namespace nani::canvas::visuals
 	private:
 		Timer m_blinkTimer;
 		basic::single m_scrollX = 0.0f;
+		basic::single m_scrollY = 0.0f;
 		bool m_caretVisible = true;
 		bool m_dragging = false;
 	};

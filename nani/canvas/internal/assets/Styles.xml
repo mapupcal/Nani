@@ -148,6 +148,11 @@
         <Colors border="#2563EBFF" />
     </Style>
 
+    <Style class="DefaultInputTextMultiline" inherit="DefaultInputText">
+        <Dimension height="96" minHeight="96" />
+        <TextAlignment horizontal="left" vertical="top" />
+    </Style>
+
     <!-- ============================================================
          HeadingText — Bold heading with underline decoration.
          Inherits DefaultText, overrides weight and decoration.

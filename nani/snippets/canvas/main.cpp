@@ -182,7 +182,7 @@ namespace
 		});
 	}
 
-	void BuildInputTextCategory(Element* row)
+	void BuildInputTextCategory(Element* row, FilterList& filters)
 	{
 		ScrollAreaElement* scroll = CreateCategory(row, u8"Input Text");
 		Element* content = CreateStyledElement(scroll, u8"InputDemoContent");
@@ -199,6 +199,25 @@ namespace
 			u8"Select me — amber highlight uses a different text color",
 			u8"DemoInputSelectionContrast");
 		selectionContrast->SetSelection(0, 9); // "Select me"
+
+		CreateStyledText(content, u8"Multiline + soft wrap", u8"InputDemoLabel");
+		auto* multi = CreateStyledInputText(
+			content,
+			u8"Line one\nLine two wraps when the row is narrow enough for soft wrapping.",
+			u8"DemoInputMultiline");
+		multi->SetMultiLine(true);
+
+		CreateStyledText(content, u8"Password", u8"InputDemoLabel");
+		Element* passwordRow = CreateStyledElement(content, u8"InputPasswordRow");
+		auto* password = CreateStyledInputText(passwordRow, u8"hunter2", u8"DemoInputPassword");
+		password->SetPasswordMode(true);
+		Element* reveal = CreateStyledElement(passwordRow, u8"DemoPasswordReveal");
+		TextElement* revealLabel = CreateStyledText(reveal, u8"Show", u8"DemoPasswordRevealText");
+		BindMousePress(filters, reveal, [password, revealLabel]() {
+			const bool visible = !password->IsPasswordVisible();
+			password->SetPasswordVisible(visible);
+			revealLabel->SetText(visible ? u8"Hide" : u8"Show");
+		});
 
 		CreateStyledText(
 			content,
@@ -270,14 +289,14 @@ namespace
 		}
 	}
 
-	void BuildDemoBody(Element* root)
+	void BuildDemoBody(Element* root, FilterList& filters)
 	{
 		Element* demoBody = CreateStyledElement(root, u8"DemoBody");
 		Element* inputRow = CreateStyledElement(demoBody, u8"CategoryRow");
 		Element* topRow = CreateStyledElement(demoBody, u8"CategoryRow");
 		Element* bottomRow = CreateStyledElement(demoBody, u8"CategoryRow");
 
-		BuildInputTextCategory(inputRow);
+		BuildInputTextCategory(inputRow, filters);
 		BuildEffectsCategory(topRow);
 		BuildDecorationCategory(topRow);
 		BuildMultiLineCategory(bottomRow);
@@ -316,7 +335,7 @@ int main(int argc, char** argv)
 		lightStylesPath,
 		darkStylesPath,
 		filters);
-	BuildDemoBody(window->RootElement());
+	BuildDemoBody(window->RootElement(), filters);
 
 	window->Show();
 	return env.WaitForQuit();

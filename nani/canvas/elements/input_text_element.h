@@ -15,6 +15,16 @@ namespace nani::canvas::elements
 		void SetText(const std::u8string_view& text);
 		const std::u8string_view Text() const;
 
+		void SetMultiLine(bool multiLine);
+		bool IsMultiLine() const;
+
+		void SetPasswordMode(bool password);
+		bool IsPasswordMode() const;
+		void SetPasswordVisible(bool visible);
+		bool IsPasswordVisible() const;
+		void SetPasswordEcho(const std::u8string_view& echo);
+		const std::u8string_view PasswordEcho() const;
+
 		void SetCaretIndex(size_t index);
 		size_t CaretIndex() const;
 
@@ -49,6 +59,7 @@ namespace nani::canvas::elements
 		void MoveCaretTo(size_t index, bool extend);
 		size_t ClampCaret(size_t index) const;
 		static bool HasShift(events::Modifier modifier);
+		static bool HasCtrl(events::Modifier modifier);
 
 	private:
 		std::u8string m_text;
@@ -56,5 +67,9 @@ namespace nani::canvas::elements
 		size_t m_anchor = 0;
 		size_t m_caret = 0;
 		bool m_composing = false;
+		bool m_multiLine = false;
+		bool m_passwordMode = false;
+		bool m_passwordVisible = false;
+		std::u8string m_passwordEcho;
 	};
 }

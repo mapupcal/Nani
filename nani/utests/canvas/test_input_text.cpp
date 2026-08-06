@@ -633,17 +633,353 @@ TEST_F(InputTextTest, ScrollFollowsCaretWhenTextOverflows)
 	auto* inputVisual = dynamic_cast<InputTextVisual*>(rootVisual->Visuals().front().get());
 	ASSERT_NE(inputVisual, nullptr);
 
-	EXPECT_GT(inputVisual->ScrollOffset(), 0.0f);
+	EXPECT_GT(inputVisual->ScrollOffsetX(), 0.0f);
 
 	KeyPressEvent home(Key::Home);
 	input->FireEvent(&home);
 	window_->GetView()->Flush();
-	EXPECT_FLOAT_EQ(inputVisual->ScrollOffset(), 0.0f);
+	EXPECT_FLOAT_EQ(inputVisual->ScrollOffsetX(), 0.0f);
 
 	KeyPressEvent end(Key::End);
 	input->FireEvent(&end);
 	window_->GetView()->Flush();
-	EXPECT_GT(inputVisual->ScrollOffset(), 0.0f);
+	EXPECT_GT(inputVisual->ScrollOffsetX(), 0.0f);
 
 	window_->Hide();
+}
+
+TEST_F(InputTextTest, MultiLineEnterInsertsNewline)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"ab");
+	input->SetCaretIndex(2);
+
+	KeyPressEvent enter(Key::Enter);
+	input->FireEvent(&enter);
+	EXPECT_EQ(input->Text(), u8"ab");
+
+	input->SetMultiLine(true);
+	input->FireEvent(&enter);
+	EXPECT_EQ(input->Text(), u8"ab\n");
+	EXPECT_EQ(input->CaretIndex(), 3u);
+}
+
+TEST_F(InputTextTest, MultiLineHomeEndAreLineLocal)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"hello\nworld");
+	input->SetMultiLine(true);
+	input->SetStyleClass(u8"DefaultInputText");
+	BuildAndFlush();
+
+	input->SetCaretIndex(8); // inside "world"
+	KeyPressEvent home(Key::Home);
+	input->FireEvent(&home);
+	EXPECT_EQ(input->CaretIndex(), 6u);
+
+	KeyPressEvent end(Key::End);
+	input->FireEvent(&end);
+	EXPECT_EQ(input->CaretIndex(), 11u);
+
+	KeyPressEvent docHome(Key::Home, Modifier::Ctrl);
+	input->FireEvent(&docHome);
+	EXPECT_EQ(input->CaretIndex(), 0u);
+
+	KeyPressEvent docEnd(Key::End, Modifier::Ctrl);
+	input->FireEvent(&docEnd);
+	EXPECT_EQ(input->CaretIndex(), 11u);
+}
+
+TEST_F(InputTextTest, MultiLineUpDownMovesVisualLine)
+{
+	window_->RootElement()->GetStyles()->LoadFromXML(R"(
+		<Styles>
+			<Style class="NaniWindow">
+				<FlexBox flexDirection="column" />
+			</Style>
+			<Style class="WrapInput">
+				<Font family="Segoe UI" size="14" style="normal" weight="normal" />
+				<Dimension width="120" height="96" />
+				<Paddings l="4" t="4" r="4" b="4" />
+				<Borders value="1" />
+				<Colors background="#FFFFFFFF" border="#000000FF" color="#000000FF" />
+			</Style>
+		</Styles>
+	)");
+
+	auto* input = new InputTextElement(
+		window_->RootElement(),
+		u8"one two three four five six");
+	input->SetStyleClass(u8"WrapInput");
+	input->SetMultiLine(true);
+	input->SetCaretIndex(0);
+	BuildAndFlush();
+
+	KeyPressEvent down(Key::Down);
+	input->FireEvent(&down);
+	EXPECT_GT(input->CaretIndex(), 0u);
+
+	const size_t afterDown = input->CaretIndex();
+	KeyPressEvent up(Key::Up);
+	input->FireEvent(&up);
+	EXPECT_LT(input->CaretIndex(), afterDown);
+}
+
+TEST_F(InputTextTest, MultiLineVerticalScrollFollowsCaret)
+{
+	window_->RootElement()->GetStyles()->LoadFromXML(R"(
+		<Styles>
+			<Style class="NaniWindow">
+				<FlexBox flexDirection="column" />
+			</Style>
+			<Style class="ShortMulti">
+				<Font family="Segoe UI" size="14" style="normal" weight="normal" />
+				<Dimension width="160" height="48" />
+				<Paddings l="4" t="4" r="4" b="4" />
+				<Borders value="1" />
+				<Colors background="#FFFFFFFF" border="#000000FF" color="#000000FF" />
+			</Style>
+		</Styles>
+	)");
+
+	auto* input = new InputTextElement(
+		window_->RootElement(),
+		u8"l1\nl2\nl3\nl4\nl5\nl6\nl7\nl8");
+	input->SetStyleClass(u8"ShortMulti");
+	input->SetMultiLine(true);
+	input->SetCaretIndex(input->Text().size());
+	window_->Show();
+	window_->GetView()->Flush();
+
+	auto* rootVisual = window_->GetView()->Visual();
+	auto* inputVisual = dynamic_cast<InputTextVisual*>(rootVisual->Visuals().front().get());
+	ASSERT_NE(inputVisual, nullptr);
+	EXPECT_GT(inputVisual->ScrollOffsetY(), 0.0f);
+
+	KeyPressEvent docHome(Key::Home, Modifier::Ctrl);
+	input->FireEvent(&docHome);
+	window_->GetView()->Flush();
+	EXPECT_FLOAT_EQ(inputVisual->ScrollOffsetY(), 0.0f);
+
+	window_->Hide();
+}
+
+TEST_F(InputTextTest, PasswordModeMasksAndTogglesVisibility)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"secret");
+	input->SetPasswordMode(true);
+	EXPECT_TRUE(input->IsPasswordMode());
+	EXPECT_FALSE(input->IsMultiLine());
+	EXPECT_EQ(input->Text(), u8"secret");
+
+	input->SetPasswordVisible(true);
+	EXPECT_TRUE(input->IsPasswordVisible());
+	EXPECT_EQ(input->Text(), u8"secret");
+
+	input->SetPasswordVisible(false);
+	EXPECT_FALSE(input->IsPasswordVisible());
+	EXPECT_EQ(input->Text(), u8"secret");
+}
+
+TEST_F(InputTextTest, PasswordAndMultiLineCanCoexist)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"ab\ncd");
+	input->SetMultiLine(true);
+	input->SetPasswordMode(true);
+	EXPECT_TRUE(input->IsMultiLine());
+	EXPECT_TRUE(input->IsPasswordMode());
+	EXPECT_EQ(input->Text(), u8"ab\ncd");
+
+	input->SetPasswordVisible(true);
+	EXPECT_TRUE(input->IsPasswordVisible());
+	EXPECT_TRUE(input->IsMultiLine());
+}
+
+TEST_F(InputTextTest, MultiLineSelectionReplaceAndDelete)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"ab\ncd");
+	input->SetMultiLine(true);
+	input->SetSelection(1, 4); // "b\nc"
+
+	CharEvent x(U'x');
+	input->FireEvent(&x);
+	EXPECT_EQ(input->Text(), u8"axd");
+	EXPECT_FALSE(input->HasSelection());
+
+	input->SetText(u8"ab\ncd");
+	input->SetSelection(0, 3); // "ab\n"
+	KeyPressEvent backspace(Key::Backspace);
+	input->FireEvent(&backspace);
+	EXPECT_EQ(input->Text(), u8"cd");
+	EXPECT_EQ(input->CaretIndex(), 0u);
+}
+
+TEST_F(InputTextTest, MultiLineShiftUpDownExtendsSelection)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"hello\nworld");
+	input->SetMultiLine(true);
+	BuildAndFlush();
+
+	input->SetCaretIndex(8); // in "world"
+	KeyPressEvent up(Key::Up, Modifier::Shift);
+	input->FireEvent(&up);
+	EXPECT_TRUE(input->HasSelection());
+	EXPECT_EQ(input->AnchorIndex(), 8u);
+	EXPECT_LT(input->CaretIndex(), 8u);
+
+	const size_t afterUp = input->CaretIndex();
+	KeyPressEvent down(Key::Down, Modifier::Shift);
+	input->FireEvent(&down);
+	EXPECT_GE(input->CaretIndex(), afterUp);
+	EXPECT_EQ(input->AnchorIndex(), 8u);
+}
+
+TEST_F(InputTextTest, MultiLineUpDownClampsAtDocumentEnds)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"hello\nworld");
+	input->SetMultiLine(true);
+	BuildAndFlush();
+
+	input->SetCaretIndex(2);
+	KeyPressEvent up(Key::Up);
+	input->FireEvent(&up);
+	EXPECT_EQ(input->CaretIndex(), 0u);
+
+	input->SetCaretIndex(8);
+	KeyPressEvent down(Key::Down);
+	input->FireEvent(&down);
+	EXPECT_EQ(input->CaretIndex(), input->Text().size());
+}
+
+TEST_F(InputTextTest, MultiLineMouseClickPlacesCaretOnSecondLine)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"hello\nworld");
+	input->SetMultiLine(true);
+	input->SetStyleClass(u8"DefaultInputText");
+	window_->RootElement()->GetStyles()->LoadFromXML(R"(
+		<Styles>
+			<Style class="NaniWindow">
+				<FlexBox flexDirection="column" />
+			</Style>
+			<Style class="DefaultInputText">
+				<Font family="Segoe UI" size="14" style="normal" weight="normal" />
+				<Dimension width="200" height="64" />
+				<Paddings l="8" t="4" r="8" b="4" />
+				<Borders value="1" />
+				<Colors background="#FFFFFFFF" border="#000000FF" color="#000000FF" />
+			</Style>
+		</Styles>
+	)");
+	BuildAndFlush();
+
+	MousePressEvent press(MouseButton::Left, PointF(20.0f, 28.0f), PointF(20.0f, 28.0f));
+	input->FireEvent(&press);
+	EXPECT_GE(input->CaretIndex(), 6u);
+}
+
+TEST_F(InputTextTest, PasswordMaskedClickSetsCaretByBullet)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"abcdef");
+	input->SetPasswordMode(true);
+	input->SetPasswordVisible(false);
+	BuildAndFlush();
+
+	MousePressEvent press(MouseButton::Left, PointF(40.0f, 16.0f), PointF(40.0f, 16.0f));
+	input->FireEvent(&press);
+	EXPECT_GT(input->CaretIndex(), 0u);
+	EXPECT_LT(input->CaretIndex(), input->Text().size());
+	EXPECT_EQ(input->Text(), u8"abcdef");
+}
+
+TEST_F(InputTextTest, PasswordMaskedScrollFollowsCaret)
+{
+	window_->RootElement()->GetStyles()->LoadFromXML(R"(
+		<Styles>
+			<Style class="NaniWindow">
+				<FlexBox flexDirection="column" />
+			</Style>
+			<Style class="NarrowPassword">
+				<Font family="Segoe UI" size="14" style="normal" weight="normal" />
+				<Dimension width="64" height="32" />
+				<Paddings l="4" t="4" r="4" b="4" />
+				<Borders value="1" />
+				<Colors background="#FFFFFFFF" border="#000000FF" color="#000000FF" />
+			</Style>
+		</Styles>
+	)");
+
+	auto* input = new InputTextElement(
+		window_->RootElement(),
+		u8"0123456789abcdef");
+	input->SetStyleClass(u8"NarrowPassword");
+	input->SetPasswordMode(true);
+	input->SetPasswordVisible(false);
+	input->SetCaretIndex(input->Text().size());
+	window_->Show();
+	window_->GetView()->Flush();
+
+	auto* rootVisual = window_->GetView()->Visual();
+	auto* inputVisual = dynamic_cast<InputTextVisual*>(rootVisual->Visuals().front().get());
+	ASSERT_NE(inputVisual, nullptr);
+	EXPECT_GT(inputVisual->ScrollOffsetX(), 0.0f);
+
+	KeyPressEvent home(Key::Home);
+	input->FireEvent(&home);
+	window_->GetView()->Flush();
+	EXPECT_FLOAT_EQ(inputVisual->ScrollOffsetX(), 0.0f);
+
+	window_->Hide();
+}
+
+TEST_F(InputTextTest, PasswordImePreeditThenCommitKeepsPlaintext)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"");
+	input->SetPasswordMode(true);
+	input->SetPasswordVisible(false);
+
+	ImeCompositionUpdateEvent update(u8"ni");
+	input->FireEvent(&update);
+	EXPECT_EQ(input->PreeditText(), u8"ni");
+	EXPECT_TRUE(input->Text().empty());
+
+	CharEvent committed(U'你');
+	input->FireEvent(&committed);
+	EXPECT_TRUE(input->PreeditText().empty());
+	EXPECT_FALSE(input->IsComposing());
+	EXPECT_EQ(input->Text(), u8"你");
+	EXPECT_TRUE(input->IsPasswordMode());
+	EXPECT_FALSE(input->IsPasswordVisible());
+}
+
+TEST_F(InputTextTest, PasswordVisibleToggleMarksViewDirty)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"secret");
+	input->SetPasswordMode(true);
+	BuildAndFlush();
+
+	RequestWatcher watcher(window_->GetView());
+	input->SetPasswordVisible(true);
+	EXPECT_GT(watcher.requestCount, 0);
+
+	const int afterShow = watcher.requestCount;
+	input->SetPasswordVisible(false);
+	EXPECT_GT(watcher.requestCount, afterShow);
+}
+
+TEST_F(InputTextTest, PasswordEchoCanBeCustomized)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"ab");
+	EXPECT_FALSE(input->PasswordEcho().empty());
+	const size_t defaultEchoSize = input->PasswordEcho().size();
+
+	input->SetPasswordMode(true);
+	BuildAndFlush();
+
+	RequestWatcher watcher(window_->GetView());
+	input->SetPasswordEcho(u8"*");
+	EXPECT_EQ(input->PasswordEcho(), u8"*");
+	EXPECT_GT(watcher.requestCount, 0);
+	EXPECT_EQ(input->Text(), u8"ab");
+
+	input->SetPasswordEcho(u8"");
+	EXPECT_EQ(input->PasswordEcho().size(), defaultEchoSize);
+	EXPECT_NE(input->PasswordEcho(), u8"*");
 }

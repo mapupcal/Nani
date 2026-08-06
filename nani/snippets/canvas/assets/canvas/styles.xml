@@ -196,6 +196,62 @@
 		<Borders value="2" />
 	</Style>
 
+	<Style class="DemoInputMultiline">
+		<Font family="Segoe UI" size="14" style="normal" weight="normal" />
+		<Dimension width="100%" height="96" minHeight="96" />
+		<FlexBox shrink="0" />
+		<Paddings l="10" t="8" r="10" b="8" />
+		<Borders value="1" />
+		<Radius radius="6" />
+		<Colors background="#FFFFFFFF" border="#94A3B8FF" color="#0F172AFF" selection-background="#2563EBFF" selection-color="#FFFFFFFF" />
+		<TextAlignment horizontal="left" vertical="top" />
+	</Style>
+
+	<Style class="DemoInputMultiline" state="focused">
+		<Colors border="#2563EBFF" background="#F8FAFCFF" />
+		<Borders value="2" />
+	</Style>
+
+	<Style class="InputPasswordRow">
+		<FlexBox flexDirection="row" alignItems="center" shrink="0" />
+		<Gaps gap="8" />
+		<Dimension width="100%" />
+	</Style>
+
+	<Style class="DemoInputPassword">
+		<Font family="Segoe UI" size="14" style="normal" weight="normal" />
+		<Dimension width="1" height="36" minHeight="36" />
+		<FlexBox grow="1" shrink="1" />
+		<Paddings l="10" t="6" r="10" b="6" />
+		<Borders value="1" />
+		<Radius radius="6" />
+		<Colors background="#FFFFFFFF" border="#94A3B8FF" color="#0F172AFF" selection-background="#2563EBFF" selection-color="#FFFFFFFF" />
+		<TextAlignment horizontal="left" vertical="center" />
+	</Style>
+
+	<Style class="DemoInputPassword" state="focused">
+		<Colors border="#2563EBFF" background="#F8FAFCFF" />
+		<Borders value="2" />
+	</Style>
+
+	<Style class="DemoPasswordReveal">
+		<Dimension width="56" height="36" minWidth="56" />
+		<FlexBox shrink="0" justify="center" alignItems="center" />
+		<Borders value="1" />
+		<Radius radius="6" />
+		<Colors background="#F1F5F9FF" border="#94A3B8FF" />
+	</Style>
+
+	<Style class="DemoPasswordReveal" state="hovered">
+		<Colors background="#E2E8F0FF" border="#64748BFF" />
+	</Style>
+
+	<Style class="DemoPasswordRevealText" inherit="DefaultText">
+		<Font family="Segoe UI" size="12" weight="bold" />
+		<Colors color="#334155FF" />
+		<TextAlignment horizontal="center" vertical="center" />
+	</Style>
+
 	<Style class="EffectsContent">
 		<FlexBox flexDirection="column" shrink="0" />
 		<Gaps gap="12" />

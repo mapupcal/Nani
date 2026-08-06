@@ -28,26 +28,140 @@ namespace nani::canvas::visuals
 		constexpr dword kBlinkIntervalMs = 530;
 		const Color kDefaultSelectionBackground(0x3B, 0x82, 0xF6, 0x80);
 
-		struct InputTextLayout
+		struct DisplayBoundary
 		{
-			RectF contentRect;
-			float textX = 0.0f;
-			float baselineY = 0.0f;
-			float ascent = 0.0f;
-			float descent = 0.0f;
-			float prefixWidth = 0.0f;
-			float preeditWidth = 0.0f;
-			std::u8string_view prefix;
-			std::u8string_view preedit;
-			std::u8string_view suffix;
+			size_t displayOffset = 0;
+			size_t sourceOffset = 0;
 		};
 
-		bool ResolveInputTextLayout(
+		struct DisplayModel
+		{
+			std::u8string display;
+			std::vector<DisplayBoundary> boundaries; // sorted by displayOffset
+			size_t caretDisplayOffset = 0;
+			size_t preeditDisplayStart = 0;
+			size_t preeditDisplayEnd = 0;
+		};
+
+		struct VisualLine
+		{
+			size_t displayStart = 0;
+			size_t displayEnd = 0;
+			float width = 0.0f;
+			float top = 0.0f;
+			float baselineY = 0.0f;
+			float bottom = 0.0f;
+		};
+
+		struct DocumentLayout
+		{
+			RectF contentRect;
+			DisplayModel display;
+			std::vector<VisualLine> lines;
+			float ascent = 0.0f;
+			float descent = 0.0f;
+			float lineHeight = 0.0f;
+			float blockHeight = 0.0f;
+			float maxLineWidth = 0.0f;
+		};
+
+		Color ResolveSelectionBackground(const ComputedStyle* style)
+		{
+			if (style && style->visualProps.selectionBackground.a != 0)
+				return style->visualProps.selectionBackground;
+			return kDefaultSelectionBackground;
+		}
+
+		Color ResolveSelectionTextColor(const ComputedStyle* style)
+		{
+			if (style && style->visualProps.selectionColor.a != 0)
+				return style->visualProps.selectionColor;
+			return text_paint_utils::ResolveTextColor(style);
+		}
+
+		void AppendMaskedRange(
+			DisplayModel& model,
+			const std::u8string_view& text,
+			size_t begin,
+			size_t end,
+			bool mask,
+			const std::u8string_view& echo)
+		{
+			for (size_t index = begin; index < end; )
+			{
+				const size_t next = utf8::NextIndex(text, index);
+				if (mask)
+					model.display.append(echo);
+				else
+					model.display.append(text.substr(index, next - index));
+				model.boundaries.push_back({ model.display.size(), next });
+				index = next;
+			}
+		}
+
+		DisplayModel BuildDisplayModel(const InputTextElement* input)
+		{
+			DisplayModel model;
+			model.boundaries.push_back({ 0, 0 });
+			if (!input)
+				return model;
+
+			const std::u8string_view text = input->Text();
+			const size_t caret = input->CaretIndex();
+			const bool mask =
+				input->IsPasswordMode() && !input->IsPasswordVisible();
+			const std::u8string_view echo = input->PasswordEcho().empty()
+				? std::u8string_view(u8"\u2022")
+				: input->PasswordEcho();
+
+			AppendMaskedRange(model, text, 0, caret, mask, echo);
+			model.caretDisplayOffset = model.display.size();
+			model.preeditDisplayStart = model.display.size();
+
+			const std::u8string_view preedit = input->PreeditText();
+			if (!preedit.empty())
+			{
+				model.display.append(preedit);
+				model.boundaries.push_back({ model.display.size(), caret });
+				model.caretDisplayOffset = model.display.size();
+			}
+			model.preeditDisplayEnd = model.display.size();
+
+			AppendMaskedRange(model, text, caret, text.size(), mask, echo);
+			return model;
+		}
+
+		size_t SourceToDisplayOffset(const DisplayModel& model, size_t sourceOffset)
+		{
+			size_t best = 0;
+			for (const auto& boundary : model.boundaries)
+			{
+				if (boundary.sourceOffset <= sourceOffset)
+					best = boundary.displayOffset;
+				else
+					break;
+			}
+			return best;
+		}
+
+		size_t DisplayToSourceOffset(const DisplayModel& model, size_t displayOffset)
+		{
+			size_t best = 0;
+			for (const auto& boundary : model.boundaries)
+			{
+				if (boundary.displayOffset <= displayOffset)
+					best = boundary.sourceOffset;
+				else
+					break;
+			}
+			return best;
+		}
+
+		bool ResolveDocumentLayout(
 			InputTextElement* input,
 			const ComputedStyle* style,
 			const RectF& contentRect,
-			basic::single scrollX,
-			InputTextLayout& out)
+			DocumentLayout& out)
 		{
 			if (!input || !style)
 				return false;
@@ -55,27 +169,137 @@ namespace nani::canvas::visuals
 				return false;
 
 			FontMetrics metrics(style->visualProps.font);
-			const std::u8string_view text = input->Text();
-			const size_t caret = input->CaretIndex();
-
 			out.contentRect = contentRect;
-			out.prefix = text.substr(0, caret);
-			out.preedit = input->PreeditText();
-			out.suffix = text.substr(caret);
-			out.prefixWidth = metrics.HorizontalAdvance(out.prefix);
-			out.preeditWidth = metrics.HorizontalAdvance(out.preedit);
+			out.display = BuildDisplayModel(input);
 			out.ascent = metrics.Ascent();
 			out.descent = metrics.Descent();
+			out.lineHeight = metrics.LineHeight();
 
-			const float lineHeight = metrics.LineHeight();
-			const float textTop = text_paint_utils::AlignedBlockTop(
-				contentRect,
-				lineHeight,
-				style->visualProps.textAlignment.VerticalAlign());
+			const bool multiLine = input->IsMultiLine();
+			const float wrapWidth = multiLine ? contentRect.Width() : 0.0f;
+			auto rawLines = metrics.LayoutLines(out.display.display, wrapWidth, multiLine);
+			if (rawLines.empty())
+				rawLines.emplace_back();
 
-			out.textX = contentRect.left - scrollX;
-			out.baselineY = textTop + out.ascent;
+			out.lines.clear();
+			out.lines.reserve(rawLines.size());
+			out.maxLineWidth = 0.0f;
+
+			size_t pos = 0;
+			const std::u8string_view display = out.display.display;
+			for (const auto& line : rawLines)
+			{
+				if (pos < display.size() && display[pos] == u8'\n')
+					++pos;
+
+				if (pos + line.size() > display.size() ||
+					display.substr(pos, line.size()) != line)
+				{
+					// Recover by searching forward for the line content.
+					const size_t found = display.find(line, pos);
+					if (found == std::u8string_view::npos)
+						pos = display.size();
+					else
+						pos = found;
+				}
+
+				VisualLine visualLine;
+				visualLine.displayStart = pos;
+				visualLine.displayEnd = pos + line.size();
+				visualLine.width = metrics.HorizontalAdvance(line);
+				out.maxLineWidth = std::max(out.maxLineWidth, visualLine.width);
+				out.lines.push_back(visualLine);
+				pos = visualLine.displayEnd;
+			}
+
+			out.blockHeight = out.lineHeight * static_cast<float>(out.lines.size());
+			const float blockTop = multiLine
+				? contentRect.top
+				: text_paint_utils::AlignedBlockTop(
+					contentRect,
+					out.blockHeight,
+					style->visualProps.textAlignment.VerticalAlign());
+
+			for (size_t i = 0; i < out.lines.size(); ++i)
+			{
+				auto& line = out.lines[i];
+				line.top = blockTop + out.lineHeight * static_cast<float>(i);
+				line.baselineY = line.top + out.ascent;
+				line.bottom = line.top + out.lineHeight;
+			}
 			return true;
+		}
+
+		size_t LineIndexForDisplayOffset(const DocumentLayout& layout, size_t displayOffset)
+		{
+			if (layout.lines.empty())
+				return 0;
+			for (size_t i = 0; i < layout.lines.size(); ++i)
+			{
+				const auto& line = layout.lines[i];
+				if (displayOffset <= line.displayEnd)
+					return i;
+			}
+			return layout.lines.size() - 1;
+		}
+
+		size_t CaretIndexFromContentPos(
+			const FontMetrics& metrics,
+			const DocumentLayout& layout,
+			float contentX,
+			float contentY)
+		{
+			if (layout.lines.empty())
+				return 0;
+
+			size_t lineIndex = 0;
+			float bestY = std::abs(contentY - (layout.lines[0].top + layout.lineHeight * 0.5f - layout.contentRect.top));
+			for (size_t i = 0; i < layout.lines.size(); ++i)
+			{
+				const float mid =
+					layout.lines[i].top + layout.lineHeight * 0.5f - layout.contentRect.top;
+				const float dist = std::abs(contentY - mid);
+				if (dist < bestY)
+				{
+					bestY = dist;
+					lineIndex = i;
+				}
+			}
+
+			const auto& line = layout.lines[lineIndex];
+			size_t bestDisplay = line.displayStart;
+			float bestDist = std::abs(contentX);
+			for (size_t displayOffset = line.displayStart; displayOffset <= line.displayEnd; )
+			{
+				const float width = metrics.HorizontalAdvance(
+					std::u8string_view(layout.display.display).substr(
+						line.displayStart,
+						displayOffset - line.displayStart));
+				const float dist = std::abs(width - contentX);
+				if (dist < bestDist)
+				{
+					bestDist = dist;
+					bestDisplay = displayOffset;
+				}
+				if (displayOffset >= line.displayEnd)
+					break;
+				displayOffset = utf8::NextIndex(layout.display.display, displayOffset);
+			}
+			return DisplayToSourceOffset(layout.display, bestDisplay);
+		}
+
+		PointF MapLocalToRoot(Visual* visual, PointF local)
+		{
+			for (Visual* current = visual; current; )
+			{
+				local = current->Transform().ApplyTo(local);
+				Visual* parent = current->Parent();
+				if (!parent)
+					break;
+				local += current->LayoutRect().TopLeft();
+				current = parent;
+			}
+			return local;
 		}
 
 		YGSize MeasureInputTextVisual(
@@ -101,43 +325,26 @@ namespace nani::canvas::visuals
 				return { 0.0f, 0.0f };
 
 			FontMetrics metrics(style->visualProps.font);
-			std::u8string display(input->Text());
-			display.insert(input->CaretIndex(), input->PreeditText());
+			const DisplayModel display = BuildDisplayModel(input);
+			const bool multiLine = input->IsMultiLine();
+			const float wrapWidth =
+				(multiLine && (widthMode == YGMeasureModeExactly || widthMode == YGMeasureModeAtMost))
+					? width
+					: 0.0f;
+			auto lines = metrics.LayoutLines(display.display, wrapWidth, multiLine);
+			if (lines.empty())
+				lines.emplace_back();
 
-			const float contentWidth = metrics.HorizontalAdvance(display);
-			const float contentHeight = metrics.LineHeight();
+			float contentWidth = 0.0f;
+			for (const auto& line : lines)
+				contentWidth = std::max(contentWidth, metrics.HorizontalAdvance(line));
+
+			const float contentHeight =
+				metrics.LineHeight() * static_cast<float>(std::max<size_t>(lines.size(), 1));
 			return {
 				yoga_utils::ResolveMeasuredSize(contentWidth, widthMode, width),
 				yoga_utils::ResolveMeasuredSize(contentHeight, heightMode, height)
 			};
-		}
-
-		PointF MapLocalToRoot(Visual* visual, PointF local)
-		{
-			for (Visual* current = visual; current; )
-			{
-				local = current->Transform().ApplyTo(local);
-				Visual* parent = current->Parent();
-				if (!parent)
-					break;
-				local += current->LayoutRect().TopLeft();
-				current = parent;
-			}
-			return local;
-		}
-
-		Color ResolveSelectionBackground(const ComputedStyle* style)
-		{
-			if (style && style->visualProps.selectionBackground.a != 0)
-				return style->visualProps.selectionBackground;
-			return kDefaultSelectionBackground;
-		}
-
-		Color ResolveSelectionTextColor(const ComputedStyle* style)
-		{
-			if (style && style->visualProps.selectionColor.a != 0)
-				return style->visualProps.selectionColor;
-			return text_paint_utils::ResolveTextColor(style);
 		}
 	}
 
@@ -158,15 +365,18 @@ namespace nani::canvas::visuals
 		return static_cast<InputTextElement*>(Element());
 	}
 
-	basic::single InputTextVisual::ScrollOffset() const
+	basic::single InputTextVisual::ScrollOffsetX() const
 	{
 		return m_scrollX;
 	}
 
+	basic::single InputTextVisual::ScrollOffsetY() const
+	{
+		return m_scrollY;
+	}
+
 	RectF InputTextVisual::LocalContentRect() const
 	{
-		// Paint is in local space with origin at the border-box top-left.
-		// ContentRect() keeps Yoga parent offsets, so rebuild from a local layout rect.
 		return yoga_utils::LocalContentRect(LayoutRect(), YogaNode());
 	}
 
@@ -174,27 +384,41 @@ namespace nani::canvas::visuals
 	{
 		auto* input = InputText();
 		const ComputedStyle* style = GetComputedStyle();
-		const RectF contentRect = LocalContentRect();
-		if (!input || !style || contentRect.Width() <= 0.0f)
+		DocumentLayout layout;
+		if (!ResolveDocumentLayout(input, style, LocalContentRect(), layout))
 			return;
 
 		FontMetrics metrics(style->visualProps.font);
-		std::u8string display(input->Text());
-		display.insert(input->CaretIndex(), input->PreeditText());
+		const float contentWidth = layout.contentRect.Width();
+		const float contentHeight = layout.contentRect.Height();
+		const float maxScrollX = std::max(0.0f, layout.maxLineWidth - contentWidth);
+		const float maxScrollY = std::max(0.0f, layout.blockHeight - contentHeight);
 
-		const float contentWidth = contentRect.Width();
-		const float textWidth = metrics.HorizontalAdvance(display);
-		const float caretX =
-			metrics.HorizontalAdvance(input->Text().substr(0, input->CaretIndex())) +
-			metrics.HorizontalAdvance(input->PreeditText());
-		const float maxScroll = std::max(0.0f, textWidth - contentWidth);
+		const size_t caretDisplay = layout.display.caretDisplayOffset;
+		const size_t lineIndex = LineIndexForDisplayOffset(layout, caretDisplay);
+		const auto& line = layout.lines[lineIndex];
+		const float caretX = metrics.HorizontalAdvance(
+			std::u8string_view(layout.display.display).substr(
+				line.displayStart,
+				std::min(caretDisplay, line.displayEnd) - line.displayStart));
+		const float caretTop = line.top - layout.contentRect.top;
+		const float caretBottom = line.bottom - layout.contentRect.top;
 
-		m_scrollX = std::clamp(m_scrollX, 0.0f, maxScroll);
+		m_scrollX = std::clamp(m_scrollX, 0.0f, maxScrollX);
+		m_scrollY = std::clamp(m_scrollY, 0.0f, maxScrollY);
+
 		if (caretX - m_scrollX > contentWidth)
 			m_scrollX = caretX - contentWidth;
 		else if (caretX - m_scrollX < 0.0f)
 			m_scrollX = caretX;
-		m_scrollX = std::clamp(m_scrollX, 0.0f, maxScroll);
+
+		if (caretBottom - m_scrollY > contentHeight)
+			m_scrollY = caretBottom - contentHeight;
+		else if (caretTop - m_scrollY < 0.0f)
+			m_scrollY = caretTop;
+
+		m_scrollX = std::clamp(m_scrollX, 0.0f, maxScrollX);
+		m_scrollY = std::clamp(m_scrollY, 0.0f, maxScrollY);
 	}
 
 	void InputTextVisual::BuildVisuals()
@@ -217,9 +441,20 @@ namespace nani::canvas::visuals
 		const ComputedStyle* style = GetComputedStyle();
 		EnsureCaretVisible();
 
-		InputTextLayout layout;
-		if (!ResolveInputTextLayout(input, style, LocalContentRect(), m_scrollX, layout))
+		DocumentLayout layout;
+		if (!ResolveDocumentLayout(input, style, LocalContentRect(), layout))
 			return;
+
+		FontMetrics metrics(style->visualProps.font);
+		const Color textColor = text_paint_utils::ResolveTextColor(style);
+		const Color selectedTextColor = ResolveSelectionTextColor(style);
+		const bool hasSelection = input->HasSelection() && input->PreeditText().empty();
+		const size_t selStartDisplay = hasSelection
+			? SourceToDisplayOffset(layout.display, input->SelectionStart())
+			: 0;
+		const size_t selEndDisplay = hasSelection
+			? SourceToDisplayOffset(layout.display, input->SelectionEnd())
+			: 0;
 
 		canvas->save();
 		canvas->clipRect(SkRect::MakeLTRB(
@@ -228,70 +463,94 @@ namespace nani::canvas::visuals
 			layout.contentRect.right,
 			layout.contentRect.bottom));
 
-		FontMetrics metrics(style->visualProps.font);
-		const Color textColor = text_paint_utils::ResolveTextColor(style);
-
 		SkPaint paint;
 		paint.setAntiAlias(true);
 		paint.setStyle(SkPaint::kFill_Style);
 
-		auto drawUtf8 = [&](const std::u8string_view& chunk, float x, const Color& color)
+		const float originX = layout.contentRect.left - m_scrollX;
+		const float originY = -m_scrollY;
+
+		for (const auto& line : layout.lines)
 		{
-			if (chunk.empty())
-				return;
-			paint.setColor(skia_utils::ToSkColor(color));
-			metrics.DrawText(canvas, chunk, x, layout.baselineY, paint);
-		};
+			const float baselineY = line.baselineY + originY;
+			const float top = line.top + originY;
+			const float bottom = line.bottom + originY;
+			const std::u8string_view lineText = std::u8string_view(layout.display.display).substr(
+				line.displayStart,
+				line.displayEnd - line.displayStart);
 
-		if (input->HasSelection() && input->PreeditText().empty())
-		{
-			const std::u8string_view text = input->Text();
-			const size_t selStart = input->SelectionStart();
-			const size_t selEnd = input->SelectionEnd();
-			const auto before = text.substr(0, selStart);
-			const auto selected = text.substr(selStart, selEnd - selStart);
-			const auto after = text.substr(selEnd);
+			if (hasSelection)
+			{
+				const size_t segStart = std::max(line.displayStart, selStartDisplay);
+				const size_t segEnd = std::min(line.displayEnd, selEndDisplay);
+				if (segStart < segEnd)
+				{
+					const float x0 = originX + metrics.HorizontalAdvance(
+						std::u8string_view(layout.display.display).substr(
+							line.displayStart,
+							segStart - line.displayStart));
+					const float x1 = originX + metrics.HorizontalAdvance(
+						std::u8string_view(layout.display.display).substr(
+							line.displayStart,
+							segEnd - line.displayStart));
+					SkPaint selectionPaint;
+					selectionPaint.setAntiAlias(true);
+					selectionPaint.setStyle(SkPaint::kFill_Style);
+					selectionPaint.setColor(skia_utils::ToSkColor(ResolveSelectionBackground(style)));
+					canvas->drawRect(SkRect::MakeLTRB(x0, top, x1, bottom), selectionPaint);
+				}
+			}
 
-			const float beforeWidth = metrics.HorizontalAdvance(before);
-			const float selectedWidth = metrics.HorizontalAdvance(selected);
-			const float top = layout.baselineY - layout.ascent;
-			const float bottom = layout.baselineY + layout.descent;
-
-			SkPaint selectionPaint;
-			selectionPaint.setAntiAlias(true);
-			selectionPaint.setStyle(SkPaint::kFill_Style);
-			selectionPaint.setColor(skia_utils::ToSkColor(ResolveSelectionBackground(style)));
-			canvas->drawRect(
-				SkRect::MakeLTRB(
-					layout.textX + beforeWidth,
-					top,
-					layout.textX + beforeWidth + selectedWidth,
-					bottom),
-				selectionPaint);
-
-			const Color selectedTextColor = ResolveSelectionTextColor(style);
-			drawUtf8(before, layout.textX, textColor);
-			drawUtf8(selected, layout.textX + beforeWidth, selectedTextColor);
-			drawUtf8(after, layout.textX + beforeWidth + selectedWidth, textColor);
-		}
-		else
-		{
-			drawUtf8(layout.prefix, layout.textX, textColor);
-			drawUtf8(layout.preedit, layout.textX + layout.prefixWidth, textColor);
-			drawUtf8(layout.suffix, layout.textX + layout.prefixWidth + layout.preeditWidth, textColor);
-
-			if (!layout.preedit.empty())
+			if (!hasSelection)
 			{
 				paint.setColor(skia_utils::ToSkColor(textColor));
+				metrics.DrawText(canvas, lineText, originX, baselineY, paint);
+			}
+			else
+			{
+				size_t cursor = line.displayStart;
+				auto drawSeg = [&](size_t end, const Color& color)
+				{
+					if (end <= cursor)
+						return;
+					const auto chunk = std::u8string_view(layout.display.display).substr(cursor, end - cursor);
+					const float x = originX + metrics.HorizontalAdvance(
+						std::u8string_view(layout.display.display).substr(
+							line.displayStart,
+							cursor - line.displayStart));
+					paint.setColor(skia_utils::ToSkColor(color));
+					metrics.DrawText(canvas, chunk, x, baselineY, paint);
+					cursor = end;
+				};
+
+				drawSeg(std::min(line.displayEnd, selStartDisplay), textColor);
+				drawSeg(std::min(line.displayEnd, selEndDisplay), selectedTextColor);
+				drawSeg(line.displayEnd, textColor);
+			}
+
+			if (layout.display.preeditDisplayEnd > layout.display.preeditDisplayStart &&
+				line.displayStart < layout.display.preeditDisplayEnd &&
+				line.displayEnd > layout.display.preeditDisplayStart)
+			{
+				const size_t u0 = std::max(line.displayStart, layout.display.preeditDisplayStart);
+				const size_t u1 = std::min(line.displayEnd, layout.display.preeditDisplayEnd);
+				const float x0 = originX + metrics.HorizontalAdvance(
+					std::u8string_view(layout.display.display).substr(
+						line.displayStart,
+						u0 - line.displayStart));
+				const float x1 = originX + metrics.HorizontalAdvance(
+					std::u8string_view(layout.display.display).substr(
+						line.displayStart,
+						u1 - line.displayStart));
 				SkPaint underline = paint;
+				underline.setColor(skia_utils::ToSkColor(textColor));
 				underline.setStyle(SkPaint::kStroke_Style);
 				underline.setStrokeWidth(std::max(metrics.UnderlineThickness(), 1.0f));
-				const float y = layout.baselineY + metrics.UnderlineOffset();
 				canvas->drawLine(
-					layout.textX + layout.prefixWidth,
-					y,
-					layout.textX + layout.prefixWidth + layout.preeditWidth,
-					y,
+					x0,
+					baselineY + metrics.UnderlineOffset(),
+					x1,
+					baselineY + metrics.UnderlineOffset(),
 					underline);
 			}
 		}
@@ -302,17 +561,20 @@ namespace nani::canvas::visuals
 			!input->HasSelection();
 		if (showCaret)
 		{
-			const float caretX = layout.textX + layout.prefixWidth + layout.preeditWidth;
+			const size_t caretDisplay = layout.display.caretDisplayOffset;
+			const size_t lineIndex = LineIndexForDisplayOffset(layout, caretDisplay);
+			const auto& line = layout.lines[lineIndex];
+			const float caretX = originX + metrics.HorizontalAdvance(
+				std::u8string_view(layout.display.display).substr(
+					line.displayStart,
+					std::min(caretDisplay, line.displayEnd) - line.displayStart));
+			const float top = line.top + originY;
+			const float bottom = line.bottom + originY;
 			paint.setColor(skia_utils::ToSkColor(textColor));
 			SkPaint caretPaint = paint;
 			caretPaint.setStyle(SkPaint::kStroke_Style);
 			caretPaint.setStrokeWidth(1.0f);
-			canvas->drawLine(
-				caretX,
-				layout.baselineY - layout.ascent,
-				caretX,
-				layout.baselineY + layout.descent,
-				caretPaint);
+			canvas->drawLine(caretX, top, caretX, bottom, caretPaint);
 		}
 
 		canvas->restore();
@@ -327,14 +589,20 @@ namespace nani::canvas::visuals
 			return;
 
 		EnsureCaretVisible();
-
-		InputTextLayout layout;
-		if (!ResolveInputTextLayout(input, GetComputedStyle(), LocalContentRect(), m_scrollX, layout))
+		DocumentLayout layout;
+		if (!ResolveDocumentLayout(input, GetComputedStyle(), LocalContentRect(), layout))
 			return;
 
-		const float caretX = layout.textX + layout.prefixWidth + layout.preeditWidth;
-		const float top = layout.baselineY - layout.ascent;
-		const float bottom = layout.baselineY + layout.descent;
+		FontMetrics metrics(GetComputedStyle()->visualProps.font);
+		const size_t caretDisplay = layout.display.caretDisplayOffset;
+		const size_t lineIndex = LineIndexForDisplayOffset(layout, caretDisplay);
+		const auto& line = layout.lines[lineIndex];
+		const float caretX = layout.contentRect.left - m_scrollX + metrics.HorizontalAdvance(
+			std::u8string_view(layout.display.display).substr(
+				line.displayStart,
+				std::min(caretDisplay, line.displayEnd) - line.displayStart));
+		const float top = line.top - m_scrollY;
+		const float bottom = line.bottom - m_scrollY;
 
 		const PointF rootTopLeft = MapLocalToRoot(this, PointF(caretX, top));
 		const PointF rootBottom = MapLocalToRoot(this, PointF(caretX, bottom));
@@ -382,35 +650,91 @@ namespace nani::canvas::visuals
 		Repaint();
 	}
 
-	size_t InputTextVisual::CaretIndexAtLocalX(basic::single localX) const
+	size_t InputTextVisual::CaretIndexAtLocalPos(basic::single localX, basic::single localY) const
 	{
 		auto* input = InputText();
 		const ComputedStyle* style = GetComputedStyle();
-		if (!input || !style)
+		DocumentLayout layout;
+		if (!ResolveDocumentLayout(input, style, LocalContentRect(), layout))
 			return 0;
 
-		const RectF contentRect = LocalContentRect();
-		const float x = localX - contentRect.left + m_scrollX;
-		const std::u8string_view text = input->Text();
 		FontMetrics metrics(style->visualProps.font);
+		const float contentX = localX - layout.contentRect.left + m_scrollX;
+		const float contentY = localY - layout.contentRect.top + m_scrollY;
+		return CaretIndexFromContentPos(metrics, layout, contentX, contentY);
+	}
 
-		size_t best = 0;
-		float bestDist = std::abs(x);
-		for (size_t index = 0; index <= text.size(); )
+	bool InputTextVisual::HandleMultiLineKey(KeyPressEvent* e)
+	{
+		auto* input = InputText();
+		if (!input || !e || !input->IsMultiLine() || input->IsComposing())
+			return false;
+
+		const bool extend = (e->modifier & Modifier::Shift) != Modifier::None;
+		const bool ctrl = (e->modifier & Modifier::Ctrl) != Modifier::None;
+
+		DocumentLayout layout;
+		if (!ResolveDocumentLayout(input, GetComputedStyle(), LocalContentRect(), layout))
+			return false;
+
+		FontMetrics metrics(GetComputedStyle()->visualProps.font);
+		const size_t caretDisplay = SourceToDisplayOffset(layout.display, input->CaretIndex());
+		const size_t lineIndex = LineIndexForDisplayOffset(layout, caretDisplay);
+		const auto& line = layout.lines[lineIndex];
+
+		auto moveToDisplay = [&](size_t displayOffset)
 		{
-			const float width = metrics.HorizontalAdvance(text.substr(0, index));
-			const float dist = std::abs(width - x);
-			if (dist < bestDist)
+			const size_t source = DisplayToSourceOffset(layout.display, displayOffset);
+			if (extend)
+				input->SetSelection(input->AnchorIndex(), source);
+			else
+				input->SetSelection(source, source);
+		};
+
+		switch (e->key)
+		{
+		case Key::Home:
+			if (ctrl)
+				return false;
+			moveToDisplay(line.displayStart);
+			return true;
+		case Key::End:
+			if (ctrl)
+				return false;
+			moveToDisplay(line.displayEnd);
+			return true;
+		case Key::Up:
+		case Key::Down:
+		{
+			if (lineIndex == 0 && e->key == Key::Up)
 			{
-				bestDist = dist;
-				best = index;
+				moveToDisplay(layout.lines.front().displayStart);
+				return true;
+			}
+			if (lineIndex + 1 >= layout.lines.size() && e->key == Key::Down)
+			{
+				moveToDisplay(layout.lines.back().displayEnd);
+				return true;
 			}
 
-			if (index >= text.size())
-				break;
-			index = utf8::NextIndex(text, index);
+			const float caretX = metrics.HorizontalAdvance(
+				std::u8string_view(layout.display.display).substr(
+					line.displayStart,
+					std::min(caretDisplay, line.displayEnd) - line.displayStart));
+			const size_t targetLine = e->key == Key::Up ? lineIndex - 1 : lineIndex + 1;
+			const auto& dest = layout.lines[targetLine];
+			const float contentY =
+				dest.top + layout.lineHeight * 0.5f - layout.contentRect.top;
+			const size_t source = CaretIndexFromContentPos(metrics, layout, caretX, contentY);
+			if (extend)
+				input->SetSelection(input->AnchorIndex(), source);
+			else
+				input->SetSelection(source, source);
+			return true;
 		}
-		return best;
+		default:
+			return false;
+		}
 	}
 
 	void InputTextVisual::HandleMousePress(MousePressEvent* e)
@@ -419,7 +743,7 @@ namespace nani::canvas::visuals
 		if (!input || !e || e->button != MouseButton::Left || input->IsComposing())
 			return;
 
-		const size_t index = CaretIndexAtLocalX(e->pos.x);
+		const size_t index = CaretIndexAtLocalPos(e->pos.x, e->pos.y);
 		const bool extend = (e->modifier & Modifier::Shift) != Modifier::None;
 		if (extend)
 			input->SetSelection(input->AnchorIndex(), index);
@@ -436,7 +760,7 @@ namespace nani::canvas::visuals
 		if (!input || !e || !m_dragging || input->IsComposing())
 			return;
 
-		input->SetSelection(input->AnchorIndex(), CaretIndexAtLocalX(e->pos.x));
+		input->SetSelection(input->AnchorIndex(), CaretIndexAtLocalPos(e->pos.x, e->pos.y));
 		ResetCaretBlink();
 	}
 
@@ -464,6 +788,14 @@ namespace nani::canvas::visuals
 			case Type::ElementStatesChanged:
 				Reflow();
 				SyncCaretBlink(input->States()->IsFocused());
+				return false;
+			case Type::KeyPress:
+				if (HandleMultiLineKey(static_cast<KeyPressEvent*>(e)))
+				{
+					EnsureCaretVisible();
+					ResetCaretBlink();
+					return true;
+				}
 				return false;
 			case Type::MousePress:
 				HandleMousePress(static_cast<MousePressEvent*>(e));

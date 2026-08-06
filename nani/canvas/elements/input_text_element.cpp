@@ -9,11 +9,17 @@ using namespace nani::canvas::text;
 
 namespace nani::canvas::elements
 {
+	namespace
+	{
+		constexpr char8_t kDefaultPasswordEcho[] = u8"\u2022";
+	}
+
 	InputTextElement::InputTextElement(Element* parent, const std::u8string_view& text)
 		: Element(parent)
 		, m_text(text)
 		, m_anchor(text.size())
 		, m_caret(text.size())
+		, m_passwordEcho(kDefaultPasswordEcho)
 	{
 		SetStyleClass(u8"DefaultInputText");
 	}
@@ -38,6 +44,67 @@ namespace nani::canvas::elements
 	const std::u8string_view InputTextElement::Text() const
 	{
 		return m_text;
+	}
+
+	void InputTextElement::SetMultiLine(bool multiLine)
+	{
+		if (m_multiLine == multiLine)
+			return;
+
+		m_multiLine = multiLine;
+		NotifyTextChanged();
+	}
+
+	bool InputTextElement::IsMultiLine() const
+	{
+		return m_multiLine;
+	}
+
+	void InputTextElement::SetPasswordMode(bool password)
+	{
+		if (m_passwordMode == password)
+			return;
+
+		m_passwordMode = password;
+		NotifyTextChanged();
+	}
+
+	bool InputTextElement::IsPasswordMode() const
+	{
+		return m_passwordMode;
+	}
+
+	void InputTextElement::SetPasswordVisible(bool visible)
+	{
+		if (m_passwordVisible == visible)
+			return;
+
+		m_passwordVisible = visible;
+		if (m_passwordMode)
+			NotifyTextChanged();
+	}
+
+	bool InputTextElement::IsPasswordVisible() const
+	{
+		return m_passwordVisible;
+	}
+
+	void InputTextElement::SetPasswordEcho(const std::u8string_view& echo)
+	{
+		const std::u8string next = echo.empty()
+			? std::u8string(kDefaultPasswordEcho)
+			: std::u8string(echo);
+		if (m_passwordEcho == next)
+			return;
+
+		m_passwordEcho = next;
+		if (m_passwordMode && !m_passwordVisible)
+			NotifyTextChanged();
+	}
+
+	const std::u8string_view InputTextElement::PasswordEcho() const
+	{
+		return m_passwordEcho;
 	}
 
 	void InputTextElement::SetCaretIndex(size_t index)
@@ -120,6 +187,11 @@ namespace nani::canvas::elements
 		return (modifier & Modifier::Shift) != Modifier::None;
 	}
 
+	bool InputTextElement::HasCtrl(Modifier modifier)
+	{
+		return (modifier & Modifier::Ctrl) != Modifier::None;
+	}
+
 	void InputTextElement::OnEvent(Event* e)
 	{
 		switch (e->type)
@@ -141,7 +213,7 @@ namespace nani::canvas::elements
 
 			auto* keyEvent = static_cast<KeyPressEvent*>(e);
 			const bool extend = HasShift(keyEvent->modifier);
-			const bool ctrl = (keyEvent->modifier & Modifier::Ctrl) != Modifier::None;
+			const bool ctrl = HasCtrl(keyEvent->modifier);
 
 			if (ctrl && (keyEvent->key == Key::A))
 			{
@@ -151,6 +223,10 @@ namespace nani::canvas::elements
 
 			switch (keyEvent->key)
 			{
+			case Key::Enter:
+				if (m_multiLine)
+					InsertUtf8(u8"\n");
+				return;
 			case Key::Backspace:
 				DeleteBackward();
 				return;
@@ -164,10 +240,19 @@ namespace nani::canvas::elements
 				MoveCaretRight(extend);
 				return;
 			case Key::Home:
+				if (m_multiLine && !ctrl)
+					break; // Visual handles line-local Home.
 				MoveCaretTo(0, extend);
 				return;
 			case Key::End:
+				if (m_multiLine && !ctrl)
+					break; // Visual handles line-local End.
 				MoveCaretTo(m_text.size(), extend);
+				return;
+			case Key::Up:
+			case Key::Down:
+				if (m_multiLine)
+					break; // Visual handles visual-line navigation.
 				return;
 			default:
 				break;
