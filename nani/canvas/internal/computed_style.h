@@ -62,6 +62,8 @@ namespace nani::canvas::internal
 			basic::Color color = basic::Colors::Transparent;
 			basic::Color backgroundColor = basic::Colors::Transparent;
 			basic::Color borderColor = basic::Colors::Transparent;
+			basic::Color selectionBackground = basic::Colors::Transparent;
+			basic::Color selectionColor = basic::Colors::Transparent;
 			TransformOrigin transformOrigin;
 			basic::TransformF transform;
 			basic::scalar opacity = 1.0f;

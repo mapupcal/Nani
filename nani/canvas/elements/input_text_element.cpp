@@ -12,6 +12,7 @@ namespace nani::canvas::elements
 	InputTextElement::InputTextElement(Element* parent, const std::u8string_view& text)
 		: Element(parent)
 		, m_text(text)
+		, m_anchor(text.size())
 		, m_caret(text.size())
 	{
 		SetStyleClass(u8"DefaultInputText");
@@ -20,12 +21,17 @@ namespace nani::canvas::elements
 	void InputTextElement::SetText(const std::u8string_view& text)
 	{
 		if (m_text == text && m_preedit.empty() && !m_composing)
-			return;
+		{
+			const size_t clamped = ClampCaret(m_caret);
+			if (m_caret == clamped && m_anchor == clamped)
+				return;
+		}
 
 		m_text = text;
 		m_preedit.clear();
 		m_composing = false;
 		m_caret = ClampCaret(m_caret);
+		m_anchor = m_caret;
 		NotifyTextChanged();
 	}
 
@@ -36,17 +42,57 @@ namespace nani::canvas::elements
 
 	void InputTextElement::SetCaretIndex(size_t index)
 	{
-		const size_t clamped = ClampCaret(index);
-		if (m_caret == clamped)
-			return;
-
-		m_caret = clamped;
-		NotifyTextChanged();
+		SetSelection(index, index);
 	}
 
 	size_t InputTextElement::CaretIndex() const
 	{
 		return m_caret;
+	}
+
+	void InputTextElement::SetSelection(size_t anchor, size_t caret)
+	{
+		const size_t clampedAnchor = ClampCaret(anchor);
+		const size_t clampedCaret = ClampCaret(caret);
+		if (m_anchor == clampedAnchor && m_caret == clampedCaret)
+			return;
+
+		m_anchor = clampedAnchor;
+		m_caret = clampedCaret;
+		NotifyTextChanged();
+	}
+
+	size_t InputTextElement::AnchorIndex() const
+	{
+		return m_anchor;
+	}
+
+	size_t InputTextElement::SelectionStart() const
+	{
+		return std::min(m_anchor, m_caret);
+	}
+
+	size_t InputTextElement::SelectionEnd() const
+	{
+		return std::max(m_anchor, m_caret);
+	}
+
+	bool InputTextElement::HasSelection() const
+	{
+		return m_anchor != m_caret;
+	}
+
+	void InputTextElement::ClearSelection()
+	{
+		if (!HasSelection())
+			return;
+		m_anchor = m_caret;
+		NotifyTextChanged();
+	}
+
+	void InputTextElement::SelectAll()
+	{
+		SetSelection(0, m_text.size());
 	}
 
 	const std::u8string_view InputTextElement::PreeditText() const
@@ -69,6 +115,11 @@ namespace nani::canvas::elements
 		return std::make_shared<InputTextVisual>(view, this, visualParent);
 	}
 
+	bool InputTextElement::HasShift(Modifier modifier)
+	{
+		return (modifier & Modifier::Shift) != Modifier::None;
+	}
+
 	void InputTextElement::OnEvent(Event* e)
 	{
 		switch (e->type)
@@ -89,6 +140,15 @@ namespace nani::canvas::elements
 				return;
 
 			auto* keyEvent = static_cast<KeyPressEvent*>(e);
+			const bool extend = HasShift(keyEvent->modifier);
+			const bool ctrl = (keyEvent->modifier & Modifier::Ctrl) != Modifier::None;
+
+			if (ctrl && (keyEvent->key == Key::A))
+			{
+				SelectAll();
+				return;
+			}
+
 			switch (keyEvent->key)
 			{
 			case Key::Backspace:
@@ -98,16 +158,16 @@ namespace nani::canvas::elements
 				DeleteForward();
 				return;
 			case Key::Left:
-				MoveCaretLeft();
+				MoveCaretLeft(extend);
 				return;
 			case Key::Right:
-				MoveCaretRight();
+				MoveCaretRight(extend);
 				return;
 			case Key::Home:
-				SetCaretIndex(0);
+				MoveCaretTo(0, extend);
 				return;
 			case Key::End:
-				SetCaretIndex(m_text.size());
+				MoveCaretTo(m_text.size(), extend);
 				return;
 			default:
 				break;
@@ -116,12 +176,14 @@ namespace nani::canvas::elements
 		}
 		case Type::ImeCompositionStart:
 		{
+			ClearSelection();
 			m_composing = true;
 			return;
 		}
 		case Type::ImeCompositionUpdate:
 		{
 			auto* update = static_cast<ImeCompositionUpdateEvent*>(e);
+			ClearSelection();
 			m_composing = true;
 			if (m_preedit == update->preedit)
 				return;
@@ -163,40 +225,91 @@ namespace nani::canvas::elements
 		if (utf8.empty())
 			return;
 
+		DeleteSelection();
 		m_text.insert(m_caret, utf8);
 		m_caret += utf8.size();
+		m_anchor = m_caret;
 		NotifyTextChanged();
+	}
+
+	void InputTextElement::DeleteSelection()
+	{
+		if (!HasSelection())
+			return;
+
+		const size_t start = SelectionStart();
+		const size_t end = SelectionEnd();
+		m_text.erase(start, end - start);
+		m_anchor = start;
+		m_caret = start;
 	}
 
 	void InputTextElement::DeleteBackward()
 	{
+		if (HasSelection())
+		{
+			DeleteSelection();
+			NotifyTextChanged();
+			return;
+		}
+
 		if (m_caret == 0)
 			return;
 
 		const size_t prev = utf8::PrevIndex(m_text, m_caret);
 		m_text.erase(prev, m_caret - prev);
 		m_caret = prev;
+		m_anchor = m_caret;
 		NotifyTextChanged();
 	}
 
 	void InputTextElement::DeleteForward()
 	{
+		if (HasSelection())
+		{
+			DeleteSelection();
+			NotifyTextChanged();
+			return;
+		}
+
 		if (m_caret >= m_text.size())
 			return;
 
 		const size_t next = utf8::NextIndex(m_text, m_caret);
 		m_text.erase(m_caret, next - m_caret);
+		m_anchor = m_caret;
 		NotifyTextChanged();
 	}
 
-	void InputTextElement::MoveCaretLeft()
+	void InputTextElement::MoveCaretLeft(bool extend)
 	{
-		SetCaretIndex(utf8::PrevIndex(m_text, m_caret));
+		if (!extend && HasSelection())
+		{
+			SetCaretIndex(SelectionStart());
+			return;
+		}
+
+		MoveCaretTo(utf8::PrevIndex(m_text, m_caret), extend);
 	}
 
-	void InputTextElement::MoveCaretRight()
+	void InputTextElement::MoveCaretRight(bool extend)
 	{
-		SetCaretIndex(utf8::NextIndex(m_text, m_caret));
+		if (!extend && HasSelection())
+		{
+			SetCaretIndex(SelectionEnd());
+			return;
+		}
+
+		MoveCaretTo(utf8::NextIndex(m_text, m_caret), extend);
+	}
+
+	void InputTextElement::MoveCaretTo(size_t index, bool extend)
+	{
+		const size_t clamped = ClampCaret(index);
+		if (extend)
+			SetSelection(m_anchor, clamped);
+		else
+			SetSelection(clamped, clamped);
 	}
 
 	size_t InputTextElement::ClampCaret(size_t index) const

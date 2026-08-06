@@ -68,6 +68,8 @@ namespace nani::canvas::internal
 		ComputeStyleBuilderInheritProperty(basic::Color, Color);
 		ComputeStyleBuilderInheritProperty(basic::Color, BackgroundColor);
 		ComputeStyleBuilderInheritProperty(basic::Color, BorderColor);
+		ComputeStyleBuilderInheritProperty(basic::Color, SelectionBackground);
+		ComputeStyleBuilderInheritProperty(basic::Color, SelectionColor);
 		ComputeStyleBuilderInheritProperty(ComputedStyle::VisualProperties::TransformOrigin, TransformOrigin);
 		ComputeStyleBuilderInheritProperty(basic::TransformF, Transform);
 		ComputeStyleBuilderInheritProperty(basic::scalar, Opacity);

@@ -1,4 +1,6 @@
 ﻿#include <gtest/gtest.h>
+#include <thread>
+#include <chrono>
 
 #include "defs.h"
 #include "canvas/elements/input_text_element.h"
@@ -84,7 +86,7 @@ protected:
 					<Dimension width="200" height="32" />
 					<Paddings l="8" t="4" r="8" b="4" />
 					<Borders value="1" />
-					<Colors background="#FFFFFFFF" border="#94A3B8FF" color="#000000FF" />
+					<Colors background="#FFFFFFFF" border="#94A3B8FF" color="#000000FF" selection-background="#2563EBFF" selection-color="#FFFFFFFF" />
 				</Style>
 				<Style class="DefaultInputText" state="focused">
 					<Colors border="#2563EBFF" />
@@ -109,6 +111,11 @@ protected:
 	{
 		MousePressEvent press(MouseButton::Left, pos, pos);
 		window_->FireEvent(&press);
+	}
+
+	void ProcessEvents()
+	{
+		env_->ProcessEvents();
 	}
 
 	Window* window_ = nullptr;
@@ -469,4 +476,128 @@ TEST_F(InputTextTest, TextChangeMarksViewDirtyViaVisualFilter)
 	ImeCompositionUpdateEvent update(u8"x");
 	input->FireEvent(&update);
 	EXPECT_GT(watcher.requestCount, afterText);
+}
+
+TEST_F(InputTextTest, SelectionApiAndShiftExtend)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"abcd");
+	EXPECT_FALSE(input->HasSelection());
+
+	input->SetSelection(1, 3);
+	EXPECT_TRUE(input->HasSelection());
+	EXPECT_EQ(input->AnchorIndex(), 1u);
+	EXPECT_EQ(input->CaretIndex(), 3u);
+	EXPECT_EQ(input->SelectionStart(), 1u);
+	EXPECT_EQ(input->SelectionEnd(), 3u);
+
+	input->SetCaretIndex(2);
+	EXPECT_FALSE(input->HasSelection());
+	EXPECT_EQ(input->AnchorIndex(), 2u);
+	EXPECT_EQ(input->CaretIndex(), 2u);
+
+	input->SetCaretIndex(0);
+	KeyPressEvent right(Key::Right, Modifier::Shift);
+	input->FireEvent(&right);
+	input->FireEvent(&right);
+	EXPECT_TRUE(input->HasSelection());
+	EXPECT_EQ(input->AnchorIndex(), 0u);
+	EXPECT_EQ(input->CaretIndex(), 2u);
+
+	KeyPressEvent left(Key::Left);
+	input->FireEvent(&left);
+	EXPECT_FALSE(input->HasSelection());
+	EXPECT_EQ(input->CaretIndex(), 0u);
+}
+
+TEST_F(InputTextTest, SelectionReplaceAndDelete)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"abcd");
+	input->SetSelection(1, 3);
+
+	CharEvent x(U'x');
+	input->FireEvent(&x);
+	EXPECT_EQ(input->Text(), u8"axd");
+	EXPECT_FALSE(input->HasSelection());
+	EXPECT_EQ(input->CaretIndex(), 2u);
+
+	input->SetSelection(0, 2);
+	KeyPressEvent backspace(Key::Backspace);
+	input->FireEvent(&backspace);
+	EXPECT_EQ(input->Text(), u8"d");
+	EXPECT_EQ(input->CaretIndex(), 0u);
+
+	input->SetText(u8"abcd");
+	input->SetSelection(1, 3);
+	KeyPressEvent del(Key::Delete);
+	input->FireEvent(&del);
+	EXPECT_EQ(input->Text(), u8"ad");
+}
+
+TEST_F(InputTextTest, SelectAllWithCtrlA)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"hello");
+	KeyPressEvent selectAll(Key::A, Modifier::Ctrl);
+	input->FireEvent(&selectAll);
+	EXPECT_TRUE(input->HasSelection());
+	EXPECT_EQ(input->SelectionStart(), 0u);
+	EXPECT_EQ(input->SelectionEnd(), 5u);
+}
+
+TEST_F(InputTextTest, HomeEndWithShiftSelects)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"abcd");
+	input->SetCaretIndex(2);
+
+	KeyPressEvent home(Key::Home, Modifier::Shift);
+	input->FireEvent(&home);
+	EXPECT_EQ(input->SelectionStart(), 0u);
+	EXPECT_EQ(input->SelectionEnd(), 2u);
+
+	KeyPressEvent end(Key::End, Modifier::Shift);
+	input->FireEvent(&end);
+	EXPECT_EQ(input->SelectionStart(), 2u);
+	EXPECT_EQ(input->SelectionEnd(), 4u);
+}
+
+TEST_F(InputTextTest, MouseDragSelectsText)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"abcdef");
+	BuildAndFlush();
+
+	const RectF client = window_->ClientRect();
+	ClickAt(PointF(client.left + 20.0f, client.top + 16.0f));
+	ASSERT_TRUE(input->States()->IsFocused());
+
+	auto* rootVisual = window_->GetView()->Visual();
+	ASSERT_NE(rootVisual, nullptr);
+	ASSERT_FALSE(rootVisual->Visuals().empty());
+	auto* inputVisual = dynamic_cast<InputTextVisual*>(rootVisual->Visuals().front().get());
+	ASSERT_NE(inputVisual, nullptr);
+
+	MousePressEvent press(MouseButton::Left, PointF(12.0f, 16.0f), PointF(12.0f, 16.0f));
+	input->FireEvent(&press);
+	MouseMoveEvent move(PointF(80.0f, 16.0f), PointF(80.0f, 16.0f));
+	input->FireEvent(&move);
+	MouseReleaseEvent release(MouseButton::Left, PointF(80.0f, 16.0f), PointF(80.0f, 16.0f));
+	input->FireEvent(&release);
+
+	EXPECT_TRUE(input->HasSelection());
+	EXPECT_LT(input->SelectionStart(), input->SelectionEnd());
+}
+
+TEST_F(InputTextTest, FocusStartsCaretBlinkRepaint)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"blink");
+	BuildAndFlush();
+
+	RequestWatcher watcher(window_->GetView());
+	const RectF client = window_->ClientRect();
+	ClickAt(PointF(client.left + 20.0f, client.top + 16.0f));
+	ASSERT_TRUE(input->States()->IsFocused());
+	EXPECT_GT(watcher.requestCount, 0);
+
+	const int afterFocus = watcher.requestCount;
+	std::this_thread::sleep_for(std::chrono::milliseconds(560));
+	ProcessEvents();
+	EXPECT_GT(watcher.requestCount, afterFocus);
 }

@@ -153,7 +153,7 @@
 		<Paddings l="10" t="6" r="10" b="6" />
 		<Borders value="1" />
 		<Radius radius="6" />
-		<Colors background="#FFFFFFFF" border="#94A3B8FF" color="#0F172AFF" />
+		<Colors background="#FFFFFFFF" border="#94A3B8FF" color="#0F172AFF" selection-background="#2563EBFF" selection-color="#FFFFFFFF" />
 		<TextAlignment horizontal="left" vertical="center" />
 	</Style>
 
@@ -169,7 +169,7 @@
 		<Paddings l="14" t="8" r="14" b="8" />
 		<Borders value="0" />
 		<Radius radius="20" />
-		<Colors background="#E2E8F0FF" border="#E2E8F000" color="#0F172AFF" />
+		<Colors background="#E2E8F0FF" border="#E2E8F000" color="#0F172AFF" selection-background="#2563EBFF" selection-color="#FFFFFFFF" />
 		<TextAlignment horizontal="left" vertical="center" />
 	</Style>
 
@@ -177,6 +177,23 @@
 		<Colors background="#DBEAFEFF" border="#3B82F6FF" color="#1E3A8AFF" />
 		<Borders value="2" />
 		<Shadow color="#2563EB33" x="0" y="2" b="8" s="0" />
+	</Style>
+
+	<!-- Body text slate; selection uses amber background + rose text for clear contrast. -->
+	<Style class="DemoInputSelectionContrast">
+		<Font family="Segoe UI" size="14" style="normal" weight="normal" />
+		<Dimension width="100%" height="36" minHeight="36" />
+		<FlexBox shrink="0" />
+		<Paddings l="10" t="6" r="10" b="6" />
+		<Borders value="1" />
+		<Radius radius="6" />
+		<Colors background="#FFFBEBFF" border="#F59E0BFF" color="#0F172AFF" selection-background="#FBBF24FF" selection-color="#9F1239FF" />
+		<TextAlignment horizontal="left" vertical="center" />
+	</Style>
+
+	<Style class="DemoInputSelectionContrast" state="focused">
+		<Colors border="#D97706FF" background="#FEF3C7FF" />
+		<Borders value="2" />
 	</Style>
 
 	<Style class="EffectsContent">

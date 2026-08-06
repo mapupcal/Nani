@@ -193,9 +193,16 @@ namespace
 		CreateStyledText(content, u8"Filled / Rounded", u8"InputDemoLabel");
 		CreateStyledInputText(content, u8"Search or compose…", u8"DemoInputFilled");
 
+		CreateStyledText(content, u8"Selection contrast", u8"InputDemoLabel");
+		auto* selectionContrast = CreateStyledInputText(
+			content,
+			u8"Select me — amber highlight uses a different text color",
+			u8"DemoInputSelectionContrast");
+		selectionContrast->SetSelection(0, 9); // "Select me"
+
 		CreateStyledText(
 			content,
-			u8"Click a field to focus, then type. Switch fields to end IME composition.",
+			u8"Click a field to focus, then type. Drag or Shift+arrows to select. Switch fields to end IME composition.",
 			u8"InputDemoHint");
 	}
 

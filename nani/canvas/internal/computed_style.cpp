@@ -47,6 +47,8 @@ namespace nani::canvas::internal
 			(lhs.color == rhs.color) && 
 			(lhs.borderColor == rhs.borderColor) &&
 			(lhs.backgroundColor == rhs.backgroundColor) &&
+			(lhs.selectionBackground == rhs.selectionBackground) &&
+			(lhs.selectionColor == rhs.selectionColor) &&
 			basic::IsScalarEqual(lhs.opacity, rhs.opacity) &&
 			lhs.transform == rhs.transform &&
 			lhs.transformOrigin == rhs.transformOrigin &&

@@ -57,7 +57,7 @@ TEST_F(StylesTest, LoadFromXML_WithColors)
 	styles_->LoadFromXML(R"(
 		<Styles>
 			<Style class="Colored">
-				<Colors color="#FF0000FF" background="#00FF00FF" border="#0000FFFF" />
+				<Colors color="#FF0000FF" background="#00FF00FF" border="#0000FFFF" selection-background="#2563EBFF" selection-color="#FFFFFFFF" />
 			</Style>
 		</Styles>
 	)");
@@ -68,6 +68,8 @@ TEST_F(StylesTest, LoadFromXML_WithColors)
 	EXPECT_EQ(cs->visualProps.color, Color("#FF0000FF"));
 	EXPECT_EQ(cs->visualProps.backgroundColor, Color("#00FF00FF"));
 	EXPECT_EQ(cs->visualProps.borderColor, Color("#0000FFFF"));
+	EXPECT_EQ(cs->visualProps.selectionBackground, Color("#2563EBFF"));
+	EXPECT_EQ(cs->visualProps.selectionColor, Color("#FFFFFFFF"));
 }
 
 // -----------------------------------------------------------

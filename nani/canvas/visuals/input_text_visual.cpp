@@ -7,6 +7,7 @@
 #include "../window.h"
 #include "../text/font_metrics.h"
 #include "../text/text_alignment.h"
+#include "../text/utf8.h"
 #include "../internal/computed_style.h"
 #include "../internal/skia_defs.h"
 #include "../internal/skia_utils.h"
@@ -24,6 +25,9 @@ namespace nani::canvas::visuals
 {
 	namespace
 	{
+		constexpr dword kBlinkIntervalMs = 530;
+		const Color kDefaultSelectionBackground(0x3B, 0x82, 0xF6, 0x80);
+
 		struct InputTextLayout
 		{
 			RectF contentRect;
@@ -120,11 +124,32 @@ namespace nani::canvas::visuals
 			}
 			return local;
 		}
+
+		Color ResolveSelectionBackground(const ComputedStyle* style)
+		{
+			if (style && style->visualProps.selectionBackground.a != 0)
+				return style->visualProps.selectionBackground;
+			return kDefaultSelectionBackground;
+		}
+
+		Color ResolveSelectionTextColor(const ComputedStyle* style)
+		{
+			if (style && style->visualProps.selectionColor.a != 0)
+				return style->visualProps.selectionColor;
+			return text_paint_utils::ResolveTextColor(style);
+		}
 	}
 
 	InputTextVisual::InputTextVisual(visuals::View* view, InputTextElement* element, Visual* parent)
 		: Visual(view, element, parent)
 	{
+		m_blinkTimer.SetInterval(kBlinkIntervalMs);
+		m_blinkTimer.SetCallback([this] { OnBlinkTimeout(); });
+	}
+
+	InputTextVisual::~InputTextVisual()
+	{
+		m_blinkTimer.Stop();
 	}
 
 	InputTextElement* InputTextVisual::InputText() const
@@ -169,38 +194,81 @@ namespace nani::canvas::visuals
 			layout.contentRect.bottom));
 
 		FontMetrics metrics(style->visualProps.font);
+		const Color textColor = text_paint_utils::ResolveTextColor(style);
 
 		SkPaint paint;
 		paint.setAntiAlias(true);
 		paint.setStyle(SkPaint::kFill_Style);
-		paint.setColor(skia_utils::ToSkColor(text_paint_utils::ResolveTextColor(style)));
 
-		auto drawUtf8 = [&](const std::u8string_view& chunk, float x)
+		auto drawUtf8 = [&](const std::u8string_view& chunk, float x, const Color& color)
 		{
+			if (chunk.empty())
+				return;
+			paint.setColor(skia_utils::ToSkColor(color));
 			metrics.DrawText(canvas, chunk, x, layout.baselineY, paint);
 		};
 
-		drawUtf8(layout.prefix, layout.textX);
-		drawUtf8(layout.preedit, layout.textX + layout.prefixWidth);
-		drawUtf8(layout.suffix, layout.textX + layout.prefixWidth + layout.preeditWidth);
-
-		if (!layout.preedit.empty())
+		if (input->HasSelection() && input->PreeditText().empty())
 		{
-			SkPaint underline = paint;
-			underline.setStyle(SkPaint::kStroke_Style);
-			underline.setStrokeWidth(std::max(metrics.UnderlineThickness(), 1.0f));
-			const float y = layout.baselineY + metrics.UnderlineOffset();
-			canvas->drawLine(
-				layout.textX + layout.prefixWidth,
-				y,
-				layout.textX + layout.prefixWidth + layout.preeditWidth,
-				y,
-				underline);
+			const std::u8string_view text = input->Text();
+			const size_t selStart = input->SelectionStart();
+			const size_t selEnd = input->SelectionEnd();
+			const auto before = text.substr(0, selStart);
+			const auto selected = text.substr(selStart, selEnd - selStart);
+			const auto after = text.substr(selEnd);
+
+			const float beforeWidth = metrics.HorizontalAdvance(before);
+			const float selectedWidth = metrics.HorizontalAdvance(selected);
+			const float top = layout.baselineY - layout.ascent;
+			const float bottom = layout.baselineY + layout.descent;
+
+			SkPaint selectionPaint;
+			selectionPaint.setAntiAlias(true);
+			selectionPaint.setStyle(SkPaint::kFill_Style);
+			selectionPaint.setColor(skia_utils::ToSkColor(ResolveSelectionBackground(style)));
+			canvas->drawRect(
+				SkRect::MakeLTRB(
+					layout.textX + beforeWidth,
+					top,
+					layout.textX + beforeWidth + selectedWidth,
+					bottom),
+				selectionPaint);
+
+			const Color selectedTextColor = ResolveSelectionTextColor(style);
+			drawUtf8(before, layout.textX, textColor);
+			drawUtf8(selected, layout.textX + beforeWidth, selectedTextColor);
+			drawUtf8(after, layout.textX + beforeWidth + selectedWidth, textColor);
+		}
+		else
+		{
+			drawUtf8(layout.prefix, layout.textX, textColor);
+			drawUtf8(layout.preedit, layout.textX + layout.prefixWidth, textColor);
+			drawUtf8(layout.suffix, layout.textX + layout.prefixWidth + layout.preeditWidth, textColor);
+
+			if (!layout.preedit.empty())
+			{
+				paint.setColor(skia_utils::ToSkColor(textColor));
+				SkPaint underline = paint;
+				underline.setStyle(SkPaint::kStroke_Style);
+				underline.setStrokeWidth(std::max(metrics.UnderlineThickness(), 1.0f));
+				const float y = layout.baselineY + metrics.UnderlineOffset();
+				canvas->drawLine(
+					layout.textX + layout.prefixWidth,
+					y,
+					layout.textX + layout.prefixWidth + layout.preeditWidth,
+					y,
+					underline);
+			}
 		}
 
-		if (input->States()->IsFocused())
+		const bool showCaret =
+			input->States()->IsFocused() &&
+			m_caretVisible &&
+			!input->HasSelection();
+		if (showCaret)
 		{
 			const float caretX = layout.textX + layout.prefixWidth + layout.preeditWidth;
+			paint.setColor(skia_utils::ToSkColor(textColor));
 			SkPaint caretPaint = paint;
 			caretPaint.setStyle(SkPaint::kStroke_Style);
 			caretPaint.setStrokeWidth(1.0f);
@@ -241,14 +309,136 @@ namespace nani::canvas::visuals
 			rootBottom.y + clientRect.top));
 	}
 
+	void InputTextVisual::SyncCaretBlink(bool focused)
+	{
+		if (focused)
+		{
+			ResetCaretBlink();
+		}
+		else
+		{
+			m_blinkTimer.Stop();
+			m_caretVisible = false;
+			m_dragging = false;
+			Repaint();
+		}
+	}
+
+	void InputTextVisual::ResetCaretBlink()
+	{
+		m_caretVisible = true;
+		m_blinkTimer.Start(kBlinkIntervalMs);
+		Repaint();
+	}
+
+	void InputTextVisual::OnBlinkTimeout()
+	{
+		auto* input = InputText();
+		if (!input || !input->States()->IsFocused() || input->HasSelection())
+		{
+			m_caretVisible = false;
+			Repaint();
+			return;
+		}
+
+		m_caretVisible = !m_caretVisible;
+		Repaint();
+	}
+
+	size_t InputTextVisual::CaretIndexAtLocalX(basic::single localX) const
+	{
+		auto* input = InputText();
+		const ComputedStyle* style = GetComputedStyle();
+		if (!input || !style)
+			return 0;
+
+		const RectF contentRect = LocalContentRect();
+		const float x = localX - contentRect.left;
+		const std::u8string_view text = input->Text();
+		FontMetrics metrics(style->visualProps.font);
+
+		size_t best = 0;
+		float bestDist = std::abs(x);
+		for (size_t index = 0; index <= text.size(); )
+		{
+			const float width = metrics.HorizontalAdvance(text.substr(0, index));
+			const float dist = std::abs(width - x);
+			if (dist < bestDist)
+			{
+				bestDist = dist;
+				best = index;
+			}
+
+			if (index >= text.size())
+				break;
+			index = utf8::NextIndex(text, index);
+		}
+		return best;
+	}
+
+	void InputTextVisual::HandleMousePress(MousePressEvent* e)
+	{
+		auto* input = InputText();
+		if (!input || !e || e->button != MouseButton::Left || input->IsComposing())
+			return;
+
+		const size_t index = CaretIndexAtLocalX(e->pos.x);
+		const bool extend = (e->modifier & Modifier::Shift) != Modifier::None;
+		if (extend)
+			input->SetSelection(input->AnchorIndex(), index);
+		else
+			input->SetSelection(index, index);
+
+		m_dragging = true;
+		ResetCaretBlink();
+	}
+
+	void InputTextVisual::HandleMouseMove(MouseMoveEvent* e)
+	{
+		auto* input = InputText();
+		if (!input || !e || !m_dragging || input->IsComposing())
+			return;
+
+		input->SetSelection(input->AnchorIndex(), CaretIndexAtLocalX(e->pos.x));
+		ResetCaretBlink();
+	}
+
+	void InputTextVisual::HandleMouseRelease(MouseReleaseEvent* e)
+	{
+		if (e && e->button == MouseButton::Left)
+			m_dragging = false;
+	}
+
 	bool InputTextVisual::Filter(events::EventTarget* target, events::Event* e)
 	{
-		if (target == InputText() &&
-			(e->type == Type::ElementTextChanged || e->type == Type::ElementStatesChanged))
+		auto* input = InputText();
+		if (target == input && e)
 		{
-			Reflow();
-			Repaint();
-			return false;
+			switch (e->type)
+			{
+			case Type::ElementTextChanged:
+				Reflow();
+				if (input->States()->IsFocused())
+					ResetCaretBlink();
+				else
+					Repaint();
+				return false;
+			case Type::ElementStatesChanged:
+				Reflow();
+				SyncCaretBlink(input->States()->IsFocused());
+				return false;
+			case Type::MousePress:
+				HandleMousePress(static_cast<MousePressEvent*>(e));
+				return false;
+			case Type::MouseMove:
+				HandleMouseMove(static_cast<MouseMoveEvent*>(e));
+				return false;
+			case Type::MouseRelease:
+				HandleMouseRelease(static_cast<MouseReleaseEvent*>(e));
+				return false;
+			default:
+				break;
+			}
 		}
 
 		return Visual::Filter(target, e);

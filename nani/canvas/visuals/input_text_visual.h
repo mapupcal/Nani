@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "visuals_defs.h"
 #include "visual.h"
+#include "../timer.h"
 
 namespace nani::canvas::elements
 {
@@ -13,7 +14,7 @@ namespace nani::canvas::visuals
 	{
 	public:
 		InputTextVisual(visuals::View* view, elements::InputTextElement* element, Visual* parent);
-		~InputTextVisual() override = default;
+		~InputTextVisual() override;
 
 	public:
 		void BuildVisuals() override;
@@ -24,5 +25,17 @@ namespace nani::canvas::visuals
 		elements::InputTextElement* InputText() const;
 		basic::RectF LocalContentRect() const;
 		void SyncImeCaretRect();
+		void SyncCaretBlink(bool focused);
+		void ResetCaretBlink();
+		void OnBlinkTimeout();
+		size_t CaretIndexAtLocalX(basic::single localX) const;
+		void HandleMousePress(events::MousePressEvent* e);
+		void HandleMouseMove(events::MouseMoveEvent* e);
+		void HandleMouseRelease(events::MouseReleaseEvent* e);
+
+	private:
+		Timer m_blinkTimer;
+		bool m_caretVisible = true;
+		bool m_dragging = false;
 	};
 }

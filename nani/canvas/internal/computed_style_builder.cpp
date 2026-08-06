@@ -537,6 +537,12 @@ namespace nani::canvas::internal
 		if (auto v = ComputeBorderColor(); v.has_value())
 			visualPropsRef.borderColor = v.value();
 
+		if (auto v = ComputeSelectionBackground(); v.has_value())
+			visualPropsRef.selectionBackground = v.value();
+
+		if (auto v = ComputeSelectionColor(); v.has_value())
+			visualPropsRef.selectionColor = v.value();
+
 		if (auto v = ComputeTransform(); v.has_value())
 			visualPropsRef.transform = v.value();
 
@@ -677,6 +683,10 @@ namespace nani::canvas::internal
 				BackgroundColor = AsColor(attribute.value());
 			else if (name == "border")
 				BorderColor = AsColor(attribute.value());
+			else if (name == "selection-background")
+				SelectionBackground = AsColor(attribute.value());
+			else if (name == "selection-color")
+				SelectionColor = AsColor(attribute.value());
 			else if (name == "opacity")
 				Opacity = AsScalar(attribute.value());
 		}

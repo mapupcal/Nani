@@ -18,6 +18,14 @@ namespace nani::canvas::elements
 		void SetCaretIndex(size_t index);
 		size_t CaretIndex() const;
 
+		void SetSelection(size_t anchor, size_t caret);
+		size_t AnchorIndex() const;
+		size_t SelectionStart() const;
+		size_t SelectionEnd() const;
+		bool HasSelection() const;
+		void ClearSelection();
+		void SelectAll();
+
 		const std::u8string_view PreeditText() const;
 		bool IsComposing() const;
 		void EndComposition();
@@ -33,15 +41,19 @@ namespace nani::canvas::elements
 		void NotifyTextChanged();
 		void ClearCompositionState(bool notify);
 		void InsertUtf8(const std::u8string_view& utf8);
+		void DeleteSelection();
 		void DeleteBackward();
 		void DeleteForward();
-		void MoveCaretLeft();
-		void MoveCaretRight();
+		void MoveCaretLeft(bool extend);
+		void MoveCaretRight(bool extend);
+		void MoveCaretTo(size_t index, bool extend);
 		size_t ClampCaret(size_t index) const;
+		static bool HasShift(events::Modifier modifier);
 
 	private:
 		std::u8string m_text;
 		std::u8string m_preedit;
+		size_t m_anchor = 0;
 		size_t m_caret = 0;
 		bool m_composing = false;
 	};
