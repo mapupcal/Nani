@@ -45,6 +45,7 @@ namespace nani::canvas::visuals
 		elements::Element* HitTest(const basic::PointF& windowPos, basic::PointF& hitLocalPos);
 		elements::Element* HitTest(events::MouseEvent* me, basic::PointF& hitLocalPos);
 		elements::Element* HoverElement(elements::Element* candidate);
+		void BubbleMouseEvent(visuals::Visual* hitVisual, basic::PointF hitLocalPos, events::MouseEvent* e);
 		void SetFocus(elements::Element* element);
 		elements::Element* FindFocusable(elements::Element* candidate) const;
 		void RouteToFocus(events::Event* e);

@@ -8,6 +8,16 @@ namespace nani::canvas::events
 
 	}
 
+	void Event::Accept()
+	{
+		m_accepted = true;
+	}
+
+	bool Event::IsAccepted() const
+	{
+		return m_accepted;
+	}
+
 	MoveEvent::MoveEvent(const basic::PointF& oldPos_, const basic::PointF& newPos_)
 		: Event(Type::Move)
 		, oldPos(oldPos_)

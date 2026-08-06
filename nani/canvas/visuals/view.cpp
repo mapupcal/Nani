@@ -125,54 +125,76 @@ namespace nani::canvas::visuals
 		m_dirtyRect = m_dirtyRect | static_cast<events::PaintRequestEvent*>(e)->dirtyRect;
 	}
 
+	void View::BubbleMouseEvent(visuals::Visual* hitVisual, PointF hitLocalPos, MouseEvent* e)
+	{
+		if (!hitVisual || !e)
+			return;
+
+		PointF localPos = hitLocalPos;
+		for (visuals::Visual* visual = hitVisual; visual; )
+		{
+			e->pos = localPos;
+			if (elements::Element* element = visual->Element())
+				element->FireEvent(e);
+			if (e->IsAccepted())
+				break;
+
+			visuals::Visual* parent = visual->Parent();
+			if (!parent)
+				break;
+			localPos = visual->MapToParentLocal(localPos);
+			visual = parent;
+		}
+	}
+
 	void View::OnMouseMove(events::MouseMoveEvent* e)
 	{
 		PointF hitLocalPos;
-		elements::Element* hitElement = HitTest(e, hitLocalPos);
-		if (!hitElement)
+		visuals::Visual* hitVisual = HitTestVisual(e->pos, hitLocalPos);
+		HoverElement(hitVisual ? hitVisual->Element() : nullptr);
+		if (!hitVisual)
 			return;
 
 		MouseMoveEvent me(hitLocalPos, e->globalPos);
-		hitElement->FireEvent(&me);
+		BubbleMouseEvent(hitVisual, hitLocalPos, &me);
 	}
 
 	void View::OnMousePress(events::MousePressEvent* e)
 	{
 		PointF hitLocalPos;
-		elements::Element* hitElement = HitTest(e, hitLocalPos);
+		visuals::Visual* hitVisual = HitTestVisual(e->pos, hitLocalPos);
+		elements::Element* hitElement = hitVisual ? hitVisual->Element() : nullptr;
+		HoverElement(hitElement);
 		SetFocus(FindFocusable(hitElement));
+		if (!hitVisual)
+			return;
 
-		if (hitElement)
-		{
-			MousePressEvent me(e->button, hitLocalPos, e->globalPos, e->modifier);
-			hitElement->FireEvent(&me);
-		}
+		MousePressEvent me(e->button, hitLocalPos, e->globalPos, e->modifier);
+		BubbleMouseEvent(hitVisual, hitLocalPos, &me);
 	}
 
 	void View::OnMouseRelease(events::MouseReleaseEvent* e)
 	{
-		if (PointF hitLocalPos; elements::Element* hitElement = HitTest(e, hitLocalPos))
-		{
-			MouseReleaseEvent me(e->button, hitLocalPos, e->globalPos, e->modifier);
-			hitElement->FireEvent(&me);
-		}
+		PointF hitLocalPos;
+		visuals::Visual* hitVisual = HitTestVisual(e->pos, hitLocalPos);
+		HoverElement(hitVisual ? hitVisual->Element() : nullptr);
+		if (!hitVisual)
+			return;
+
+		MouseReleaseEvent me(e->button, hitLocalPos, e->globalPos, e->modifier);
+		BubbleMouseEvent(hitVisual, hitLocalPos, &me);
 	}
 
 	void View::OnWheel(events::WheelEvent* e)
 	{
 		// Hit-test without updating hover (unlike mouse move/press).
 		PointF hitLocalPos;
-		elements::Element* hitElement = HitTest(e->pos, hitLocalPos);
-		if (!hitElement)
+		visuals::Visual* hitVisual = HitTestVisual(e->pos, hitLocalPos);
+		if (!hitVisual)
 			return;
 
-		for (elements::Element* element = hitElement; element; element = element->Parent())
-		{
-			WheelEvent we(hitLocalPos, e->globalPos, e->deltaX, e->deltaY);
-			element->FireEvent(&we);
-			if (dynamic_cast<elements::ScrollAreaElement*>(element))
-				break;
-		}
+		WheelEvent we(hitLocalPos, e->globalPos, e->deltaX, e->deltaY);
+		BubbleMouseEvent(hitVisual, hitLocalPos, &we);
 	}
 
 	void View::OnKeyPress(events::KeyPressEvent* e)
@@ -279,23 +301,48 @@ namespace nani::canvas::visuals
 		return HoverElement(HitTest(e->pos, hitLocalPos));
 	}
 
+	namespace
+	{
+		// Leaf -> root.
+		std::vector<elements::Element*> HoverAncestorChain(elements::Element* leaf)
+		{
+			std::vector<elements::Element*> chain;
+			for (elements::Element* element = leaf; element; element = element->Parent())
+				chain.push_back(element);
+			return chain;
+		}
+	}
+
 	elements::Element* View::HoverElement(elements::Element* candidate)
 	{
 		if (m_spHoverElement == candidate)
 			return candidate;
 
-		if (m_spHoverElement)
+		const auto oldChain = HoverAncestorChain(m_spHoverElement.get());
+		const auto newChain = HoverAncestorChain(candidate);
+
+		// Shared ancestors from the root stay hovered across sibling moves.
+		size_t oldUnique = oldChain.size();
+		size_t newUnique = newChain.size();
+		while (oldUnique > 0 && newUnique > 0 &&
+			oldChain[oldUnique - 1] == newChain[newUnique - 1])
 		{
-			Event le(Type::Leave);
-			m_spHoverElement->FireEvent(&le);
+			--oldUnique;
+			--newUnique;
+		}
+
+		for (size_t i = 0; i < oldUnique; ++i)
+		{
+			Event leave(Type::Leave);
+			oldChain[i]->FireEvent(&leave);
 		}
 
 		m_spHoverElement = candidate;
 
-		if (m_spHoverElement)
+		for (size_t i = newUnique; i > 0; --i)
 		{
-			Event ee(Type::Enter);
-			m_spHoverElement->FireEvent(&ee);
+			Event enter(Type::Enter);
+			newChain[i - 1]->FireEvent(&enter);
 		}
 
 		return m_spHoverElement;

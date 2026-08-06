@@ -26,6 +26,7 @@ namespace nani::canvas::visuals
 
 		bool HitTest(const basic::PointF& localPos, Visual** ppHitVisual, basic::PointF& hitLocalPos);
 		virtual bool HitTestOverride(const basic::PointF& localPos);
+		basic::PointF MapToParentLocal(const basic::PointF& localPos) const;
 		void Paint(SkCanvas* canvas, const basic::RectF& dirtyRect);
 		virtual void PaintOverride(SkCanvas* canvas, const basic::RectF& dirtyRect);
 

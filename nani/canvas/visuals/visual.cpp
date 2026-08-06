@@ -316,6 +316,16 @@ namespace nani::canvas::visuals
 		return true;
 	}
 
+	basic::PointF Visual::MapToParentLocal(const basic::PointF& localPos) const
+	{
+		if (!m_pParent)
+			return localPos;
+
+		PointF parentLocal = Transform().ApplyTo(localPos);
+		parentLocal += LayoutRect().TopLeft() - m_pParent->ContentScrollOffset();
+		return parentLocal;
+	}
+
 	void Visual::Paint(SkCanvas* canvas, const basic::RectF& dirtyRect)
 	{
 		if (Element()->Visibility()->IsHidden())

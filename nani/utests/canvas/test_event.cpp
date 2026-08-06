@@ -35,6 +35,14 @@ TEST_F(EventTest, BaseEventStoresCorrectType)
 	EXPECT_EQ(hide.type, Type::Hide);
 }
 
+TEST_F(EventTest, EventAcceptDefaultsFalseAndCanBeSet)
+{
+	Event e(Type::MousePress);
+	EXPECT_FALSE(e.IsAccepted());
+	e.Accept();
+	EXPECT_TRUE(e.IsAccepted());
+}
+
 // ============================================================
 // MoveEvent
 // ============================================================

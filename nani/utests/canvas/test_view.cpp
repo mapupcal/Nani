@@ -175,6 +175,242 @@ TEST_F(ViewTest, HitTest)
 	}
 }
 
+TEST_F(ViewTest, HoverPropagatesToAncestors)
+{
+	window->RootElement()->GetStyles()->LoadFromXML(R"(
+		<Styles>
+			<Style class="NaniWindow">
+				<FlexBox flexDirection="column" />
+			</Style>
+			<Style class="Composite">
+				<Dimension width="200" height="100" />
+				<FlexBox flexDirection="column" />
+				<Colors background="#FFFFFFFF" />
+			</Style>
+			<Style class="Composite" state="hovered">
+				<Colors background="#FF0000FF" />
+			</Style>
+			<Style class="CompositeLabel">
+				<Dimension width="200" height="40" />
+				<Colors background="#00FF00FF" />
+			</Style>
+		</Styles>
+	)");
+
+	Element* composite = new Element(window->RootElement());
+	composite->SetStyleClass(u8"Composite");
+	Element* label = new Element(composite);
+	label->SetStyleClass(u8"CompositeLabel");
+
+	ElementHitTestWatcher compositeWatcher(composite);
+	ElementHitTestWatcher labelWatcher(label);
+
+	window->Show();
+	window->Hide();
+
+	// Hit the child: parent should enter with it and stay hovered.
+	{
+		MouseMoveEvent e(PointF(10, 10), Cursor::Pos());
+		window->FireEvent(&e);
+
+		EXPECT_EQ(labelWatcher.EnterCount, 1);
+		EXPECT_EQ(labelWatcher.LeaveCount, 0);
+		EXPECT_EQ(compositeWatcher.EnterCount, 1);
+		EXPECT_EQ(compositeWatcher.LeaveCount, 0);
+		EXPECT_TRUE(label->States()->IsHovered());
+		EXPECT_TRUE(composite->States()->IsHovered());
+	}
+
+	// Move onto parent chrome below the label (still inside composite).
+	{
+		MouseMoveEvent e(PointF(10, 60), Cursor::Pos());
+		window->FireEvent(&e);
+
+		EXPECT_EQ(labelWatcher.EnterCount, 1);
+		EXPECT_EQ(labelWatcher.LeaveCount, 1);
+		EXPECT_EQ(compositeWatcher.EnterCount, 1);
+		EXPECT_EQ(compositeWatcher.LeaveCount, 0);
+		EXPECT_FALSE(label->States()->IsHovered());
+		EXPECT_TRUE(composite->States()->IsHovered());
+	}
+
+	// Leave the window: both clear.
+	{
+		MouseMoveEvent e(PointF(-1, -1), Cursor::Pos());
+		window->FireEvent(&e);
+
+		EXPECT_EQ(labelWatcher.EnterCount, 1);
+		EXPECT_EQ(labelWatcher.LeaveCount, 1);
+		EXPECT_EQ(compositeWatcher.EnterCount, 1);
+		EXPECT_EQ(compositeWatcher.LeaveCount, 1);
+		EXPECT_FALSE(label->States()->IsHovered());
+		EXPECT_FALSE(composite->States()->IsHovered());
+	}
+}
+
+class MousePressBubbleWatcher : public EventFilter
+{
+public:
+	MousePressBubbleWatcher(Element* element, int& counter, bool accept)
+		: element_(element)
+		, counter_(counter)
+		, accept_(accept)
+	{
+		if (element_)
+			element_->RegisterEventFilter(this);
+	}
+
+	~MousePressBubbleWatcher()
+	{
+		if (element_)
+			element_->UnRegisterEventFilter(this);
+	}
+
+	bool Filter(EventTarget*, Event* e) override
+	{
+		if (e->type == Type::MousePress)
+		{
+			++counter_;
+			if (accept_)
+				e->Accept();
+		}
+		return false;
+	}
+
+private:
+	Element* element_ = nullptr;
+	int& counter_;
+	bool accept_ = false;
+};
+
+TEST_F(ViewTest, MousePressBubblesToAncestorsUntilAccepted)
+{
+	window->RootElement()->GetStyles()->LoadFromXML(R"(
+		<Styles>
+			<Style class="NaniWindow">
+				<FlexBox flexDirection="column" />
+			</Style>
+			<Style class="Composite">
+				<Dimension width="200" height="100" />
+				<FlexBox flexDirection="column" />
+			</Style>
+			<Style class="CompositeLabel">
+				<Dimension width="200" height="40" />
+			</Style>
+		</Styles>
+	)");
+
+	Element* composite = new Element(window->RootElement());
+	composite->SetStyleClass(u8"Composite");
+	Element* label = new Element(composite);
+	label->SetStyleClass(u8"CompositeLabel");
+
+	int compositePress = 0;
+	int labelPress = 0;
+	MousePressBubbleWatcher labelPressWatcher(label, labelPress, false);
+	MousePressBubbleWatcher compositePressWatcher(composite, compositePress, true);
+
+	window->Show();
+	window->Hide();
+
+	MousePressEvent press(MouseButton::Left, PointF(10, 10), PointF(10, 10));
+	window->FireEvent(&press);
+
+	EXPECT_EQ(labelPress, 1);
+	EXPECT_EQ(compositePress, 1);
+}
+
+TEST_F(ViewTest, MousePressStopsAtAcceptingChild)
+{
+	window->RootElement()->GetStyles()->LoadFromXML(R"(
+		<Styles>
+			<Style class="NaniWindow">
+				<FlexBox flexDirection="column" />
+			</Style>
+			<Style class="Composite">
+				<Dimension width="200" height="100" />
+				<FlexBox flexDirection="column" />
+			</Style>
+			<Style class="CompositeLabel">
+				<Dimension width="200" height="40" />
+			</Style>
+		</Styles>
+	)");
+
+	Element* composite = new Element(window->RootElement());
+	composite->SetStyleClass(u8"Composite");
+	Element* label = new Element(composite);
+	label->SetStyleClass(u8"CompositeLabel");
+
+	int compositePress = 0;
+	int labelPress = 0;
+	MousePressBubbleWatcher labelPressWatcher(label, labelPress, true);
+	MousePressBubbleWatcher compositePressWatcher(composite, compositePress, false);
+
+	window->Show();
+	window->Hide();
+
+	MousePressEvent press(MouseButton::Left, PointF(10, 10), PointF(10, 10));
+	window->FireEvent(&press);
+
+	EXPECT_EQ(labelPress, 1);
+	EXPECT_EQ(compositePress, 0);
+}
+
+TEST_F(ViewTest, HoverKeepsSharedAncestorsAcrossSiblingMove)
+{
+	window->RootElement()->GetStyles()->LoadFromXML(R"(
+		<Styles>
+			<Style class="NaniWindow">
+				<FlexBox flexDirection="row" />
+			</Style>
+			<Style class="Composite">
+				<Dimension width="200" height="100" />
+				<FlexBox flexDirection="row" />
+			</Style>
+			<Style class="CompositeChild">
+				<Dimension width="100" height="100" />
+			</Style>
+		</Styles>
+	)");
+
+	Element* composite = new Element(window->RootElement());
+	composite->SetStyleClass(u8"Composite");
+	Element* left = new Element(composite);
+	left->SetStyleClass(u8"CompositeChild");
+	Element* right = new Element(composite);
+	right->SetStyleClass(u8"CompositeChild");
+
+	ElementHitTestWatcher compositeWatcher(composite);
+	ElementHitTestWatcher leftWatcher(left);
+	ElementHitTestWatcher rightWatcher(right);
+
+	window->Show();
+	window->Hide();
+
+	{
+		MouseMoveEvent e(PointF(10, 10), Cursor::Pos());
+		window->FireEvent(&e);
+		EXPECT_EQ(compositeWatcher.EnterCount, 1);
+		EXPECT_EQ(leftWatcher.EnterCount, 1);
+		EXPECT_EQ(rightWatcher.EnterCount, 0);
+	}
+
+	{
+		MouseMoveEvent e(PointF(110, 10), Cursor::Pos());
+		window->FireEvent(&e);
+		EXPECT_EQ(compositeWatcher.EnterCount, 1);
+		EXPECT_EQ(compositeWatcher.LeaveCount, 0);
+		EXPECT_EQ(leftWatcher.EnterCount, 1);
+		EXPECT_EQ(leftWatcher.LeaveCount, 1);
+		EXPECT_EQ(rightWatcher.EnterCount, 1);
+		EXPECT_EQ(rightWatcher.LeaveCount, 0);
+		EXPECT_TRUE(composite->States()->IsHovered());
+		EXPECT_FALSE(left->States()->IsHovered());
+		EXPECT_TRUE(right->States()->IsHovered());
+	}
+}
+
 class PaintRequestWatcher : public EventFilter
 {
 public:

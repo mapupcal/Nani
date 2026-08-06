@@ -132,7 +132,10 @@ namespace
 		auto watcher = std::make_unique<EventFilterDelegate>(element);
 		watcher->SetDelegate([onPress = std::move(onPress)](Event* e) -> bool {
 			if (e->type == Type::MousePress)
+			{
 				onPress();
+				e->Accept();
+			}
 			return false;
 		});
 		filters.push_back(std::move(watcher));

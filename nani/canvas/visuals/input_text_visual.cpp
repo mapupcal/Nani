@@ -799,12 +799,21 @@ namespace nani::canvas::visuals
 				return false;
 			case Type::MousePress:
 				HandleMousePress(static_cast<MousePressEvent*>(e));
+				e->Accept();
 				return false;
 			case Type::MouseMove:
-				HandleMouseMove(static_cast<MouseMoveEvent*>(e));
+				if (m_dragging)
+				{
+					HandleMouseMove(static_cast<MouseMoveEvent*>(e));
+					e->Accept();
+				}
 				return false;
 			case Type::MouseRelease:
-				HandleMouseRelease(static_cast<MouseReleaseEvent*>(e));
+				if (m_dragging || input->States()->IsFocused())
+				{
+					HandleMouseRelease(static_cast<MouseReleaseEvent*>(e));
+					e->Accept();
+				}
 				return false;
 			default:
 				break;

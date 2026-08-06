@@ -14,7 +14,13 @@ namespace nani::canvas::events
 		Event(Type type_);
 		~Event() = default;
 
+		void Accept();
+		bool IsAccepted() const;
+
 		const Type type = Type::Unknown;
+
+	private:
+		bool m_accepted = false;
 	};
 
 	class NANI_CANVAS_API MoveEvent : public Event

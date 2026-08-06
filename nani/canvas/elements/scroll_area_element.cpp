@@ -77,6 +77,7 @@ namespace nani::canvas::elements
 	{
 		if (e->type == Type::Wheel)
 		{
+			e->Accept();
 			auto* wheel = static_cast<WheelEvent*>(e);
 			ScrollBy(
 				static_cast<scalar>(-wheel->deltaX * kWheelScale),
