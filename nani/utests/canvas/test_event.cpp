@@ -190,6 +190,26 @@ TEST_F(EventTest, KeyReleaseEventStoresKeyAndModifier)
 	EXPECT_EQ(e.scancode, 1);
 }
 
+TEST_F(EventTest, CharEventStoresCodepoint)
+{
+	CharEvent e(U'你');
+	EXPECT_EQ(e.type, Type::Char);
+	EXPECT_EQ(e.codepoint, U'你');
+}
+
+TEST_F(EventTest, ImeCompositionEvents)
+{
+	ImeCompositionStartEvent start;
+	EXPECT_EQ(start.type, Type::ImeCompositionStart);
+
+	ImeCompositionUpdateEvent update(u8"ni");
+	EXPECT_EQ(update.type, Type::ImeCompositionUpdate);
+	EXPECT_TRUE(update.preedit == u8"ni");
+
+	ImeCompositionEndEvent end;
+	EXPECT_EQ(end.type, Type::ImeCompositionEnd);
+}
+
 // ============================================================
 // ElementModifyEvent
 // ============================================================

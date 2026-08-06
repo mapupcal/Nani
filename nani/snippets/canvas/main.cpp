@@ -3,6 +3,7 @@
 #include "canvas/window.h"
 
 #include "canvas/elements/element.h"
+#include "canvas/elements/input_text_element.h"
 #include "canvas/elements/scroll_area_element.h"
 #include "canvas/elements/text_element.h"
 
@@ -27,7 +28,7 @@ namespace
 	constexpr float kBorderWidth = 5.0f;
 	constexpr float kWindowRadius = 12.0f;
 	constexpr float kClientWidth = 640.0f;
-	constexpr float kClientHeight = 480.0f;
+	constexpr float kClientHeight = 560.0f;
 
 	constexpr char8_t kLightStylesRelPath[] = u8"assets/canvas/styles.xml";
 	constexpr char8_t kDarkStylesRelPath[] = u8"assets/canvas/styles_dark.xml";
@@ -104,6 +105,16 @@ namespace
 		return element;
 	}
 
+	InputTextElement* CreateStyledInputText(
+		Element* parent,
+		const std::u8string_view& text,
+		const std::u8string_view& styleClass)
+	{
+		auto* element = new InputTextElement(parent, text);
+		element->SetStyleClass(styleClass);
+		return element;
+	}
+
 	ScrollAreaElement* CreateCategory(
 		Element* parent,
 		const std::u8string_view& title)
@@ -169,6 +180,23 @@ namespace
 			if (window)
 				window->Close();
 		});
+	}
+
+	void BuildInputTextCategory(Element* row)
+	{
+		ScrollAreaElement* scroll = CreateCategory(row, u8"Input Text");
+		Element* content = CreateStyledElement(scroll, u8"InputDemoContent");
+
+		CreateStyledText(content, u8"Outlined", u8"InputDemoLabel");
+		CreateStyledInputText(content, u8"Type here (IME supported)", u8"DemoInputOutlined");
+
+		CreateStyledText(content, u8"Filled / Rounded", u8"InputDemoLabel");
+		CreateStyledInputText(content, u8"Search or compose…", u8"DemoInputFilled");
+
+		CreateStyledText(
+			content,
+			u8"Click a field to focus, then type. Switch fields to end IME composition.",
+			u8"InputDemoHint");
 	}
 
 	void BuildEffectsCategory(Element* row)
@@ -238,9 +266,11 @@ namespace
 	void BuildDemoBody(Element* root)
 	{
 		Element* demoBody = CreateStyledElement(root, u8"DemoBody");
+		Element* inputRow = CreateStyledElement(demoBody, u8"CategoryRow");
 		Element* topRow = CreateStyledElement(demoBody, u8"CategoryRow");
 		Element* bottomRow = CreateStyledElement(demoBody, u8"CategoryRow");
 
+		BuildInputTextCategory(inputRow);
 		BuildEffectsCategory(topRow);
 		BuildDecorationCategory(topRow);
 		BuildMultiLineCategory(bottomRow);

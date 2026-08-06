@@ -135,6 +135,13 @@ namespace nani::canvas::internal
 			}
 		}
 
+		void _OnGLFWWindowChar(GLFWwindow* window, unsigned int codepoint)
+		{
+			WindowPrivate* pImpl = reinterpret_cast<WindowPrivate*>(glfwGetWindowUserPointer(window));
+			if (pImpl)
+				pImpl->OnGLFWWindowChar(codepoint);
+		}
+
 		void _SetWindowHints(GLFWwindow* window, Window::Hint hints)
 		{
 			glfwSetWindowAttrib(window, GLFW_FLOATING, !!(hints & Window::Top));
@@ -385,6 +392,12 @@ namespace nani::canvas::internal
 		}
 	}
 
+	void WindowPrivate::OnGLFWWindowChar(unsigned int codepoint)
+	{
+		CharEvent event(static_cast<char32_t>(codepoint));
+		window->FireEvent(&event);
+	}
+
 	void WindowPrivate::SyncWindowDrag()
 	{
 		bool enabled = false;
@@ -498,7 +511,9 @@ namespace nani::canvas::internal
 		glfwSetCursorEnterCallback(glfwWindow, _OnGLFWWindowMouseEnter);
 		glfwSetScrollCallback(glfwWindow, _OnGLFWWindowWheelScroll);
 		glfwSetKeyCallback(glfwWindow, _OnGLFWWindowKeyEvent);
+		glfwSetCharCallback(glfwWindow, _OnGLFWWindowChar);
 
+		Platform::EnsureImeHook(glfwWindow);
 	}
 
 	void WindowPrivate::InitializeSkiaContext()

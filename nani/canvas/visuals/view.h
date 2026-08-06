@@ -36,6 +36,8 @@ namespace nani::canvas::visuals
 		void OnWheel(events::WheelEvent* e);
 		void OnKeyPress(events::KeyPressEvent* e);
 		void OnKeyRelease(events::KeyReleaseEvent* e);
+		void OnChar(events::CharEvent* e);
+		void OnImeComposition(events::Event* e);
 
 	private:
 		basic::PointF ToRootLocal(const basic::PointF& windowPos) const;
@@ -43,6 +45,9 @@ namespace nani::canvas::visuals
 		elements::Element* HitTest(const basic::PointF& windowPos, basic::PointF& hitLocalPos);
 		elements::Element* HitTest(events::MouseEvent* me, basic::PointF& hitLocalPos);
 		elements::Element* HoverElement(elements::Element* candidate);
+		void SetFocus(elements::Element* element);
+		elements::Element* FindFocusable(elements::Element* candidate) const;
+		void RouteToFocus(events::Event* e);
 
 	private:
 		friend class canvas::Window;

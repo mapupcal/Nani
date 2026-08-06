@@ -56,6 +56,7 @@ namespace nani::canvas
 		visuals::View* GetView() const;
 		SkCanvas* GetCanvas();
 		void SyncWindowDrag();
+		void SetImeCaretRect(const basic::RectF& clientRect);
 
 	private:
 		void OnEvent(events::Event* e);

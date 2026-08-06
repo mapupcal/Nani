@@ -131,6 +131,23 @@
     </Style>
 
     <!-- ============================================================
+         DefaultInputText — Single-line editable text field.
+         ============================================================ -->
+    <Style class="DefaultInputText">
+        <Font family="Segoe UI" size="14" style="normal" weight="normal" />
+        <Dimension height="32" minHeight="32" />
+        <Paddings l="8" t="4" r="8" b="4" />
+        <Borders value="1" />
+        <Radius radius="4" />
+        <Colors background="#FFFFFFFF" border="#94A3B8FF" color="#0F172AFF" />
+        <TextAlignment horizontal="left" vertical="center" />
+    </Style>
+
+    <Style class="DefaultInputText" state="focused">
+        <Colors border="#2563EBFF" />
+    </Style>
+
+    <!-- ============================================================
          HeadingText — Bold heading with underline decoration.
          Inherits DefaultText, overrides weight and decoration.
          ============================================================ -->

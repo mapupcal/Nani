@@ -130,6 +130,38 @@ namespace nani::canvas::events
 		~KeyReleaseEvent() = default;
 	};
 
+	class NANI_CANVAS_API CharEvent : public Event
+	{
+	public:
+		explicit CharEvent(char32_t codepoint_);
+		~CharEvent() = default;
+
+		const char32_t codepoint = 0;
+	};
+
+	class NANI_CANVAS_API ImeCompositionStartEvent : public Event
+	{
+	public:
+		ImeCompositionStartEvent();
+		~ImeCompositionStartEvent() = default;
+	};
+
+	class NANI_CANVAS_API ImeCompositionUpdateEvent : public Event
+	{
+	public:
+		explicit ImeCompositionUpdateEvent(const std::u8string_view& preedit_);
+		~ImeCompositionUpdateEvent() = default;
+
+		const std::u8string preedit;
+	};
+
+	class NANI_CANVAS_API ImeCompositionEndEvent : public Event
+	{
+	public:
+		ImeCompositionEndEvent();
+		~ImeCompositionEndEvent() = default;
+	};
+
 	class NANI_CANVAS_API ElementModifyEvent : public Event
 	{
 	public:

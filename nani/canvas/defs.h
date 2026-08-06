@@ -29,6 +29,7 @@ namespace nani::canvas::elements
 	class ElementVisibility;
 	class TextElement;
 	class ScrollAreaElement;
+	class InputTextElement;
 }
 namespace nani::canvas::visuals
 {
@@ -36,12 +37,17 @@ namespace nani::canvas::visuals
 	class View;
 	class TextVisual;
 	class ScrollAreaVisual;
+	class InputTextVisual;
 }
 namespace nani::canvas::events
 {
 	class Event;
 	class EventFilter;
 	class EventTarget;
+	class CharEvent;
+	class ImeCompositionStartEvent;
+	class ImeCompositionUpdateEvent;
+	class ImeCompositionEndEvent;
 }
 namespace nani::canvas::text
 {

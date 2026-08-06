@@ -124,6 +124,61 @@
 		<Paddings value="4" />
 	</Style>
 
+	<Style class="InputDemoContent">
+		<FlexBox flexDirection="column" shrink="0" />
+		<Gaps gap="8" />
+		<Dimension width="100%" />
+		<Paddings value="4" />
+	</Style>
+
+	<Style class="InputDemoLabel" inherit="DefaultText">
+		<Font family="Segoe UI" size="12" weight="bold" />
+		<Dimension width="100%" height="18" />
+		<FlexBox shrink="0" />
+		<Colors color="#64748BFF" />
+		<TextAlignment horizontal="left" vertical="center" />
+	</Style>
+
+	<Style class="InputDemoHint" inherit="DefaultText">
+		<Dimension width="100%" height="36" />
+		<FlexBox shrink="0" />
+		<Colors color="#94A3B8FF" />
+		<TextAlignment horizontal="left" vertical="top" />
+	</Style>
+
+	<Style class="DemoInputOutlined">
+		<Font family="Segoe UI" size="14" style="normal" weight="normal" />
+		<Dimension width="100%" height="36" minHeight="36" />
+		<FlexBox shrink="0" />
+		<Paddings l="10" t="6" r="10" b="6" />
+		<Borders value="1" />
+		<Radius radius="6" />
+		<Colors background="#FFFFFFFF" border="#94A3B8FF" color="#0F172AFF" />
+		<TextAlignment horizontal="left" vertical="center" />
+	</Style>
+
+	<Style class="DemoInputOutlined" state="focused">
+		<Colors border="#2563EBFF" background="#F8FAFCFF" />
+		<Borders value="2" />
+	</Style>
+
+	<Style class="DemoInputFilled">
+		<Font family="Segoe UI" size="14" style="normal" weight="normal" />
+		<Dimension width="100%" height="40" minHeight="40" />
+		<FlexBox shrink="0" />
+		<Paddings l="14" t="8" r="14" b="8" />
+		<Borders value="0" />
+		<Radius radius="20" />
+		<Colors background="#E2E8F0FF" border="#E2E8F000" color="#0F172AFF" />
+		<TextAlignment horizontal="left" vertical="center" />
+	</Style>
+
+	<Style class="DemoInputFilled" state="focused">
+		<Colors background="#DBEAFEFF" border="#3B82F6FF" color="#1E3A8AFF" />
+		<Borders value="2" />
+		<Shadow color="#2563EB33" x="0" y="2" b="8" s="0" />
+	</Style>
+
 	<Style class="EffectsContent">
 		<FlexBox flexDirection="column" shrink="0" />
 		<Gaps gap="12" />

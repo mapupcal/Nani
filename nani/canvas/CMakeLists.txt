@@ -37,6 +37,8 @@ nani_add_library(canvas SHARED
 	elements/text_element.h
 	elements/scroll_area_element.cpp
 	elements/scroll_area_element.h
+	elements/input_text_element.cpp
+	elements/input_text_element.h
 
 	visuals/visuals_defs.h
 	visuals/visual.cpp
@@ -45,6 +47,8 @@ nani_add_library(canvas SHARED
 	visuals/text_visual.h
 	visuals/scroll_area_visual.cpp
 	visuals/scroll_area_visual.h
+	visuals/input_text_visual.cpp
+	visuals/input_text_visual.h
 	visuals/view.cpp
 	visuals/view.h
 
@@ -114,3 +118,6 @@ target_link_libraries(canvas PRIVATE
 	pugixml::shared
 	pugixml::pugixml
 )
+if (WIN32)
+	target_link_libraries(canvas PRIVATE imm32)
+endif()

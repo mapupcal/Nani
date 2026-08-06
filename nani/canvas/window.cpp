@@ -1,5 +1,6 @@
 ﻿#include "window.h"
 #include "internal/window_p.h"
+#include "internal/platform.h"
 #include "styles.h"
 #include "elements/element.h"
 #include "visuals/visual.h"
@@ -228,6 +229,25 @@ namespace nani::canvas
 			m_pView->OnKeyRelease(static_cast<KeyReleaseEvent*>(e));
 			break;
 		}
+		case events::Type::Char:
+		{
+			m_pView->OnChar(static_cast<CharEvent*>(e));
+			break;
 		}
+		case events::Type::ImeCompositionStart:
+		case events::Type::ImeCompositionUpdate:
+		case events::Type::ImeCompositionEnd:
+		{
+			m_pView->OnImeComposition(e);
+			break;
+		}
+		}
+	}
+
+	void Window::SetImeCaretRect(const RectF& clientRect)
+	{
+		if (!m_pImpl || !m_pImpl->glfwWindow)
+			return;
+		internal::Platform::SetImeCompositionRect(m_pImpl->glfwWindow, clientRect);
 	}
 }

@@ -19,6 +19,11 @@ namespace nani::canvas::events
 
 		KeyPress,
 		KeyRelease,
+		Char,
+
+		ImeCompositionStart,
+		ImeCompositionUpdate,
+		ImeCompositionEnd,
 
 		Show,
 		Hide,

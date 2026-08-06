@@ -99,6 +99,32 @@ namespace nani::canvas::events
 
 	}
 
+	CharEvent::CharEvent(char32_t codepoint_)
+		: Event(Type::Char)
+		, codepoint(codepoint_)
+	{
+
+	}
+
+	ImeCompositionStartEvent::ImeCompositionStartEvent()
+		: Event(Type::ImeCompositionStart)
+	{
+
+	}
+
+	ImeCompositionUpdateEvent::ImeCompositionUpdateEvent(const std::u8string_view& preedit_)
+		: Event(Type::ImeCompositionUpdate)
+		, preedit(preedit_)
+	{
+
+	}
+
+	ImeCompositionEndEvent::ImeCompositionEndEvent()
+		: Event(Type::ImeCompositionEnd)
+	{
+
+	}
+
 	ElementModifyEvent::ElementModifyEvent(Type type, elements::Element* element_)
 		: Event(type)
 		, element(element_)

@@ -4,6 +4,7 @@
 #include "elements/element.h"
 #include "elements/element_states.h"
 #include "elements/scroll_area_element.h"
+#include "elements/input_text_element.h"
 
 #include "events/event.h"
 
@@ -137,7 +138,11 @@ namespace nani::canvas::visuals
 
 	void View::OnMousePress(events::MousePressEvent* e)
 	{
-		if (PointF hitLocalPos; elements::Element* hitElement = HitTest(e, hitLocalPos))
+		PointF hitLocalPos;
+		elements::Element* hitElement = HitTest(e, hitLocalPos);
+		SetFocus(FindFocusable(hitElement));
+
+		if (hitElement)
 		{
 			MousePressEvent me(e->button, hitLocalPos, e->globalPos, e->modifier);
 			hitElement->FireEvent(&me);
@@ -172,12 +177,57 @@ namespace nani::canvas::visuals
 
 	void View::OnKeyPress(events::KeyPressEvent* e)
 	{
-
+		RouteToFocus(e);
 	}
 
 	void View::OnKeyRelease(events::KeyReleaseEvent* e)
 	{
+		RouteToFocus(e);
+	}
 
+	void View::OnChar(events::CharEvent* e)
+	{
+		RouteToFocus(e);
+	}
+
+	void View::OnImeComposition(events::Event* e)
+	{
+		RouteToFocus(e);
+	}
+
+	void View::SetFocus(elements::Element* element)
+	{
+		if (m_spFocusElement == element)
+			return;
+
+		if (m_spFocusElement)
+		{
+			if (auto* input = dynamic_cast<elements::InputTextElement*>(m_spFocusElement.get()))
+				input->EndComposition();
+			m_spFocusElement->States()->SetFocused(false);
+		}
+
+		m_spFocusElement = element;
+
+		if (m_spFocusElement)
+			m_spFocusElement->States()->SetFocused(true);
+	}
+
+	elements::Element* View::FindFocusable(elements::Element* candidate) const
+	{
+		for (elements::Element* element = candidate; element; element = element->Parent())
+		{
+			if (dynamic_cast<elements::InputTextElement*>(element))
+				return element;
+		}
+		return nullptr;
+	}
+
+	void View::RouteToFocus(events::Event* e)
+	{
+		if (!m_spFocusElement || !e)
+			return;
+		m_spFocusElement->FireEvent(e);
 	}
 
 	PointF View::ToRootLocal(const PointF& windowPos) const

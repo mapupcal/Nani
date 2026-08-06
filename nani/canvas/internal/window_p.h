@@ -55,6 +55,7 @@ namespace nani::canvas::internal
 		void OnGLFWWindowMouseButton(double xPos, double yPos, events::MouseButton button, bool bPress, events::Modifier modifier);
 		void OnGLFWWindowWheelScroll(double xDelta, double yDelta);
 		void OnGLFWWindowKeyEvent(events::Key key, int scancode, bool bPress, events::Modifier modifier);
+		void OnGLFWWindowChar(unsigned int codepoint);
 		void onTick();
 
 	public:
@@ -75,5 +76,6 @@ namespace nani::canvas::internal
 		void* _originalWndProc = nullptr;
 		bool resizableEnabled = false;
 		bool windowDragEnabled = false;
+		bool imeHookEnabled = false;
 	};
 }

@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "defs.h"
 #include "basic/pointf.h"
+#include "basic/rectf.h"
 
 struct GLFWwindow;
 namespace nani::canvas::internal
@@ -13,5 +14,7 @@ namespace nani::canvas::internal
 		static void MakeResizableWindow(GLFWwindow* window, bool bResizable);
 		static void MakeTruncatedPassThroughWindow(GLFWwindow* window, bool bPassThrough);
 		static void SyncCustomWndProc(GLFWwindow* window);
+		static void EnsureImeHook(GLFWwindow* window);
+		static void SetImeCompositionRect(GLFWwindow* window, const basic::RectF& clientCaretRect);
 	};
 }
