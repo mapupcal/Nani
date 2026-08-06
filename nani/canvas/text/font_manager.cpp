@@ -7,6 +7,11 @@ namespace nani::canvas::text
 		return internal::FontManagerPrivate::Instance()->DefaultFamilies();
 	}
 
+	std::vector<std::u8string> FontManager::FallbackFamilies() const
+	{
+		return internal::FontManagerPrivate::Instance()->FallbackFamilies();
+	}
+
 	void FontManager::ClearCache()
 	{
 		internal::FontManagerPrivate::Instance()->ClearCache();

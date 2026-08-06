@@ -1,5 +1,9 @@
 ﻿#pragma once
 #include "text_defs.h"
+#include "font.h"
+
+class SkCanvas;
+class SkPaint;
 
 namespace nani::canvas::text
 {
@@ -40,7 +44,15 @@ namespace nani::canvas::text
 			basic::single maxWidth,
 			bool wrap) const;
 
+		void DrawText(
+			SkCanvas* canvas,
+			const std::u8string_view& text,
+			basic::single x,
+			basic::single y,
+			const SkPaint& paint) const;
+
 	private:
+		Font m_font;
 		std::shared_ptr<SkFont> m_spSkFont;
 	};
 }

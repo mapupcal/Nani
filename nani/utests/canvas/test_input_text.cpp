@@ -224,6 +224,29 @@ TEST_F(InputTextTest, EditingBoundariesDoNotCrashOrMutate)
 	EXPECT_EQ(input->CaretIndex(), 0u);
 }
 
+TEST_F(InputTextTest, RepeatedKeyPressMovesAndDeletesContinuously)
+{
+	auto* input = new InputTextElement(window_->RootElement(), u8"abcd");
+	input->SetCaretIndex(4);
+
+	KeyPressEvent left(Key::Left);
+	input->FireEvent(&left);
+	input->FireEvent(&left);
+	EXPECT_EQ(input->CaretIndex(), 2u);
+
+	KeyPressEvent backspace(Key::Backspace);
+	input->FireEvent(&backspace);
+	input->FireEvent(&backspace);
+	EXPECT_EQ(input->Text(), u8"cd");
+	EXPECT_EQ(input->CaretIndex(), 0u);
+
+	KeyPressEvent del(Key::Delete);
+	input->FireEvent(&del);
+	input->FireEvent(&del);
+	EXPECT_TRUE(input->Text().empty());
+	EXPECT_EQ(input->CaretIndex(), 0u);
+}
+
 TEST_F(InputTextTest, ControlCharIsIgnoredExceptTab)
 {
 	auto* input = new InputTextElement(window_->RootElement(), u8"");

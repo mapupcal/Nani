@@ -47,26 +47,50 @@ namespace
 		}
 	}
 
-	// Helper: Create std::shared_ptr<SkFont>
 	std::shared_ptr<SkFont> MakeSharedSkFont(
 		sk_sp<SkTypeface> typeface,
 		float size)
 	{
 		if (!typeface)
-		{
 			return nullptr;
-		}
 
 		return std::make_shared<SkFont>(typeface, size);
 	}
 
-	// Helper: Convert std::u8string_view to SkString
 	SkString U8StringToSkString(const std::u8string_view& u8str)
 	{
 		const char* data = reinterpret_cast<const char*>(u8str.data());
 		return SkString(data, u8str.size());
 	}
 
+	sk_sp<SkTypeface> MatchFamilyStyle(
+		SkFontMgr* fontMgr,
+		const std::u8string_view& family,
+		const SkFontStyle& style)
+	{
+		if (!fontMgr || family.empty())
+			return nullptr;
+
+		SkString skFamilyName = U8StringToSkString(family);
+		sk_sp<SkTypeface> typeface = fontMgr->matchFamilyStyle(skFamilyName.c_str(), style);
+		if (!typeface)
+			typeface = fontMgr->matchFamilyStyle(skFamilyName.c_str(), SkFontStyle::Normal());
+		return typeface;
+	}
+
+	std::vector<std::u8string> PlatformFallbackFamilies()
+	{
+		std::vector<std::u8string> families;
+#ifdef NANI_OS_WIN
+		families = {
+			u8"Microsoft YaHei UI",
+			u8"Microsoft YaHei",
+			u8"Segoe UI Emoji",
+			u8"SimSun",
+		};
+#endif
+		return families;
+	}
 }
 
 namespace nani::canvas::internal
@@ -82,21 +106,13 @@ namespace nani::canvas::internal
 		std::vector<std::u8string> families;
 
 		if (!m_spSkFontMgr)
-		{
 			return families;
-		}
 
-		// Get the number of font families
 		int familyCount = m_spSkFontMgr->countFamilies();
 		if (familyCount <= 0)
-		{
 			return families;
-		}
 
-		// Reserve space for performance
 		families.reserve(familyCount);
-
-		// Iterate through all families and collect their names
 		for (int i = 0; i < familyCount; ++i)
 		{
 			SkString familyName;
@@ -104,7 +120,6 @@ namespace nani::canvas::internal
 
 			if (!familyName.isEmpty())
 			{
-				// Convert SkString to u8string
 				std::u8string u8Name(reinterpret_cast<const char8_t*>(familyName.c_str()),
 					familyName.size());
 				families.push_back(std::move(u8Name));
@@ -114,61 +129,50 @@ namespace nani::canvas::internal
 		return families;
 	}
 
+	const std::vector<std::u8string>& FontManagerPrivate::FallbackFamilies() const
+	{
+		return m_fallbackFamilies;
+	}
+
 	std::shared_ptr<SkFont> FontManagerPrivate::CreateSkFont(const text::Font& font)
 	{
 		if (!m_spSkFontMgr)
-		{
 			return nullptr;
-		}
 
-		// Check cache
 		auto it = m_fontCache.find(font);
 		if (it != m_fontCache.end())
 		{
 			std::shared_ptr<SkFont> cachedFont = it->second.lock();
 			if (cachedFont)
-			{
 				return cachedFont;
-			}
-			else
-			{
-				// Weak pointer expired, remove from cache
-				m_fontCache.erase(it);
-			}
+			m_fontCache.erase(it);
 		}
 
-		// Convert font properties to Skia types
 		SkFontStyle::Weight skWeight = ConvertWeight(font.Weight());
 		SkFontStyle::Slant skSlant = ConvertStyle(font.Style());
 		SkFontStyle style(skWeight, SkFontStyle::kNormal_Width, skSlant);
 
 		sk_sp<SkTypeface> typeface;
-		std::u8string_view family = font.Family();
-
-		// Try to find the font by family name with the specified style
-		if (!family.empty())
+		for (const auto& family : font.Families())
 		{
-			SkString skFamilyName = U8StringToSkString(family);
+			typeface = MatchFamilyStyle(m_spSkFontMgr.get(), family, style);
+			if (typeface)
+				break;
+		}
 
-			// Try to match the family with the style
-			typeface = m_spSkFontMgr->matchFamilyStyle(skFamilyName.c_str(), style);
-
-			// If not found, try with normal style
-			if (!typeface)
+		if (!typeface)
+		{
+			for (const auto& family : m_fallbackFamilies)
 			{
-				typeface = m_spSkFontMgr->matchFamilyStyle(
-					skFamilyName.c_str(),
-					SkFontStyle::Normal());
+				typeface = MatchFamilyStyle(m_spSkFontMgr.get(), family, style);
+				if (typeface)
+					break;
 			}
 		}
 
-		// If still not found, fallback to default font with specified style
 		if (!typeface)
-		{
 			typeface = m_spSkFontMgr->matchFamilyStyle(nullptr, style);
-		}
 
-		// Last resort: legacy default
 		if (!typeface)
 		{
 			typeface = m_spSkFontMgr->legacyMakeTypeface(
@@ -177,18 +181,11 @@ namespace nani::canvas::internal
 		}
 
 		if (!typeface)
-		{
 			return nullptr;
-		}
 
-		// Create SkFont
 		std::shared_ptr<SkFont> skFont = MakeSharedSkFont(typeface, font.Size());
-
 		if (skFont)
-		{
-			// Store in cache
 			m_fontCache[font] = skFont;
-		}
 
 		return skFont;
 	}
@@ -198,13 +195,18 @@ namespace nani::canvas::internal
 		m_fontCache.clear();
 	}
 
+	SkFontMgr* FontManagerPrivate::FontMgr() const
+	{
+		return m_spSkFontMgr.get();
+	}
+
 	FontManagerPrivate::FontManagerPrivate()
 	{
 		m_spSkFontMgr = skia_utils::CreateDefaultFontMgr();
+		m_fallbackFamilies = PlatformFallbackFamilies();
 	}
 
 	FontManagerPrivate::~FontManagerPrivate()
 	{
-
 	}
 }

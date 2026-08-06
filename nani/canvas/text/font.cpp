@@ -8,12 +8,33 @@ namespace nani::canvas::text
 
 	const std::u8string_view Font::Family() const
 	{
-		return m_family;
+		if (m_families.empty())
+			return {};
+		return m_families.front();
 	}
 
 	void Font::SetFamily(const std::u8string_view& family)
 	{
-		m_family = family;
+		m_families.clear();
+		if (!family.empty())
+			m_families.emplace_back(family);
+	}
+
+	const std::vector<std::u8string>& Font::Families() const
+	{
+		return m_families;
+	}
+
+	void Font::SetFamilies(std::vector<std::u8string> families)
+	{
+		m_families = std::move(families);
+		// Drop empty entries to keep equality/hash stable.
+		m_families.erase(
+			std::remove_if(
+				m_families.begin(),
+				m_families.end(),
+				[](const std::u8string& name) { return name.empty(); }),
+			m_families.end());
 	}
 
 	basic::single Font::Size() const
@@ -48,10 +69,12 @@ namespace nani::canvas::text
 
 	size_t Font::Hash() const
 	{
-		size_t h1 = std::hash<std::u8string>()(m_family);
-		size_t h2 = std::hash<float>()(m_size);
-		size_t h3 = std::hash<int>()(static_cast<int>(m_weight));
-		size_t h4 = std::hash<int>()(static_cast<int>(m_style));
-		return h1 ^ (h2 << 1) ^ (h3 << 2) ^ (h4 << 3);
+		size_t h = 0;
+		for (const auto& family : m_families)
+			h ^= std::hash<std::u8string>()(family) + 0x9e3779b9 + (h << 6) + (h >> 2);
+		h ^= (std::hash<float>()(m_size) << 1);
+		h ^= (std::hash<int>()(static_cast<int>(m_weight)) << 2);
+		h ^= (std::hash<int>()(static_cast<int>(m_style)) << 3);
+		return h;
 	}
 }

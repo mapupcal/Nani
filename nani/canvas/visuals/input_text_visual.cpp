@@ -8,7 +8,6 @@
 #include "../text/font_metrics.h"
 #include "../text/text_alignment.h"
 #include "../internal/computed_style.h"
-#include "../internal/font_manager_p.h"
 #include "../internal/skia_defs.h"
 #include "../internal/skia_utils.h"
 #include "../internal/yoga_defs.h"
@@ -203,13 +202,6 @@ namespace nani::canvas::visuals
 			layout.contentRect.right,
 			layout.contentRect.bottom));
 
-		auto skFont = FontManagerPrivate::Instance()->CreateSkFont(style->visualProps.font);
-		if (!skFont)
-		{
-			canvas->restore();
-			return;
-		}
-
 		FontMetrics metrics(style->visualProps.font);
 
 		SkPaint paint;
@@ -217,22 +209,9 @@ namespace nani::canvas::visuals
 		paint.setStyle(SkPaint::kFill_Style);
 		paint.setColor(skia_utils::ToSkColor(ResolveTextColor(style)));
 
-		SkFont drawFont = *skFont;
-		drawFont.setEdging(SkFont::Edging::kAntiAlias);
-		drawFont.setSubpixel(true);
-
 		auto drawUtf8 = [&](const std::u8string_view& chunk, float x)
 		{
-			if (chunk.empty())
-				return;
-			canvas->drawSimpleText(
-				reinterpret_cast<const char*>(chunk.data()),
-				chunk.size(),
-				SkTextEncoding::kUTF8,
-				x,
-				layout.baselineY,
-				drawFont,
-				paint);
+			metrics.DrawText(canvas, chunk, x, layout.baselineY, paint);
 		};
 
 		drawUtf8(layout.prefix, layout.textX);

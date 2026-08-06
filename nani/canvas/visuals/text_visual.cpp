@@ -5,7 +5,6 @@
 #include "../styles.h"
 #include "../text/font_metrics.h"
 #include "../internal/computed_style.h"
-#include "../internal/font_manager_p.h"
 #include "../internal/skia_defs.h"
 #include "../internal/skia_utils.h"
 #include "../internal/yoga_defs.h"
@@ -381,34 +380,19 @@ namespace nani::canvas::visuals
 			return;
 
 		const Font& font = style->visualProps.font;
-		auto skFont = FontManagerPrivate::Instance()->CreateSkFont(font);
-		if (!skFont)
-			return;
+		FontMetrics metrics(font);
 
 		SkPaint paint;
 		paint.setAntiAlias(true);
 		paint.setStyle(SkPaint::kFill_Style);
 		paint.setColor(skia_utils::ToSkColor(ResolveTextColor(style)));
 
-		SkFont drawFont = *skFont;
-		drawFont.setEdging(SkFont::Edging::kAntiAlias);
-		drawFont.setSubpixel(true);
-
-		FontMetrics metrics(font);
 		for (const auto& line : layout.lines)
 		{
 			if (line.text.empty())
 				continue;
 
-			const char* utf8Data = reinterpret_cast<const char*>(line.text.data());
-			canvas->drawSimpleText(
-				utf8Data,
-				line.text.size(),
-				SkTextEncoding::kUTF8,
-				line.baselineX,
-				line.baselineY,
-				drawFont,
-				paint);
+			metrics.DrawText(canvas, line.text, line.baselineX, line.baselineY, paint);
 
 			DrawTextDecorations(
 				canvas,

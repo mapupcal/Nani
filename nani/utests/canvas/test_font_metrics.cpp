@@ -1,6 +1,7 @@
 ﻿#include <gtest/gtest.h>
 #include "defs.h"
 #include "canvas/text/font.h"
+#include "canvas/text/font_manager.h"
 #include "canvas/text/font_metrics.h"
 
 using namespace nani::canvas::text;
@@ -272,6 +273,41 @@ TEST_F(FontMetricsTest, LayoutLinesSoftWrapsMultibyteText)
 	ASSERT_GT(lines.size(), 1u);
 	for (const auto& line : lines)
 		EXPECT_LE(metrics.HorizontalAdvance(line), fullWidth * 0.4f + 1.0f);
+}
+
+TEST_F(FontMetricsTest, CjkAdvanceUsesFallbackGlyphs)
+{
+	FontMetrics metrics(font_);
+	const float latin = metrics.HorizontalAdvance(u8"AAAA");
+	const float cjk = metrics.HorizontalAdvance(u8"你好世界");
+	ASSERT_GT(latin, 0.0f);
+	ASSERT_GT(cjk, 0.0f);
+	// Real CJK glyphs are typically wider than Latin of the same length under Segoe UI + fallback.
+	EXPECT_GT(cjk, latin * 0.8f);
+}
+
+TEST_F(FontMetricsTest, PlatformFallbackFamiliesAreConfigured)
+{
+	FontManager mgr;
+	const auto fallbacks = mgr.FallbackFamilies();
+#ifdef NANI_OS_WIN
+	ASSERT_FALSE(fallbacks.empty());
+#else
+	(void)fallbacks;
+#endif
+}
+
+TEST_F(FontMetricsTest, ElidedTextWorksForMultibyteWithFallback)
+{
+	FontMetrics metrics(font_);
+	const std::u8string text = u8"你好世界测试文本省略号";
+	const float fullWidth = metrics.HorizontalAdvance(text);
+	ASSERT_GT(fullWidth, 0.0f);
+
+	const auto elided = metrics.ElidedText(text, fullWidth * 0.45f, TextElideMode::Right);
+	ASSERT_FALSE(elided.empty());
+	EXPECT_TRUE(elided.ends_with(u8"…"));
+	EXPECT_LT(metrics.HorizontalAdvance(elided), fullWidth);
 }
 
 // ElidedText contracts: empty/non-positive width, ellipsis-only fallback,

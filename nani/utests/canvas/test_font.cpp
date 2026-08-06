@@ -32,12 +32,32 @@ TEST_F(FontTest, FamilyRoundTrip)
 	Font font;
 	font.SetFamily(u8"Arial");
 	EXPECT_EQ(font.Family(), u8"Arial");
+	ASSERT_EQ(font.Families().size(), 1u);
+	EXPECT_TRUE(font.Families().front() == u8"Arial");
 
 	font.SetFamily(u8"微软雅黑");
 	EXPECT_EQ(font.Family(), u8"微软雅黑");
 
 	font.SetFamily(u8"");
 	EXPECT_TRUE(font.Family().empty());
+	EXPECT_TRUE(font.Families().empty());
+}
+
+TEST_F(FontTest, FamiliesRoundTripAndEquality)
+{
+	Font a;
+	a.SetFamilies({ u8"Segoe UI", u8"Microsoft YaHei UI", u8"" });
+	ASSERT_EQ(a.Families().size(), 2u);
+	EXPECT_EQ(a.Family(), u8"Segoe UI");
+	EXPECT_TRUE(a.Families()[1] == u8"Microsoft YaHei UI");
+
+	Font b;
+	b.SetFamilies({ u8"Segoe UI", u8"Microsoft YaHei UI" });
+	EXPECT_EQ(a, b);
+	EXPECT_EQ(a.Hash(), b.Hash());
+
+	b.SetFamily(u8"Segoe UI");
+	EXPECT_NE(a, b);
 }
 
 // -----------------------------------------------------------

@@ -16,9 +16,11 @@ namespace nani::canvas::internal
 
 	public:
 		std::vector<std::u8string> DefaultFamilies() const;
+		const std::vector<std::u8string>& FallbackFamilies() const;
 		void ClearCache();
 
 		std::shared_ptr<SkFont> CreateSkFont(const text::Font& font);
+		SkFontMgr* FontMgr() const;
 
 	private:
 		FontManagerPrivate();
@@ -35,6 +37,7 @@ namespace nani::canvas::internal
 
 	private:
 		sk_sp<SkFontMgr> m_spSkFontMgr;
+		std::vector<std::u8string> m_fallbackFamilies;
 		std::unordered_map<text::Font, std::weak_ptr<SkFont>, FontHash> m_fontCache;
 	};
 }

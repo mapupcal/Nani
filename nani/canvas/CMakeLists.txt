@@ -62,6 +62,7 @@ nani_add_library(canvas SHARED
 	events/target_ptr.hpp
 
 	text/text_defs.h
+	text/utf8.h
 	text/font.cpp
 	text/font.h
 	text/font_manager.cpp
@@ -90,6 +91,8 @@ nani_add_library(canvas SHARED
 	internal/env_p.h
 	internal/font_manager_p.cpp
 	internal/font_manager_p.h
+	internal/font_resolver.cpp
+	internal/font_resolver.h
 	internal/platform.cpp
 	internal/platform.h
 	internal/window_p.cpp

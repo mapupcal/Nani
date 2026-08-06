@@ -14,8 +14,12 @@ namespace nani::canvas::text
 		Font& operator=(const Font& other) = default;
 
 	public:
+		// Preferred family (first entry). Empty when Families() is empty.
 		const std::u8string_view Family() const;
 		void SetFamily(const std::u8string_view& family);
+
+		const std::vector<std::u8string>& Families() const;
+		void SetFamilies(std::vector<std::u8string> families);
 
 		basic::single Size() const;
 		void SetSize(basic::single size);
@@ -29,7 +33,7 @@ namespace nani::canvas::text
 		size_t Hash() const;
 
 	private:
-		std::u8string m_family;
+		std::vector<std::u8string> m_families;
 		basic::single m_size = 12.0f;
 		FontWeight m_weight = FontWeight::Normal;
 		FontStyle m_style = FontStyle::Normal;
@@ -37,7 +41,7 @@ namespace nani::canvas::text
 
 	inline bool operator==(const Font& lhs, const Font& rhs)
 	{
-		return lhs.Family() == rhs.Family() && lhs.Size() == rhs.Size() &&
+		return lhs.Families() == rhs.Families() && lhs.Size() == rhs.Size() &&
 			lhs.Weight() == rhs.Weight() && lhs.Style() == rhs.Style();
 	}
 

@@ -131,7 +131,10 @@ namespace nani::canvas::internal
 					modifier = modifier | Modifier::NumLock;
 				if (mods & GLFW_MOD_SUPER)
 					modifier = modifier | Modifier::Super;
-				pImpl->OnGLFWWindowKeyEvent(key_, scancode, action == GLFW_PRESS, modifier);
+				// GLFW_REPEAT must be treated as press so held keys keep firing
+				// KeyPress (caret move / backspace / delete).
+				const bool bPress = (action == GLFW_PRESS || action == GLFW_REPEAT);
+				pImpl->OnGLFWWindowKeyEvent(key_, scancode, bPress, modifier);
 			}
 		}
 

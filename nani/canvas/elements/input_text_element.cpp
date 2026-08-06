@@ -1,85 +1,14 @@
 ﻿#include "input_text_element.h"
 #include "../visuals/input_text_visual.h"
 #include "../events/event.h"
+#include "../text/utf8.h"
 
 using namespace nani::canvas::visuals;
 using namespace nani::canvas::events;
+using namespace nani::canvas::text;
 
 namespace nani::canvas::elements
 {
-	namespace
-	{
-		size_t Utf8NextIndex(const std::u8string& text, size_t index)
-		{
-			if (index >= text.size())
-				return text.size();
-
-			const unsigned char lead = static_cast<unsigned char>(text[index]);
-			size_t len = 1;
-			if ((lead & 0xE0) == 0xC0)
-				len = 2;
-			else if ((lead & 0xF0) == 0xE0)
-				len = 3;
-			else if ((lead & 0xF8) == 0xF0)
-				len = 4;
-
-			return std::min(index + len, text.size());
-		}
-
-		size_t Utf8PrevIndex(const std::u8string& text, size_t index)
-		{
-			if (index == 0)
-				return 0;
-
-			size_t i = index - 1;
-			while (i > 0 && (static_cast<unsigned char>(text[i]) & 0xC0) == 0x80)
-				--i;
-			return i;
-		}
-
-		size_t AlignUtf8Boundary(const std::u8string& text, size_t index)
-		{
-			if (index >= text.size())
-				return text.size();
-			while (index > 0 && (static_cast<unsigned char>(text[index]) & 0xC0) == 0x80)
-				--index;
-			return index;
-		}
-
-		std::u8string CodepointToUtf8(char32_t codepoint)
-		{
-			char8_t bytes[4] = {};
-			size_t count = 0;
-			if (codepoint <= 0x7F)
-			{
-				bytes[0] = static_cast<char8_t>(codepoint);
-				count = 1;
-			}
-			else if (codepoint <= 0x7FF)
-			{
-				bytes[0] = static_cast<char8_t>(0xC0 | ((codepoint >> 6) & 0x1F));
-				bytes[1] = static_cast<char8_t>(0x80 | (codepoint & 0x3F));
-				count = 2;
-			}
-			else if (codepoint <= 0xFFFF)
-			{
-				bytes[0] = static_cast<char8_t>(0xE0 | ((codepoint >> 12) & 0x0F));
-				bytes[1] = static_cast<char8_t>(0x80 | ((codepoint >> 6) & 0x3F));
-				bytes[2] = static_cast<char8_t>(0x80 | (codepoint & 0x3F));
-				count = 3;
-			}
-			else
-			{
-				bytes[0] = static_cast<char8_t>(0xF0 | ((codepoint >> 18) & 0x07));
-				bytes[1] = static_cast<char8_t>(0x80 | ((codepoint >> 12) & 0x3F));
-				bytes[2] = static_cast<char8_t>(0x80 | ((codepoint >> 6) & 0x3F));
-				bytes[3] = static_cast<char8_t>(0x80 | (codepoint & 0x3F));
-				count = 4;
-			}
-			return std::u8string(bytes, count);
-		}
-	}
-
 	InputTextElement::InputTextElement(Element* parent, const std::u8string_view& text)
 		: Element(parent)
 		, m_text(text)
@@ -151,7 +80,7 @@ namespace nani::canvas::elements
 				return;
 
 			ClearCompositionState(false);
-			InsertUtf8(CodepointToUtf8(charEvent->codepoint));
+			InsertUtf8(utf8::Encode(charEvent->codepoint));
 			return;
 		}
 		case Type::KeyPress:
@@ -244,7 +173,7 @@ namespace nani::canvas::elements
 		if (m_caret == 0)
 			return;
 
-		const size_t prev = Utf8PrevIndex(m_text, m_caret);
+		const size_t prev = utf8::PrevIndex(m_text, m_caret);
 		m_text.erase(prev, m_caret - prev);
 		m_caret = prev;
 		NotifyTextChanged();
@@ -255,23 +184,23 @@ namespace nani::canvas::elements
 		if (m_caret >= m_text.size())
 			return;
 
-		const size_t next = Utf8NextIndex(m_text, m_caret);
+		const size_t next = utf8::NextIndex(m_text, m_caret);
 		m_text.erase(m_caret, next - m_caret);
 		NotifyTextChanged();
 	}
 
 	void InputTextElement::MoveCaretLeft()
 	{
-		SetCaretIndex(Utf8PrevIndex(m_text, m_caret));
+		SetCaretIndex(utf8::PrevIndex(m_text, m_caret));
 	}
 
 	void InputTextElement::MoveCaretRight()
 	{
-		SetCaretIndex(Utf8NextIndex(m_text, m_caret));
+		SetCaretIndex(utf8::NextIndex(m_text, m_caret));
 	}
 
 	size_t InputTextElement::ClampCaret(size_t index) const
 	{
-		return AlignUtf8Boundary(m_text, std::min(index, m_text.size()));
+		return utf8::AlignBoundary(m_text, std::min(index, m_text.size()));
 	}
 }
