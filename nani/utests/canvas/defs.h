@@ -2,6 +2,7 @@
 #include "canvas/env.h"
 #include "canvas/timer.h"
 #include "canvas/window.h"
+#include "canvas/screen.h"
 #include "canvas/styles.h"
 #include "canvas/basic/transformf.h"
 #include "canvas/basic/pointf.h"

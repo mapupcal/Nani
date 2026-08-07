@@ -21,6 +21,8 @@ namespace nani::canvas::text
 		const std::vector<std::u8string>& Families() const;
 		void SetFamilies(std::vector<std::u8string> families);
 
+		// EM size in logical pixels (same space as layout lengths / SkFont local units).
+		// Do not multiply by DevicePixelRatio; HiDPI is applied via the window canvas CTM.
 		basic::single Size() const;
 		void SetSize(basic::single size);
 

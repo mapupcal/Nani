@@ -16,7 +16,8 @@ namespace nani::canvas
 		const basic::RectF Geometry() const;
 		const basic::RectF WorkAreaGeometry() const;
 
-		const float DPI() const;
+		// Monitor content scale (logical px -> physical px). Not physical DPI (96/120/...).
+		const float DevicePixelRatio() const;
 		const int Width() const;
 		const int Height() const;
 

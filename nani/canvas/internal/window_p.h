@@ -19,7 +19,6 @@ namespace nani::canvas::internal
 		WindowPrivate(Window* window_);
 		~WindowPrivate();
 
-	public:
 		bool IsVisible() const;
 
 		void Show();
@@ -39,14 +38,18 @@ namespace nani::canvas::internal
 		bool Initialize();
 		void InitializeGLFWWindow();
 		void InitializeSkiaContext();
-		void ResetSkiaSurface();
 		SkCanvas* GetCanvas();
 
 		void Repaint();
 		void SyncWindowDrag();
 
-	public:
+		basic::PointF ScreenToLogical(double xPos, double yPos) const;
+		basic::PointF LogicalToPlatformScale() const;
+		basic::RectF LogicalToPlatformRect(const basic::RectF& logical) const;
+
 		void OnGLFWWindowSizeChanged(int width, int height);
+		void OnGLFWFramebufferSizeChanged(int width, int height);
+		void OnGLFWWindowContentScaleChanged(float xScale, float yScale);
 		void OnGLFWWindowPositionChanged(int xPos, int yPos);
 		void OnGLFWWindowFocusChanged(bool bFocus);
 		void OnGLFWWindowClose();
@@ -58,10 +61,14 @@ namespace nani::canvas::internal
 		void OnGLFWWindowChar(unsigned int codepoint);
 		void onTick();
 
-	public:
 		unsigned int hints = 0;
 		basic::PointF pos;
-		basic::SizeF size;
+		basic::SizeF size; // logical size (layout / paint space)
+		basic::SizeF platformWindowSize; // GLFW screen-coordinate window size
+		basic::SizeF framebufferSize;
+		float devicePixelRatio = 1.0f;
+		bool syncingPlatformSize = false;
+		bool surfaceResizeFallbackPending = false;
 		basic::single radius = 0.0f;
 		basic::single borderWidth = 0.0f;
 		basic::Color borderColor = basic::Color(basic::Colors::Transparent);
@@ -80,5 +87,13 @@ namespace nani::canvas::internal
 		bool imeCaretRectValid = false;
 		bool imeUpdatingForms = false;
 		basic::RectF imeCaretRect;
+
+	private:
+		void RefreshDpiState();
+		void SyncPlatformWindowToLogicalDpi();
+		void SyncDpiSurface(bool syncPlatformWindow);
+		void BindSkiaSurface();
+		void CommitSurfaceResize();
+		void ResetSkiaSurface(bool verifyFramebufferSize = false);
 	};
 }

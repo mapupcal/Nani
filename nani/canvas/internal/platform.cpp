@@ -1,10 +1,13 @@
-﻿#include "platform.h"
+#include "platform.h"
 #include "window_p.h"
 #include "../visuals/view.h"
 #include "../window.h"
 #include "../events/event.h"
 
 #if defined(NANI_OS_WIN)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
 #include <Windows.h>
 #include <windowsx.h>
 #include <imm.h>
@@ -20,6 +23,35 @@
 using namespace nani::canvas::basic;
 namespace nani::canvas::internal
 {
+	void Platform::EnableProcessDpiAwareness()
+	{
+#ifdef NANI_OS_WIN
+		// Must run before any HWND / glfwInit so the process is Per-Monitor V2 aware.
+		using SetProcessDpiAwarenessContextFn = BOOL(WINAPI*)(DPI_AWARENESS_CONTEXT);
+		HMODULE user32 = ::GetModuleHandleW(L"user32.dll");
+		if (user32)
+		{
+			auto setCtx = reinterpret_cast<SetProcessDpiAwarenessContextFn>(
+				::GetProcAddress(user32, "SetProcessDpiAwarenessContext"));
+			if (setCtx && setCtx(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2))
+				return;
+		}
+
+		// Older Windows: fall back to per-monitor v1 via Shcore (value = 2).
+		using SetProcessDpiAwarenessFn = HRESULT(WINAPI*)(int);
+		if (HMODULE shcore = ::LoadLibraryW(L"Shcore.dll"))
+		{
+			auto setDpiAwareness = reinterpret_cast<SetProcessDpiAwarenessFn>(
+				::GetProcAddress(shcore, "SetProcessDpiAwareness"));
+			if (setDpiAwareness)
+				setDpiAwareness(2);
+			::FreeLibrary(shcore);
+		}
+#else
+		// Non-Windows: nothing to do; content scale comes from GLFW.
+#endif
+	}
+
 	const PointF Platform::GetCursorPos()
 	{
 #ifdef NANI_OS_WIN
@@ -165,10 +197,16 @@ namespace nani::canvas::internal
 
 		LRESULT HitTestResizable(WindowPrivate* pImpl, POINT pt)
 		{
-			int width = (int)pImpl->size.width;
-			int height = (int)pImpl->size.height;
-			int borderWidth = (int)pImpl->borderWidth;
-			int radius = (int)pImpl->radius;
+			const PointF scale = pImpl->LogicalToPlatformScale();
+
+			const int width = static_cast<int>(pImpl->platformWindowSize.width > 0.0f
+				? pImpl->platformWindowSize.width
+				: pImpl->size.width);
+			const int height = static_cast<int>(pImpl->platformWindowSize.height > 0.0f
+				? pImpl->platformWindowSize.height
+				: pImpl->size.height);
+			const int borderWidth = static_cast<int>(std::lround(pImpl->borderWidth * scale.x));
+			const int radius = static_cast<int>(std::lround(pImpl->radius * ((scale.x + scale.y) * 0.5f)));
 
 			if (pt.x < radius && pt.y < radius)
 			{
@@ -318,7 +356,7 @@ namespace nani::canvas::internal
 				POINT pt = { GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
 				::ScreenToClient(hwnd, &pt);
 
-				const PointF localPt((scalar)pt.x, (scalar)pt.y);
+				const PointF localPt = pImpl->ScreenToLogical(pt.x, pt.y);
 				visuals::View* view = pImpl->window ? pImpl->window->GetView() : nullptr;
 
 				if (pImpl->resizableEnabled)
@@ -427,13 +465,15 @@ namespace nani::canvas::internal
 			return;
 		}
 
-		const LONG left = static_cast<LONG>(clientCaretRect.left);
-		const LONG top = static_cast<LONG>(clientCaretRect.top);
+		// Caret rect is in logical client coordinates; Imm wants platform client pixels.
+		const RectF platformRect = pImpl->LogicalToPlatformRect(clientCaretRect);
+		const LONG left = static_cast<LONG>(std::lround(platformRect.left));
+		const LONG top = static_cast<LONG>(std::lround(platformRect.top));
 		const LONG right = clientCaretRect.right > clientCaretRect.left
-			? static_cast<LONG>(clientCaretRect.right)
+			? static_cast<LONG>(std::lround(platformRect.right))
 			: left + 1;
 		const LONG bottom = clientCaretRect.bottom > clientCaretRect.top
-			? static_cast<LONG>(clientCaretRect.bottom)
+			? static_cast<LONG>(std::lround(platformRect.bottom))
 			: top + 1;
 
 		// Qt-style anchor: composition point at preedit/caret top-left; candidate

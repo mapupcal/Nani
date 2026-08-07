@@ -19,6 +19,8 @@ namespace nani::canvas
 	{
 		m_pImpl->pos = pos;
 		m_pImpl->size = size;
+		m_pImpl->platformWindowSize = size;
+		m_pImpl->framebufferSize = size;
 	}
 
 	Window::~Window()
@@ -51,6 +53,11 @@ namespace nani::canvas
 	const RectF Window::Geometry() const
 	{
 		return RectF(Position(), Size());
+	}
+
+	float Window::DevicePixelRatio() const
+	{
+		return m_pImpl->devicePixelRatio > 0.0f ? m_pImpl->devicePixelRatio : 1.0f;
 	}
 
 	bool Window::IsVisible() const

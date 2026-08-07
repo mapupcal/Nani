@@ -56,12 +56,14 @@ namespace nani::canvas
 		return rc.MoveTo(GetGeometryPos(m_pData->monitor));
 	}
 
-	const float Screen::DPI() const
+	const float Screen::DevicePixelRatio() const
 	{
 		if (!m_pData->monitor)
 			return 1.0f;
 		float x = 1.0f, y = 1.0f;
 		glfwGetMonitorContentScale(m_pData->monitor, &x, &y);
+		if (x <= 0.0f)
+			return 1.0f;
 		return x;
 	}
 

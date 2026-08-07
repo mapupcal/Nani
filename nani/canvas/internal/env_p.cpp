@@ -1,6 +1,7 @@
 ﻿#include "env_p.h"
 #include "timer_p.h"
 #include "window_p.h"
+#include "platform.h"
 #include "../timer.h"
 
 namespace nani::canvas::internal
@@ -13,6 +14,7 @@ namespace nani::canvas::internal
 
 	void EnvPrivate::Initialize()
 	{
+		Platform::EnableProcessDpiAwareness();
 		glfwInit();
 	}
 

@@ -130,4 +130,30 @@ TEST_F(WindowTest, WindowTruncatedColor)
 	});
 }
 
+TEST_F(WindowTest, DevicePixelRatioMatchesScreen)
+{
+	std::shared_ptr<Window> window = std::make_shared<Window>(PointF(0, 0), SizeF(400, 600));
+	EXPECT_FLOAT_EQ(window->DevicePixelRatio(), 1.0f);
+
+	window->Show();
+
+	const float dpr = window->DevicePixelRatio();
+	EXPECT_GT(dpr, 0.0f);
+
+	const Screen* primary = Screen::Primary();
+	ASSERT_NE(primary, nullptr);
+	EXPECT_NEAR(dpr, primary->DevicePixelRatio(), 0.05f);
+	EXPECT_FLOAT_EQ(window->Size().width, 400.0f);
+	EXPECT_FLOAT_EQ(window->Size().height, 600.0f);
+
+	window->Close();
+}
+
+TEST_F(WindowTest, ScreenDevicePixelRatio)
+{
+	const Screen* primary = Screen::Primary();
+	ASSERT_NE(primary, nullptr);
+	EXPECT_GT(primary->DevicePixelRatio(), 0.0f);
+}
+
 

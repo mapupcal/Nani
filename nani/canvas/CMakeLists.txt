@@ -127,5 +127,5 @@ target_link_libraries(canvas PRIVATE
 	pugixml::pugixml
 )
 if (WIN32)
-	target_link_libraries(canvas PRIVATE imm32)
+	target_link_libraries(canvas PRIVATE imm32 user32)
 endif()

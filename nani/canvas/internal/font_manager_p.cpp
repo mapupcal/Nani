@@ -161,6 +161,7 @@ namespace nani::canvas::internal
 		if (!typeface)
 			return nullptr;
 
+		// font.Size() is logical pixels / SkFont local units; do not multiply by DPR.
 		std::shared_ptr<SkFont> skFont = MakeSharedSkFont(typeface, font.Size());
 		if (skFont)
 			m_fontCache[font] = skFont;

@@ -29,6 +29,8 @@ namespace nani::canvas
 		const basic::RectF Rect() const;
 		const basic::RectF ClientRect() const;
 		const basic::RectF Geometry() const;
+		// Read-only window content scale (logical px -> physical px). OS/monitor driven.
+		float DevicePixelRatio() const;
 		bool IsVisible() const;
 
 		void Show();

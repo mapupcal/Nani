@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include "window_p.h"
 #include "window.h"
 #include "env_p.h"
@@ -8,6 +8,9 @@
 #include "events/event.h"
 #include "../visuals/view.h"
 #include "../visuals/visual.h"
+
+#include <algorithm>
+#include <cmath>
 
 #include <include/gpu/ganesh/gl/GrGLInterface.h>
 #include <include/gpu/ganesh/GrContextOptions.h>
@@ -23,11 +26,118 @@ namespace nani::canvas::internal
 {
 	namespace
 	{
+		void FramebufferScaleForWindow(
+			int winW, int winH, int fbW, int fbH, float& scaleX, float& scaleY)
+		{
+			scaleX = (winW > 0) ? (static_cast<float>(fbW) / static_cast<float>(winW)) : 1.0f;
+			scaleY = (winH > 0) ? (static_cast<float>(fbH) / static_cast<float>(winH)) : 1.0f;
+			if (scaleX <= 0.0f)
+				scaleX = 1.0f;
+			if (scaleY <= 0.0f)
+				scaleY = 1.0f;
+		}
+
+		SizeF LogicalSizeFromPlatform(
+			const SizeF& platform, const SizeF& framebuffer, float devicePixelRatio)
+		{
+			float fbRatioX = 1.0f;
+			float fbRatioY = 1.0f;
+			FramebufferScaleForWindow(
+				static_cast<int>(platform.width),
+				static_cast<int>(platform.height),
+				static_cast<int>(framebuffer.width),
+				static_cast<int>(framebuffer.height),
+				fbRatioX,
+				fbRatioY);
+
+			const float dpr = (devicePixelRatio > 0.0f) ? devicePixelRatio : 1.0f;
+			return SizeF(
+				platform.width * fbRatioX / dpr,
+				platform.height * fbRatioY / dpr);
+		}
+
+		struct PlatformSurfaceSnapshot
+		{
+			SizeF platform;
+			SizeF framebuffer;
+			float devicePixelRatio = 1.0f;
+			SizeF logical;
+		};
+
+		bool CanHandlePlatformSurfaceEvent(const WindowPrivate& windowPrivate)
+		{
+			return windowPrivate.glfwWindow && !windowPrivate.syncingPlatformSize;
+		}
+
+		bool QueryPlatformSurfaceSnapshot(
+			const WindowPrivate& windowPrivate, PlatformSurfaceSnapshot& out)
+		{
+			if (!windowPrivate.glfwWindow)
+				return false;
+
+			int winW = 0;
+			int winH = 0;
+			glfwGetWindowSize(windowPrivate.glfwWindow, &winW, &winH);
+			if (winW <= 0 || winH <= 0)
+				return false;
+
+			float xScale = 1.0f;
+			float yScale = 1.0f;
+			glfwGetWindowContentScale(windowPrivate.glfwWindow, &xScale, &yScale);
+
+			out.platform = SizeF(static_cast<float>(winW), static_cast<float>(winH));
+			out.devicePixelRatio = (xScale > 0.0f) ? xScale : 1.0f;
+
+			int fbW = 0;
+			int fbH = 0;
+			glfwGetFramebufferSize(windowPrivate.glfwWindow, &fbW, &fbH);
+			if (fbW > 0 && fbH > 0)
+			{
+				out.framebuffer = SizeF(static_cast<float>(fbW), static_cast<float>(fbH));
+				out.logical = LogicalSizeFromPlatform(
+					out.platform, out.framebuffer, out.devicePixelRatio);
+			}
+			else
+			{
+				out.framebuffer = SizeF();
+				out.logical = windowPrivate.size;
+			}
+
+			return true;
+		}
+
+		void NotifyLogicalSizeChanged(WindowPrivate& windowPrivate, const SizeF& oldLogicalSize)
+		{
+			if (oldLogicalSize != windowPrivate.size)
+			{
+				ResizeEvent event(oldLogicalSize, windowPrivate.size);
+				windowPrivate.window->FireEvent(&event);
+				return;
+			}
+
+			if (visuals::View* view = windowPrivate.window->GetView())
+				view->MarkDirty();
+		}
+
 		void _OnGLFWWindowSizeChanged(GLFWwindow* window, int width, int height)
 		{
 			WindowPrivate* pImpl = reinterpret_cast<WindowPrivate*>(glfwGetWindowUserPointer(window));
 			if (pImpl)
 				pImpl->OnGLFWWindowSizeChanged(width, height);
+		}
+
+		void _OnGLFWFramebufferSizeChanged(GLFWwindow* window, int width, int height)
+		{
+			WindowPrivate* pImpl = reinterpret_cast<WindowPrivate*>(glfwGetWindowUserPointer(window));
+			if (pImpl)
+				pImpl->OnGLFWFramebufferSizeChanged(width, height);
+		}
+
+		void _OnGLFWWindowContentScaleChanged(GLFWwindow* window, float xScale, float yScale)
+		{
+			WindowPrivate* pImpl = reinterpret_cast<WindowPrivate*>(glfwGetWindowUserPointer(window));
+			if (pImpl)
+				pImpl->OnGLFWWindowContentScaleChanged(xScale, yScale);
 		}
 
 		void _OnGLFWWindowPositionChanged(GLFWwindow* window, int xpos, int ypos)
@@ -232,14 +342,26 @@ namespace nani::canvas::internal
 		glfwSetWindowPos(glfwWindow, pos.x, pos.y);
 	}
 
-	void WindowPrivate::Resize(const basic::SizeF& size)
+	void WindowPrivate::Resize(const basic::SizeF& size_)
 	{
-		if (!glfwWindow)
-			return;
-		if (size == this->size)
+		if (size_ == this->size && glfwWindow)
 			return;
 
-		glfwSetWindowSize(glfwWindow, size.width, size.height);
+		const SizeF oldSize = size;
+		size = size_;
+		if (!glfwWindow)
+		{
+			framebufferSize = size;
+			return;
+		}
+
+		SyncDpiSurface(true);
+		if (oldSize != size)
+		{
+			ResizeEvent event(oldSize, size);
+			window->FireEvent(&event);
+		}
+		Repaint();
 	}
 
 	void WindowPrivate::SetRadius(basic::single fRadius)
@@ -287,22 +409,64 @@ namespace nani::canvas::internal
 		SetHints(hints);
 	}
 
-	void WindowPrivate::OnGLFWWindowSizeChanged(int width, int height)
+	void WindowPrivate::OnGLFWWindowSizeChanged(int /*width*/, int /*height*/)
 	{
-		if (!glfwWindow)
+		if (!CanHandlePlatformSurfaceEvent(*this))
+			return;
+
+		// Repaint from the framebuffer callback once the physical surface matches.
+		surfaceResizeFallbackPending = true;
+	}
+
+	void WindowPrivate::OnGLFWFramebufferSizeChanged(int width, int height)
+	{
+		if (!CanHandlePlatformSurfaceEvent(*this))
 			return;
 		if (width <= 0 || height <= 0)
 			return;
 
-		SizeF oldSize = size;
-		size = SizeF(width, height);
+		surfaceResizeFallbackPending = false;
+		CommitSurfaceResize();
+	}
 
-		glfwMakeContextCurrent(glfwWindow);
-		glViewport(0, 0, width, height);
-		ResetSkiaSurface();
+	void WindowPrivate::CommitSurfaceResize()
+	{
+		if (!CanHandlePlatformSurfaceEvent(*this))
+			return;
 
-		ResizeEvent event(oldSize, size);
-		window->FireEvent(&event);
+		PlatformSurfaceSnapshot snapshot;
+		if (!QueryPlatformSurfaceSnapshot(*this, snapshot) || !snapshot.framebuffer.IsValid())
+			return;
+
+		if (snapshot.platform == platformWindowSize &&
+			snapshot.framebuffer == framebufferSize &&
+			snapshot.logical == size)
+		{
+			return;
+		}
+
+		devicePixelRatio = snapshot.devicePixelRatio;
+		platformWindowSize = snapshot.platform;
+		framebufferSize = snapshot.framebuffer;
+
+		const SizeF oldSize = size;
+		size = snapshot.logical;
+
+		BindSkiaSurface();
+		NotifyLogicalSizeChanged(*this, oldSize);
+		Repaint();
+	}
+
+	void WindowPrivate::OnGLFWWindowContentScaleChanged(float xScale, float /*yScale*/)
+	{
+		if (!glfwWindow)
+			return;
+
+		devicePixelRatio = (xScale > 0.0f) ? xScale : 1.0f;
+		// Keep logical size; grow/shrink the platform window so FB covers logical*dpr.
+		SyncDpiSurface(true);
+		if (visuals::View* view = window->GetView())
+			view->MarkDirty();
 		Repaint();
 	}
 
@@ -346,7 +510,7 @@ namespace nani::canvas::internal
 
 	void WindowPrivate::OnGLFWWindowMouseMove(double xPos, double yPos)
 	{
-		PointF pos_(xPos, yPos);
+		PointF pos_ = ScreenToLogical(xPos, yPos);
 		PointF globalPos = pos_ + pos;
 		MouseMoveEvent event(pos_, globalPos);
 		window->FireEvent(&event);
@@ -354,7 +518,7 @@ namespace nani::canvas::internal
 
 	void WindowPrivate::OnGLFWWindowMouseButton(double xPos, double yPos, MouseButton button, bool bPress, Modifier modifier)
 	{
-		PointF pos_(xPos, yPos);
+		PointF pos_ = ScreenToLogical(xPos, yPos);
 		PointF globalPos = pos_ + pos;
 		if (bPress)
 		{
@@ -375,7 +539,7 @@ namespace nani::canvas::internal
 		if (glfwWindow)
 			glfwGetCursorPos(glfwWindow, &xPos, &yPos);
 
-		PointF pos_(static_cast<float>(xPos), static_cast<float>(yPos));
+		PointF pos_ = ScreenToLogical(xPos, yPos);
 		PointF globalPos = pos_ + pos;
 		WheelEvent event(pos_, globalPos, xDelta, yDelta);
 		window->FireEvent(&event);
@@ -420,6 +584,13 @@ namespace nani::canvas::internal
 
 	void WindowPrivate::onTick()
 	{
+		if (surfaceResizeFallbackPending)
+		{
+			surfaceResizeFallbackPending = false;
+			CommitSurfaceResize();
+			return;
+		}
+
 		if (window->GetView()->IsDirty())
 			Repaint();
 	}
@@ -438,7 +609,12 @@ namespace nani::canvas::internal
 		if (!canvas)
 			return;
 
+		// Clear the full physical framebuffer, then draw in logical coordinates.
 		canvas->clear(SK_ColorTRANSPARENT);
+
+		const float dpr = (devicePixelRatio > 0.0f) ? devicePixelRatio : 1.0f;
+		canvas->save();
+		canvas->scale(dpr, dpr);
 
 		SkRect rect = SkRect::MakeXYWH(0, 0, size.width, size.height);
 		SkRect fillRect = rect;
@@ -468,6 +644,7 @@ namespace nani::canvas::internal
 		window->FireEvent(&event);
 
 		canvas->restore();
+		canvas->restore();
 
 		skiaGlContext->flushAndSubmit();
 		glfwSwapBuffers(glfwWindow);
@@ -491,9 +668,19 @@ namespace nani::canvas::internal
 		glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
 		glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
 		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+#if defined(GLFW_SCALE_FRAMEBUFFER)
+		glfwWindowHint(GLFW_SCALE_FRAMEBUFFER, GLFW_TRUE);
+#endif
 
 		
-		glfwWindow = glfwCreateWindow(size.width, size.height, title.c_str(), nullptr, nullptr);
+		// Create at logical size first; SyncDpiSurface(true) expands the platform
+		// window on systems where FB == window size (Windows).
+		glfwWindow = glfwCreateWindow(
+			std::max(1, static_cast<int>(std::lround(size.width))),
+			std::max(1, static_cast<int>(std::lround(size.height))),
+			title.c_str(),
+			nullptr,
+			nullptr);
 		if (!glfwWindow)
 			return;
 
@@ -506,6 +693,8 @@ namespace nani::canvas::internal
 		glfwSwapInterval(1);
 
 		glfwSetWindowSizeCallback(glfwWindow, _OnGLFWWindowSizeChanged);
+		glfwSetFramebufferSizeCallback(glfwWindow, _OnGLFWFramebufferSizeChanged);
+		glfwSetWindowContentScaleCallback(glfwWindow, _OnGLFWWindowContentScaleChanged);
 		glfwSetWindowPosCallback(glfwWindow, _OnGLFWWindowPositionChanged);
 		glfwSetWindowCloseCallback(glfwWindow, _OnGLFWWindowClose);
 		glfwSetWindowFocusCallback(glfwWindow, _OnGLFWWindowFocusChanged);
@@ -516,6 +705,7 @@ namespace nani::canvas::internal
 		glfwSetKeyCallback(glfwWindow, _OnGLFWWindowKeyEvent);
 		glfwSetCharCallback(glfwWindow, _OnGLFWWindowChar);
 
+		SyncDpiSurface(true);
 		Platform::EnsureImeHook(glfwWindow);
 	}
 
@@ -529,10 +719,120 @@ namespace nani::canvas::internal
 		if (!skiaGlContext)
 			return;
 
-		ResetSkiaSurface();
+		SyncDpiSurface(false);
 	}
 
-	void WindowPrivate::ResetSkiaSurface()
+	void WindowPrivate::RefreshDpiState()
+	{
+		if (!glfwWindow)
+			return;
+
+		PlatformSurfaceSnapshot snapshot;
+		if (!QueryPlatformSurfaceSnapshot(*this, snapshot))
+			return;
+
+		devicePixelRatio = snapshot.devicePixelRatio;
+		platformWindowSize = snapshot.platform;
+
+		if (snapshot.framebuffer.IsValid())
+			framebufferSize = snapshot.framebuffer;
+		else if (platformWindowSize.width > 0.0f)
+			framebufferSize = platformWindowSize;
+		else
+			framebufferSize = SizeF(size.width * devicePixelRatio, size.height * devicePixelRatio);
+	}
+
+	void WindowPrivate::SyncDpiSurface(bool syncPlatformWindow)
+	{
+		if (!glfwWindow)
+			return;
+
+		RefreshDpiState();
+
+		if (syncPlatformWindow)
+			SyncPlatformWindowToLogicalDpi();
+
+		BindSkiaSurface();
+	}
+
+	void WindowPrivate::SyncPlatformWindowToLogicalDpi()
+	{
+		if (!glfwWindow)
+			return;
+
+		const int winW = static_cast<int>(platformWindowSize.width);
+		const int winH = static_cast<int>(platformWindowSize.height);
+		const int fbW = static_cast<int>(framebufferSize.width);
+		const int fbH = static_cast<int>(framebufferSize.height);
+
+		float fbRatioX = 1.0f;
+		float fbRatioY = 1.0f;
+		FramebufferScaleForWindow(winW, winH, fbW, fbH, fbRatioX, fbRatioY);
+
+		// Desired physical FB = logical * dpr.
+		// Windows fbRatio≈1 → grow platform window; macOS fbRatio≈dpr → keep logical.
+		const int desiredWinW = std::max(
+			1, static_cast<int>(std::lround(size.width * devicePixelRatio / fbRatioX)));
+		const int desiredWinH = std::max(
+			1, static_cast<int>(std::lround(size.height * devicePixelRatio / fbRatioY)));
+
+		if (winW != desiredWinW || winH != desiredWinH)
+		{
+			syncingPlatformSize = true;
+			glfwSetWindowSize(glfwWindow, desiredWinW, desiredWinH);
+			syncingPlatformSize = false;
+			RefreshDpiState();
+		}
+	}
+
+	void WindowPrivate::BindSkiaSurface()
+	{
+		if (!glfwWindow)
+			return;
+
+		const int fbw = static_cast<int>(framebufferSize.width);
+		const int fbh = static_cast<int>(framebufferSize.height);
+		if (fbw <= 0 || fbh <= 0)
+			return;
+
+		glfwMakeContextCurrent(glfwWindow);
+		glViewport(0, 0, fbw, fbh);
+		ResetSkiaSurface(false);
+	}
+
+	basic::PointF WindowPrivate::LogicalToPlatformScale() const
+	{
+		float scaleX = 1.0f;
+		float scaleY = 1.0f;
+		if (size.width > 0.0f && platformWindowSize.width > 0.0f)
+			scaleX = platformWindowSize.width / size.width;
+		if (size.height > 0.0f && platformWindowSize.height > 0.0f)
+			scaleY = platformWindowSize.height / size.height;
+		return PointF(scaleX, scaleY);
+	}
+
+	basic::RectF WindowPrivate::LogicalToPlatformRect(const RectF& logical) const
+	{
+		const PointF scale = LogicalToPlatformScale();
+		return RectF(
+			logical.left * scale.x,
+			logical.top * scale.y,
+			logical.right * scale.x,
+			logical.bottom * scale.y);
+	}
+
+	basic::PointF WindowPrivate::ScreenToLogical(double xPos, double yPos) const
+	{
+		const PointF scale = LogicalToPlatformScale();
+		if (scale.x <= 0.0f || scale.y <= 0.0f)
+			return PointF(static_cast<float>(xPos), static_cast<float>(yPos));
+
+		return PointF(
+			static_cast<float>(xPos) / scale.x,
+			static_cast<float>(yPos) / scale.y);
+	}
+
+	void WindowPrivate::ResetSkiaSurface(bool verifyFramebufferSize)
 	{
 		if (!skiaGlContext)
 			return;
@@ -543,6 +843,8 @@ namespace nani::canvas::internal
 		// make Skia's backend RT invalid for texture-backed ops (glyph atlases).
 		int sampleCnt = 0;
 		int stencilBits = 8;
+		int fbw = static_cast<int>(framebufferSize.width);
+		int fbh = static_cast<int>(framebufferSize.height);
 		if (glfwWindow)
 		{
 			sampleCnt = glfwGetWindowAttrib(glfwWindow, GLFW_SAMPLES);
@@ -551,7 +853,28 @@ namespace nani::canvas::internal
 				sampleCnt = 0;
 			if (stencilBits < 0)
 				stencilBits = 0;
+
+			if (verifyFramebufferSize)
+			{
+				int glfwFbw = 0;
+				int glfwFbh = 0;
+				glfwGetFramebufferSize(glfwWindow, &glfwFbw, &glfwFbh);
+				if (glfwFbw > 0 && glfwFbh > 0)
+				{
+					fbw = glfwFbw;
+					fbh = glfwFbh;
+					framebufferSize = SizeF(static_cast<float>(fbw), static_cast<float>(fbh));
+				}
+			}
 		}
+
+		if (fbw <= 0 || fbh <= 0)
+		{
+			fbw = static_cast<int>(size.width);
+			fbh = static_cast<int>(size.height);
+		}
+		if (fbw <= 0 || fbh <= 0)
+			return;
 
 		GrGLFramebufferInfo fbi =
 		{
@@ -560,8 +883,8 @@ namespace nani::canvas::internal
 		};
 
 		GrBackendRenderTarget target = GrBackendRenderTargets::MakeGL(
-			static_cast<int>(size.width),
-			static_cast<int>(size.height),
+			fbw,
+			fbh,
 			sampleCnt,
 			stencilBits,
 			fbi);

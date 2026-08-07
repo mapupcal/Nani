@@ -8,6 +8,9 @@ namespace nani::canvas::internal
 {
 	struct Platform
 	{
+		// Call before glfwInit / any HWND. Idempotent; safe from static init.
+		static void EnableProcessDpiAwareness();
+
 		static const basic::PointF GetCursorPos();
 		static void SetCursorPos(const basic::PointF& pos);
 		static void MakeToolWindow(GLFWwindow* window, bool bTool);
